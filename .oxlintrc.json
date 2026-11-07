@@ -5,5 +5,8 @@
     "correctness": "error",
     "suspicious": "warn"
   },
+  "rules": {
+    "vitest/require-mock-type-parameters": "off"
+  },
   "ignorePatterns": ["**/dist/**", "**/src/generated/**", "**/coverage/**"]
 }

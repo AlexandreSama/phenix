@@ -1,0 +1,44 @@
+import { Events } from 'discord.js';
+import { prisma } from '@phenix/database';
+import { createClient } from './client.js';
+import { commands } from './commands.js';
+import { createInteractionHandler } from './core/interaction-router.js';
+import { createCommandRegistry, createComponentRegistry } from './core/registry.js';
+import { loadEnv } from './env.js';
+import { registerGuildEvents, syncGuilds } from './events/guilds.js';
+import { logger } from './logger.js';
+
+const env = loadEnv();
+const client = createClient();
+
+client.on(
+  Events.InteractionCreate,
+  createInteractionHandler({
+    commands: createCommandRegistry(commands),
+    components: createComponentRegistry([]),
+    logger,
+  }),
+);
+
+client.once(Events.ClientReady, (ready) => {
+  logger.info({ user: ready.user.tag, guilds: ready.guilds.cache.size }, 'Bot connecté');
+  syncGuilds(prisma, [...ready.guilds.cache.values()])
+    .then(() => logger.info('Serveurs synchronisés avec la base'))
+    .catch((err: unknown) => logger.error({ err }, 'Échec de la synchronisation des serveurs'));
+});
+
+registerGuildEvents(client, prisma, logger);
+
+process.on('unhandledRejection', (err) => logger.error({ err }, 'Promesse rejetée non gérée'));
+
+/** Arrêt propre : Docker envoie SIGTERM, Ctrl+C envoie SIGINT. */
+async function shutdown(signal: string): Promise<void> {
+  logger.info({ signal }, 'Arrêt en cours');
+  await client.destroy();
+  await prisma.$disconnect();
+  process.exit(0);
+}
+process.once('SIGTERM', () => void shutdown('SIGTERM'));
+process.once('SIGINT', () => void shutdown('SIGINT'));
+
+await client.login(env.DISCORD_TOKEN);
