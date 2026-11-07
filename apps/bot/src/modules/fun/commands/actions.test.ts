@@ -1,8 +1,11 @@
 import type { ChatInputCommandInteraction, EmbedBuilder } from 'discord.js';
 import { describe, expect, it, vi } from 'vitest';
 import { createActionCommand } from './actions.js';
+import type { BotContext } from '../../../core/context.js';
 
 const user = (id: string) => ({ id, toString: () => `<@${id}>` });
+/** Les commandes Fun n'utilisent ni la base ni les logs. */
+const context = {} as BotContext;
 
 function fakeInteraction(authorId: string, targetId: string) {
   const interaction = {
@@ -31,6 +34,7 @@ describe('createActionCommand', () => {
 
     await createActionCommand(config, gifs).execute(
       interaction as unknown as ChatInputCommandInteraction,
+      context,
     );
 
     expect(interaction.deferReply).toHaveBeenCalled();
@@ -44,6 +48,7 @@ describe('createActionCommand', () => {
 
     await createActionCommand(config, vi.fn().mockResolvedValue(null)).execute(
       interaction as unknown as ChatInputCommandInteraction,
+      context,
     );
 
     const embed = embedOf(interaction.editReply.mock.calls[0] ?? []);
@@ -57,6 +62,7 @@ describe('createActionCommand', () => {
 
     await createActionCommand(config, gifs).execute(
       interaction as unknown as ChatInputCommandInteraction,
+      context,
     );
 
     expect(interaction.reply).toHaveBeenCalledWith(

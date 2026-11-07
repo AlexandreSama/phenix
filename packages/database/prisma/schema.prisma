@@ -93,6 +93,7 @@ model Case {
 
   @@unique([guildId, number])
   @@index([guildId, targetId])
+  @@index([type, expiresAt]) // bans temporaires à lever
 }
 
 // ---------- XP et fun ----------

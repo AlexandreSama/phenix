@@ -2,21 +2,25 @@ import { Events } from 'discord.js';
 import { prisma } from '@phenix/database';
 import { createClient } from './client.js';
 import { commands } from './commands.js';
+import type { BotContext } from './core/context.js';
 import { createInteractionHandler } from './core/interaction-router.js';
 import { createCommandRegistry, createComponentRegistry } from './core/registry.js';
 import { loadEnv } from './env.js';
 import { registerGuildEvents, syncGuilds } from './events/guilds.js';
 import { logger } from './logger.js';
+import { startBanExpiry } from './modules/moderation/index.js';
 
 const env = loadEnv();
 const client = createClient();
+const context: BotContext = { db: prisma, logger };
+let stopBanExpiry: (() => void) | undefined;
 
 client.on(
   Events.InteractionCreate,
   createInteractionHandler({
     commands: createCommandRegistry(commands),
     components: createComponentRegistry([]),
-    logger,
+    context,
   }),
 );
 
@@ -25,6 +29,7 @@ client.once(Events.ClientReady, (ready) => {
   syncGuilds(prisma, [...ready.guilds.cache.values()])
     .then(() => logger.info('Serveurs synchronisés avec la base'))
     .catch((err: unknown) => logger.error({ err }, 'Échec de la synchronisation des serveurs'));
+  stopBanExpiry = startBanExpiry(ready, context);
 });
 
 registerGuildEvents(client, prisma, logger);
@@ -34,6 +39,7 @@ process.on('unhandledRejection', (err) => logger.error({ err }, 'Promesse rejet�
 /** Arrêt propre : Docker envoie SIGTERM, Ctrl+C envoie SIGINT. */
 async function shutdown(signal: string): Promise<void> {
   logger.info({ signal }, 'Arrêt en cours');
+  stopBanExpiry?.();
   await client.destroy();
   await prisma.$disconnect();
   process.exit(0);

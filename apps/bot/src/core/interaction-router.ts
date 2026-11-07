@@ -1,18 +1,20 @@
 import { MessageFlags, type Interaction } from 'discord.js';
-import type { Logger } from '../logger.js';
 import type { ComponentHandler, SlashCommand } from './command.js';
+import type { BotContext } from './context.js';
 import { parseCustomId } from './custom-id.js';
 
 interface RouterDeps {
   commands: Map<string, SlashCommand>;
   components: Map<string, ComponentHandler>;
-  logger: Pick<Logger, 'error' | 'warn'>;
+  /** Transmis tel quel à chaque commande et handler */
+  context: BotContext;
 }
 
 export const ERROR_MESSAGE = 'Oups, une erreur est survenue. Réessaie dans un instant.';
 
 /** Aiguille chaque interaction vers sa commande ou son handler, et rattrape toutes les erreurs. */
-export function createInteractionHandler({ commands, components, logger }: RouterDeps) {
+export function createInteractionHandler({ commands, components, context }: RouterDeps) {
+  const { logger } = context;
   return async (interaction: Interaction): Promise<void> => {
     try {
       if (interaction.isChatInputCommand()) {
@@ -21,12 +23,12 @@ export function createInteractionHandler({ commands, components, logger }: Route
           logger.warn({ command: interaction.commandName }, 'Commande inconnue');
           return;
         }
-        await command.execute(interaction);
+        await command.execute(interaction, context);
         return;
       }
 
       if (interaction.isAutocomplete()) {
-        await commands.get(interaction.commandName)?.autocomplete?.(interaction);
+        await commands.get(interaction.commandName)?.autocomplete?.(interaction, context);
         return;
       }
 
@@ -37,7 +39,7 @@ export function createInteractionHandler({ commands, components, logger }: Route
           logger.warn({ customId: interaction.customId }, 'Composant inconnu');
           return;
         }
-        await handler.execute(interaction, id);
+        await handler.execute(interaction, id, context);
       }
     } catch (error) {
       logger.error({ err: error, interactionId: interaction.id }, 'Échec du traitement');
