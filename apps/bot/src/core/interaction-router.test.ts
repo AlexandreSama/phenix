@@ -2,8 +2,10 @@ import { MessageFlags, type Interaction } from 'discord.js';
 import { describe, expect, it, vi } from 'vitest';
 import type { ComponentHandler, SlashCommand } from './command.js';
 import { createInteractionHandler, ERROR_MESSAGE } from './interaction-router.js';
+import type { BotContext } from './context.js';
 
 const logger = { error: vi.fn(), warn: vi.fn() };
+const context = { db: {}, logger } as unknown as BotContext;
 
 /** Fausse interaction de slash command, juste ce que le routeur lit. */
 function chatInput(commandName: string, state: { deferred?: boolean } = {}) {
@@ -51,13 +53,13 @@ describe('createInteractionHandler', () => {
     const handle = createInteractionHandler({
       commands: new Map([['ping', command('ping', execute)]]),
       components: new Map(),
-      logger,
+      context,
     });
     const interaction = chatInput('ping');
 
     await handle(interaction as unknown as Interaction);
 
-    expect(execute).toHaveBeenCalledWith(interaction);
+    expect(execute).toHaveBeenCalledWith(interaction, context);
   });
 
   it('envoie le bouton à son handler avec l’id extrait', async () => {
@@ -66,19 +68,19 @@ describe('createInteractionHandler', () => {
     const handle = createInteractionHandler({
       commands: new Map(),
       components: new Map([[handler.prefix, handler]]),
-      logger,
+      context,
     });
 
     await handle(button('giveaway:join:42') as unknown as Interaction);
 
-    expect(execute).toHaveBeenCalledWith(expect.anything(), '42');
+    expect(execute).toHaveBeenCalledWith(expect.anything(), '42', context);
   });
 
   it('répond un message d’erreur discret quand la commande plante', async () => {
     const handle = createInteractionHandler({
       commands: new Map([['ping', command('ping', () => Promise.reject(new Error('boom')))]]),
       components: new Map(),
-      logger,
+      context,
     });
     const interaction = chatInput('ping');
 
@@ -95,7 +97,7 @@ describe('createInteractionHandler', () => {
     const handle = createInteractionHandler({
       commands: new Map([['ping', command('ping', () => Promise.reject(new Error('boom')))]]),
       components: new Map(),
-      logger,
+      context,
     });
     const interaction = chatInput('ping', { deferred: true });
 
