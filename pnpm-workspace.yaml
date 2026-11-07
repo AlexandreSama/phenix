@@ -1,0 +1,33 @@
+packages:
+  - 'apps/*'
+  - 'packages/*'
+
+# Versions partagées : chaque package.json écrit "catalog:" au lieu d'un numéro
+catalog:
+  typescript: ^6.0.3
+  '@types/node': ^26.6.6
+  vitest: ^5.1.0
+  '@vitest/coverage-v8': ^5.1.0
+  tsdown: ^0.23.7
+  zod: ^4.6.7
+  # Prisma 7 épinglé : "latest" sur npm pointe vers une RC de Prisma 8
+  prisma: ^7.10.1
+  '@prisma/client': ^7.10.1
+  '@prisma/adapter-pg': ^7.10.1
+
+# pnpm 11 bloque les scripts d'installation des dépendances : on tranche au cas par cas
+allowBuilds:
+  prisma: true
+  '@prisma/engines': true # moteur de migration
+  esbuild: true # utilisé par tsx
+  cpu-features: false # accélérations natives facultatives (ssh2, via Testcontainers)
+  ssh2: false
+  protobufjs: false
+
+permissions:
+  tsdown:
+    skills: true
+
+skills:
+  dirs:
+    - .claude/skills

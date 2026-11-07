@@ -1,0 +1,383 @@
+generator client {
+  provider = "prisma-client"
+  output   = "../src/generated/prisma"
+}
+
+// l'URL de connexion est dans prisma.config.ts
+datasource db {
+  provider = "postgresql"
+}
+
+// ---------- Site ----------
+enum UserRole {
+  MEMBER
+  MODERATOR
+  ADMIN
+}
+
+model User {
+  id        String            @id // ID Discord
+  username  String
+  avatar    String?
+  role      UserRole          @default(MEMBER) // rôle sur le forum
+  createdAt DateTime          @default(now())
+  threads   ForumThread[]
+  posts     ForumPost[]
+  uploads   ForumAttachment[]
+}
+
+// ---------- Guildes ----------
+model Guild {
+  id            String        @id // ID Discord de la guilde
+  name          String
+  caseCounter   Int           @default(0)
+  ticketCounter Int           @default(0)
+  joinedAt      DateTime      @default(now())
+  leftAt        DateTime? // rempli par guildDelete
+  config        GuildConfig?
+  cases         Case[]
+  levels        MemberLevel[]
+  marriages     Marriage[]
+  tickets       Ticket[]
+  giveaways     Giveaway[]
+  rolePanels    RolePanel[]
+  td2Events     Td2Event[]
+  td2Reports    Td2Report[]
+}
+
+model GuildConfig {
+  guildId                String   @id
+  guild                  Guild    @relation(fields: [guildId], references: [id], onDelete: Cascade)
+  timezone               String   @default("Europe/Paris")
+  modLogChannelId        String?
+  staffRoleIds           String[]
+  announceChannelId      String? // reçoit /broadcast ; vide = aucune annonce
+  xpEnabled              Boolean  @default(true)
+  xpMin                  Int      @default(15)
+  xpMax                  Int      @default(25)
+  xpCooldownSec          Int      @default(60)
+  levelUpChannelId       String?
+  ticketCategoryId       String?
+  ticketStaffRoleIds     String[]
+  ticketLogChannelId     String?
+  td2ChannelId           String? // raids et incursions
+  td2ReportChannelId     String? // signalements reçus, côté staff
+  td2ReportViewerRoleIds String[] // rôles autorisés à consulter les signalements
+  td2ReportFeedChannelId String? // fil des signalements confirmés du réseau
+  updatedAt              DateTime @updatedAt
+}
+
+// ---------- Modération ----------
+enum CaseType {
+  WARN
+  MUTE
+  UNMUTE
+  KICK
+  BAN
+  UNBAN
+}
+
+model Case {
+  id          Int       @id @default(autoincrement())
+  guildId     String
+  guild       Guild     @relation(fields: [guildId], references: [id], onDelete: Cascade)
+  number      Int // #1, #2… propre à la guilde
+  type        CaseType
+  targetId    String
+  moderatorId String
+  reason      String?
+  expiresAt   DateTime? // mute ou ban temporaire
+  revokedAt   DateTime? // clearwarn, unban, unmute
+  revokedById String?
+  createdAt   DateTime  @default(now())
+
+  @@unique([guildId, number])
+  @@index([guildId, targetId])
+}
+
+// ---------- XP et fun ----------
+model MemberLevel {
+  guildId  String
+  userId   String
+  guild    Guild     @relation(fields: [guildId], references: [id], onDelete: Cascade)
+  xp       Int       @default(0)
+  level    Int       @default(0)
+  messages Int       @default(0)
+  lastXpAt DateTime?
+
+  @@id([guildId, userId])
+  @@index([guildId, xp(sort: Desc)])
+}
+
+// un seul mariage par membre et par serveur : vérifié dans le service
+model Marriage {
+  id        Int      @id @default(autoincrement())
+  guildId   String
+  guild     Guild    @relation(fields: [guildId], references: [id], onDelete: Cascade)
+  user1Id   String // paire triée : user1Id < user2Id
+  user2Id   String
+  createdAt DateTime @default(now())
+
+  @@unique([guildId, user1Id, user2Id])
+  @@index([guildId, user2Id])
+}
+
+// ---------- Tickets ----------
+enum TicketStatus {
+  OPEN
+  CLOSED
+}
+
+model Ticket {
+  id            Int          @id @default(autoincrement())
+  guildId       String
+  guild         Guild        @relation(fields: [guildId], references: [id], onDelete: Cascade)
+  number        Int
+  channelId     String       @unique
+  ownerId       String
+  status        TicketStatus @default(OPEN)
+  closedById    String?
+  transcriptKey String?
+  createdAt     DateTime     @default(now())
+  closedAt      DateTime?
+
+  @@unique([guildId, number])
+}
+
+// ---------- Giveaways ----------
+model Giveaway {
+  id             Int             @id @default(autoincrement())
+  guildId        String
+  guild          Guild           @relation(fields: [guildId], references: [id], onDelete: Cascade)
+  channelId      String
+  messageId      String?         @unique // vide tant que le bot n'a pas posté
+  hostId         String
+  prize          String
+  winnersCount   Int             @default(1)
+  requiredRoleId String?
+  endsAt         DateTime
+  endedAt        DateTime?
+  winnerIds      String[]
+  entries        GiveawayEntry[]
+  createdAt      DateTime        @default(now())
+}
+
+model GiveawayEntry {
+  giveawayId Int
+  userId     String
+  giveaway   Giveaway @relation(fields: [giveawayId], references: [id], onDelete: Cascade)
+  createdAt  DateTime @default(now())
+
+  @@id([giveawayId, userId])
+}
+
+// ---------- Autorole (panels de boutons) ----------
+enum RolePanelMode {
+  MULTIPLE // plusieurs rôles possibles
+  UNIQUE // un seul rôle à la fois
+}
+
+model RolePanel {
+  id          Int               @id @default(autoincrement())
+  guildId     String
+  guild       Guild             @relation(fields: [guildId], references: [id], onDelete: Cascade)
+  channelId   String
+  messageId   String?           @unique
+  title       String
+  description String?
+  mode        RolePanelMode     @default(MULTIPLE)
+  options     RolePanelOption[]
+}
+
+model RolePanelOption {
+  id       Int       @id @default(autoincrement())
+  panelId  Int
+  panel    RolePanel @relation(fields: [panelId], references: [id], onDelete: Cascade)
+  roleId   String
+  label    String
+  emoji    String?
+  position Int       @default(0)
+}
+
+// ---------- The Division 2 ----------
+// mêmes plateformes que l'API tracker.gg (ubi, psn, xbl)
+enum Td2Platform {
+  UBI
+  PSN
+  XBL
+}
+
+enum Td2ActivityKind {
+  RAID
+  INCURSION
+}
+
+enum Td2Role {
+  DPS
+  HEAL
+  TANK
+  HEAL_TANK // build hybride des incursions
+}
+
+enum Td2SignupStatus {
+  CONFIRMED
+  RESERVE // rôle complet : en attente d'une place
+}
+
+enum Td2ReportStatus {
+  PENDING // affiché « non vérifié » hors du serveur d'origine
+  IN_REVIEW
+  CONFIRMED
+  REJECTED // jamais visible hors du serveur d'origine
+}
+
+// profil lié par /td2 link, commun à tous les serveurs
+model Td2Profile {
+  userId     String      @id // ID Discord
+  platform   Td2Platform
+  playerName String
+  linkedAt   DateTime    @default(now())
+}
+
+// catalogue global, géré par le propriétaire du bot : Dark Hours, Paradis Perdu…
+model Td2Activity {
+  id     Int               @id @default(autoincrement())
+  kind   Td2ActivityKind
+  name   String
+  active Boolean           @default(true)
+  modes  Td2ActivityMode[]
+
+  @@unique([kind, name])
+}
+
+// un mode = une composition : Normal, Semi-Speed…
+model Td2ActivityMode {
+  id         Int           @id @default(autoincrement())
+  activityId Int
+  activity   Td2Activity   @relation(fields: [activityId], references: [id], onDelete: Cascade)
+  name       String
+  slots      Td2ModeSlot[]
+  events     Td2Event[]
+
+  @@unique([activityId, name])
+}
+
+// nombre de places par rôle pour un mode
+model Td2ModeSlot {
+  modeId Int
+  role   Td2Role
+  count  Int
+  mode   Td2ActivityMode @relation(fields: [modeId], references: [id], onDelete: Cascade)
+
+  @@id([modeId, role])
+}
+
+model Td2Event {
+  id          Int             @id @default(autoincrement())
+  guildId     String
+  guild       Guild           @relation(fields: [guildId], references: [id], onDelete: Cascade)
+  modeId      Int
+  mode        Td2ActivityMode @relation(fields: [modeId], references: [id])
+  scheduledAt DateTime
+  channelId   String
+  messageId   String?         @unique
+  organizerId String
+  cancelledAt DateTime?
+  slots       Td2EventSlot[] // composition copiée du mode à la création
+  signups     Td2Signup[]
+  createdAt   DateTime        @default(now())
+}
+
+model Td2EventSlot {
+  eventId Int
+  role    Td2Role
+  count   Int
+  event   Td2Event @relation(fields: [eventId], references: [id], onDelete: Cascade)
+
+  @@id([eventId, role])
+}
+
+model Td2Signup {
+  eventId   Int
+  userId    String
+  role      Td2Role
+  status    Td2SignupStatus @default(CONFIRMED)
+  event     Td2Event        @relation(fields: [eventId], references: [id], onDelete: Cascade)
+  createdAt DateTime        @default(now()) // ordre de passage de la réserve
+
+  @@id([eventId, userId])
+}
+
+// signalement partagé entre tous les serveurs du bot
+model Td2Report {
+  id              Int             @id @default(autoincrement())
+  guildId         String // serveur d'origine
+  guild           Guild           @relation(fields: [guildId], references: [id], onDelete: Cascade)
+  reporterId      String // visible du seul staff d'origine
+  playerName      String // pseudo tel que saisi
+  playerNameLower String // pour les recherches
+  platform        Td2Platform
+  reason          String
+  details         String?
+  evidenceKeys    String[] // clés S3 des preuves, au moins une pour confirmer
+  status          Td2ReportStatus @default(PENDING)
+  reviewedById    String?
+  reviewedAt      DateTime?
+  staffMessageId  String?         @unique // embed dans le salon staff d'origine
+  createdAt       DateTime        @default(now())
+
+  @@index([platform, playerNameLower])
+  @@index([guildId, status])
+}
+
+// ---------- Forum (unique, pour tout le site) ----------
+model ForumCategory {
+  id          Int           @id @default(autoincrement())
+  slug        String        @unique
+  name        String
+  description String?
+  position    Int           @default(0)
+  threads     ForumThread[]
+}
+
+model ForumThread {
+  id         Int           @id @default(autoincrement())
+  categoryId Int
+  category   ForumCategory @relation(fields: [categoryId], references: [id], onDelete: Cascade)
+  authorId   String
+  author     User          @relation(fields: [authorId], references: [id])
+  title      String
+  pinned     Boolean       @default(false)
+  locked     Boolean       @default(false)
+  posts      ForumPost[]
+  createdAt  DateTime      @default(now())
+  updatedAt  DateTime      @updatedAt
+}
+
+// image du forum, ré-encodée en WebP et rangée dans le bucket media
+model ForumAttachment {
+  id         String     @id @default(uuid())
+  postId     Int? // vide tant que le message n'est pas publié
+  post       ForumPost? @relation(fields: [postId], references: [id], onDelete: Cascade)
+  uploaderId String
+  uploader   User       @relation(fields: [uploaderId], references: [id])
+  key        String     @unique // clé dans le bucket media
+  sizeBytes  Int
+  width      Int
+  height     Int
+  createdAt  DateTime   @default(now())
+
+  @@index([postId])
+}
+
+model ForumPost {
+  id          Int               @id @default(autoincrement())
+  threadId    Int
+  thread      ForumThread       @relation(fields: [threadId], references: [id], onDelete: Cascade)
+  authorId    String
+  author      User              @relation(fields: [authorId], references: [id])
+  content     String
+  attachments ForumAttachment[]
+  editedAt    DateTime?
+  createdAt   DateTime          @default(now())
+}

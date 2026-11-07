@@ -1,0 +1,29 @@
+{
+  "name": "phenix",
+  "private": true,
+  "type": "module",
+  "packageManager": "pnpm@12.18.0",
+  "engines": {
+    "node": ">=26"
+  },
+  "scripts": {
+    "dev": "turbo dev",
+    "build": "turbo build",
+    "lint": "oxlint",
+    "format": "prettier --write .",
+    "format:check": "prettier --check .",
+    "typecheck": "turbo typecheck",
+    "test": "turbo test",
+    "test:integration": "turbo test:integration",
+    "db:migrate": "pnpm --filter @phenix/database migrate:dev",
+    "db:seed": "pnpm --filter @phenix/database exec prisma db seed",
+    "db:studio": "pnpm --filter @phenix/database studio"
+  },
+  "devDependencies": {
+    "@types/node": "catalog:",
+    "oxlint": "^1.91.0",
+    "prettier": "^3.9.10",
+    "turbo": "^2.11.10",
+    "typescript": "catalog:"
+  }
+}
