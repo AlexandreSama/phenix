@@ -1,0 +1,9 @@
+{
+  "extends": "@phenix/config/tsconfig.node.json",
+  "compilerOptions": {
+    // Décorateurs NestJS : l'injection lit les types des constructeurs dans ces métadonnées
+    "experimentalDecorators": true,
+    "emitDecoratorMetadata": true
+  },
+  "include": ["src"]
+}

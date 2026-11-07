@@ -1,0 +1,4 @@
+{
+  "extends": "@phenix/config/tsconfig.react.json",
+  "include": ["src"]
+}

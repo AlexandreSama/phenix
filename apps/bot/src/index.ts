@@ -9,10 +9,14 @@ import { loadEnv } from './env.js';
 import { registerGuildEvents, syncGuilds } from './events/guilds.js';
 import { logger } from './logger.js';
 import { startBanExpiry } from './modules/moderation/index.js';
+import { createGuildConfigCache } from './core/guild-config-cache.js';
+import { subscribeToBotEvents } from './events/bot-events.js';
 
 const env = loadEnv();
 const client = createClient();
-const context: BotContext = { db: prisma, logger };
+const configs = createGuildConfigCache(prisma);
+const context: BotContext = { db: prisma, logger, configs };
+const unsubscribe = subscribeToBotEvents(env.REDIS_URL, { configs, logger });
 let stopBanExpiry: (() => void) | undefined;
 
 client.on(
@@ -40,6 +44,7 @@ process.on('unhandledRejection', (err) => logger.error({ err }, 'Promesse rejetÃ
 async function shutdown(signal: string): Promise<void> {
   logger.info({ signal }, 'ArrÃªt en cours');
   stopBanExpiry?.();
+  await unsubscribe();
   await client.destroy();
   await prisma.$disconnect();
   process.exit(0);

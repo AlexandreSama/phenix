@@ -3,6 +3,7 @@ import { loadEnv } from './env.js';
 
 const base = {
   DATABASE_URL: 'postgresql://projet:secret@localhost:5432/projet',
+  REDIS_URL: 'redis://localhost:6379',
   DISCORD_TOKEN: 'token',
   DISCORD_CLIENT_ID: '123456789012345678',
 };

@@ -1,3 +1,6 @@
 # pnpm
+/migrate-from-react-router
+/react-router
+/router-query
 /tsdown
 # pnpm end

@@ -32,7 +32,8 @@ function fakeInteraction() {
 
 // Pas de salon de logs configuré : sendModLog s'arrête tout de suite
 const context = {
-  db: { guildConfig: { findUnique: vi.fn().mockResolvedValue(null) } },
+  db: {},
+  configs: { get: vi.fn().mockResolvedValue(null) },
   logger: { warn: vi.fn() },
 } as unknown as BotContext;
 
