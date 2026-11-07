@@ -17,7 +17,9 @@
     "test:integration": "turbo test:integration",
     "db:migrate": "pnpm --filter @phenix/database migrate:dev",
     "db:seed": "pnpm --filter @phenix/database exec prisma db seed",
-    "db:studio": "pnpm --filter @phenix/database studio"
+    "db:studio": "pnpm --filter @phenix/database studio",
+    "bot:dev": "pnpm --filter @phenix/bot dev",
+    "commands:deploy": "pnpm --filter @phenix/bot deploy-commands"
   },
   "devDependencies": {
     "@types/node": "catalog:",
