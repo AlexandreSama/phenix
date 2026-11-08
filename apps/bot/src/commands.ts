@@ -9,6 +9,7 @@ import { ping } from './modules/utils/commands/ping.js';
 import { serverinfos } from './modules/utils/commands/serverinfos.js';
 import { moderationCommands } from './modules/moderation/index.js';
 import { levelingCommands } from './modules/leveling/index.js';
+import { roleCommands } from './modules/roles/index.js';
 
 /** Toutes les slash commands du bot. Une nouvelle commande s'ajoute ici. */
 export const commands: SlashCommand[] = [
@@ -28,4 +29,6 @@ export const commands: SlashCommand[] = [
   ...moderationCommands,
   // Niveaux
   ...levelingCommands,
+  // Roles
+  ...roleCommands,
 ];

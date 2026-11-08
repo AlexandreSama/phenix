@@ -2,14 +2,16 @@ import { BOT_EVENTS_CHANNEL, parseBotEvent } from '@phenix/shared';
 import { Redis } from 'ioredis';
 import type { GuildConfigCache } from '../core/guild-config-cache.js';
 import type { Logger } from '../logger.js';
+import type { RolePanelPublisher } from '../modules/roles/index.js';
 
 interface Deps {
   configs: GuildConfigCache;
+  rolePanels: RolePanelPublisher;
   logger: Pick<Logger, 'info' | 'warn' | 'debug'>;
 }
 
-/** Applique un message reçu de l'API. Un message mal formé est ignoré, jamais fatal. */
-export function handleBotEvent(raw: string, { configs, logger }: Deps): void {
+// Giveaways, panel de tickets : leurs modules arrivent dans les phases 6.2 et 6.3
+export function handleBotEvent(raw: string, { configs, rolePanels, logger }: Deps): void {
   const event = parseBotEvent(raw);
   if (!event) {
     logger.warn({ raw }, 'Événement Valkey ignoré : format inconnu');
@@ -20,6 +22,17 @@ export function handleBotEvent(raw: string, { configs, logger }: Deps): void {
     case 'config.updated':
       configs.invalidate(event.guildId);
       logger.info({ guildId: event.guildId }, 'Config du serveur mise à jour depuis le site');
+      return;
+    // Les publications passent par Discord : on ne les attend pas, et une erreur reste dans les logs
+    case 'rolePanel.publish':
+      rolePanels.publish(event.panelId).catch((err: unknown) => {
+        logger.warn({ err, panelId: event.panelId }, 'Publication du panel en échec');
+      });
+      return;
+    case 'rolePanel.delete':
+      rolePanels.remove(event).catch((err: unknown) => {
+        logger.warn({ err, messageId: event.messageId }, 'Retrait du panel en échec');
+      });
       return;
     default:
       // Panels, giveaways… : leurs modules arrivent dans les phases suivantes

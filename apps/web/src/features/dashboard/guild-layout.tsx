@@ -4,7 +4,7 @@ import type { ReactNode } from 'react';
 import { GuildIcon } from '../../components/guild-icon';
 import { guildsQuery } from './api';
 
-type GuildTab = '/dashboard/$guildId' | '/dashboard/$guildId/niveaux';
+type GuildTab = '/dashboard/$guildId' | '/dashboard/$guildId/niveaux' | '/dashboard/$guildId/roles';
 
 /** Un onglet ; le Link marque l'onglet actif (classes + aria-current="page"). */
 function Tab({ to, exact, children }: { to: GuildTab; exact?: boolean; children: ReactNode }) {
@@ -47,6 +47,7 @@ export function GuildLayout() {
             Général
           </Tab>
           <Tab to="/dashboard/$guildId/niveaux">Niveaux</Tab>
+          <Tab to="/dashboard/$guildId/roles">Rôles</Tab>
         </nav>
       </div>
       <Outlet />

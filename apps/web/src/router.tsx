@@ -15,6 +15,8 @@ import { NotFound, RootLayout } from './root-layout';
 import { GuildLayout } from './features/dashboard/guild-layout';
 import { LevelingSettingsPage } from './features/dashboard/leveling/leveling-settings-page';
 import { LeaderboardPage } from './features/leaderboard/leaderboard-page';
+import { RolePanelsPage } from './features/dashboard/roles/role-panels-page';
+import { RolePanelEditorPage } from './features/dashboard/roles/role-panel-editor-page';
 
 const rootRoute = createRootRouteWithContext<{ queryClient: QueryClient }>()({
   component: RootLayout,
@@ -71,12 +73,36 @@ const leaderboardRoute = createRoute({
   component: LeaderboardPage,
 });
 
+/** Onglet « Rôles » : sans composant, la route affiche simplement sa page enfant. */
+const guildRolesRoute = createRoute({
+  getParentRoute: () => guildRoute,
+  path: 'roles',
+});
+
+const rolePanelsRoute = createRoute({
+  getParentRoute: () => guildRolesRoute,
+  path: '/',
+  component: RolePanelsPage,
+});
+
+/** `nouveau` pour créer, l'ID du panel pour le modifier. */
+const rolePanelEditorRoute = createRoute({
+  getParentRoute: () => guildRolesRoute,
+  path: '$panelId',
+  component: RolePanelEditorPage,
+});
+
 const routeTree = rootRoute.addChildren([
   homeRoute,
   leaderboardRoute,
   dashboardRoute.addChildren([
     guildPickerRoute,
     guildRoute.addChildren([guildGeneralRoute, guildLevelingRoute]),
+  ]),
+  guildRoute.addChildren([
+    guildGeneralRoute,
+    guildLevelingRoute,
+    guildRolesRoute.addChildren([rolePanelsRoute, rolePanelEditorRoute]),
   ]),
 ]);
 

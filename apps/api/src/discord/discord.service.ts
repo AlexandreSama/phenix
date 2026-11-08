@@ -12,6 +12,7 @@ import {
   type RESTGetAPIGuildChannelsResult,
   type RESTGetAPIGuildRolesResult,
   type RESTPostOAuth2AccessTokenResult,
+  type RESTGetAPIGuildMemberResult,
 } from 'discord-api-types/v10';
 import { ENV } from '../core/tokens.js';
 import type { Env } from '../env.js';
@@ -108,5 +109,12 @@ export class DiscordService {
     }
     if (!response.ok) throw new ServiceUnavailableException('Discord ne répond pas');
     return (await response.json()) as T;
+  }
+
+  /** Le bot lui-même sur ce serveur : ses rôles disent jusqu'où il peut distribuer des rôles. */
+  async getBotMember(guildId: string): Promise<RESTGetAPIGuildMemberResult> {
+    return (await this.rest.get(
+      Routes.guildMember(guildId, this.env.DISCORD_CLIENT_ID),
+    )) as RESTGetAPIGuildMemberResult;
   }
 }

@@ -12,6 +12,11 @@ import { startBanExpiry } from './modules/moderation/index.js';
 import { createGuildConfigCache } from './core/guild-config-cache.js';
 import { subscribeToBotEvents } from './events/bot-events.js';
 import { createMessageXpHandler, levelingComponents } from './modules/leveling/index.js';
+import {
+  createRolePanelPublisher,
+  publishPendingRolePanels,
+  roleComponents,
+} from './modules/roles/index.js';
 
 const env = loadEnv();
 const client = createClient();
@@ -22,14 +27,18 @@ const context: BotContext = {
   configs,
   publicUrl: env.PUBLIC_URL?.replace(/\/$/, ''),
 };
-const unsubscribe = subscribeToBotEvents(env.REDIS_URL, { configs, logger });
+const unsubscribe = subscribeToBotEvents(env.REDIS_URL, {
+  configs,
+  rolePanels: createRolePanelPublisher(client, prisma, logger),
+  logger,
+});
 let stopBanExpiry: (() => void) | undefined;
 
 client.on(
   Events.InteractionCreate,
   createInteractionHandler({
     commands: createCommandRegistry(commands),
-    components: createComponentRegistry([...levelingComponents]),
+    components: createComponentRegistry([...levelingComponents, ...roleComponents]),
     context,
   }),
 );
@@ -42,6 +51,9 @@ client.once(Events.ClientReady, (ready) => {
     .then(() => logger.info('Serveurs synchronisés avec la base'))
     .catch((err: unknown) => logger.error({ err }, 'Échec de la synchronisation des serveurs'));
   stopBanExpiry = startBanExpiry(ready, context);
+  publishPendingRolePanels(ready, prisma, logger).catch((err: unknown) =>
+    logger.error({ err }, 'Échec de la publication des panels en attente'),
+  );
 });
 
 registerGuildEvents(client, prisma, logger);

@@ -5,3 +5,5 @@ export * from './events.js';
 export * from './levels.js';
 export * from './schemas/guild-config.js';
 export * from './schemas/leveling.js';
+export * from './permissions.js';
+export * from './schemas/role-panel.js';

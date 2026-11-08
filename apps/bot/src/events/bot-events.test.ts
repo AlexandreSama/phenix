@@ -5,7 +5,8 @@ import { handleBotEvent } from './bot-events.js';
 function deps() {
   const configs = { get: vi.fn(), invalidate: vi.fn(), clear: vi.fn() };
   const logger = { info: vi.fn(), warn: vi.fn(), debug: vi.fn() };
-  return { configs: configs as unknown as GuildConfigCache & typeof configs, logger };
+  const rolePanels = { publish: vi.fn(async () => {}), remove: vi.fn(async () => {}) };
+  return { configs: configs as unknown as GuildConfigCache & typeof configs, logger, rolePanels };
 }
 
 describe('handleBotEvent', () => {
@@ -25,5 +26,20 @@ describe('handleBotEvent', () => {
 
     expect(d.configs.invalidate).not.toHaveBeenCalled();
     expect(d.logger.warn).toHaveBeenCalledTimes(2);
+  });
+
+  it('publie ou retire un panel de rôles à la demande du site', () => {
+    const d = deps();
+
+    handleBotEvent(JSON.stringify({ type: 'rolePanel.publish', panelId: 7 }), d);
+    handleBotEvent(
+      JSON.stringify({ type: 'rolePanel.delete', guildId: '1', channelId: '2', messageId: '3' }),
+      d,
+    );
+
+    expect(d.rolePanels.publish).toHaveBeenCalledWith(7);
+    expect(d.rolePanels.remove).toHaveBeenCalledWith(
+      expect.objectContaining({ channelId: '2', messageId: '3' }),
+    );
   });
 });

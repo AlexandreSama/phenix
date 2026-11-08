@@ -8,6 +8,7 @@ import type {
 import { queryOptions, useMutation, useQueryClient } from '@tanstack/react-query';
 import { api } from '../../lib/api';
 import type { LevelingConfig, LevelingConfigPatch } from '@phenix/shared';
+import type { RolePanelDetail, RolePanelInput, RolePanelSummary } from '@phenix/shared';
 
 export const guildsQuery = queryOptions({
   queryKey: ['guilds'],
@@ -64,5 +65,46 @@ export function useUpdateLeveling(guildId: string) {
       // Le classement public a pu changer de visibilité
       await queryClient.invalidateQueries({ queryKey: ['leaderboard', guildId] });
     },
+  });
+}
+
+export const rolePanelsQuery = (guildId: string) =>
+  queryOptions({
+    queryKey: ['guilds', guildId, 'role-panels'],
+    queryFn: () => api<RolePanelSummary[]>(`/guilds/${guildId}/role-panels`),
+    // Le bot confirme la publication après coup : on relit toutes les 2 s tant qu'un panel attend
+    refetchInterval: (query) =>
+      query.state.data?.some((panel) => panel.status === 'pending') ? 2000 : false,
+  });
+
+export const rolePanelQuery = (guildId: string, panelId: number) =>
+  queryOptions({
+    queryKey: ['guilds', guildId, 'role-panels', panelId],
+    queryFn: () => api<RolePanelDetail>(`/guilds/${guildId}/role-panels/${panelId}`),
+  });
+
+/** Crée le panel (sans id) ou le remplace ; dans les deux cas le bot le publie. */
+export function useSaveRolePanel(guildId: string, panelId?: number) {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (input: RolePanelInput) =>
+      api<RolePanelDetail>(
+        panelId === undefined
+          ? `/guilds/${guildId}/role-panels`
+          : `/guilds/${guildId}/role-panels/${panelId}`,
+        { method: panelId === undefined ? 'POST' : 'PUT', body: JSON.stringify(input) },
+      ),
+    onSuccess: () =>
+      queryClient.invalidateQueries({ queryKey: ['guilds', guildId, 'role-panels'] }),
+  });
+}
+
+export function useDeleteRolePanel(guildId: string) {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (panelId: number) =>
+      api<void>(`/guilds/${guildId}/role-panels/${panelId}`, { method: 'DELETE' }),
+    onSuccess: () =>
+      queryClient.invalidateQueries({ queryKey: ['guilds', guildId, 'role-panels'] }),
   });
 }

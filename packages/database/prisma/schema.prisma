@@ -184,15 +184,21 @@ enum RolePanelMode {
 }
 
 model RolePanel {
-  id          Int               @id @default(autoincrement())
-  guildId     String
-  guild       Guild             @relation(fields: [guildId], references: [id], onDelete: Cascade)
-  channelId   String
-  messageId   String?           @unique
-  title       String
-  description String?
-  mode        RolePanelMode     @default(MULTIPLE)
-  options     RolePanelOption[]
+  id           Int               @id @default(autoincrement())
+  guildId      String
+  guild        Guild             @relation(fields: [guildId], references: [id], onDelete: Cascade)
+  channelId    String
+  messageId    String?           @unique
+  title        String
+  description  String?
+  mode         RolePanelMode     @default(MULTIPLE)
+  options      RolePanelOption[]
+  // publication : le site remet les deux à null, le bot remplit l'un ou l'autre
+  publishedAt  DateTime?
+  publishError String?
+  createdAt    DateTime          @default(now())
+
+  @@index([guildId])
 }
 
 model RolePanelOption {

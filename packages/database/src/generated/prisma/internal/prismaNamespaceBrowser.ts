@@ -233,7 +233,10 @@ export const RolePanelScalarFieldEnum = {
   messageId: 'messageId',
   title: 'title',
   description: 'description',
-  mode: 'mode'
+  mode: 'mode',
+  publishedAt: 'publishedAt',
+  publishError: 'publishError',
+  createdAt: 'createdAt'
 } as const
 
 export type RolePanelScalarFieldEnum = (typeof RolePanelScalarFieldEnum)[keyof typeof RolePanelScalarFieldEnum]

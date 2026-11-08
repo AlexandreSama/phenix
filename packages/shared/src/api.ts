@@ -1,4 +1,7 @@
 /** Formes des réponses de l'API, partagées avec le site. */
+import type { RolePanelInput, RolePanelMode } from './schemas/role-panel.js';
+/** Où en est la publication d'un panel : le bot la confirme après coup, par la base. */
+export type PublicationStatus = 'published' | 'pending' | 'error';
 
 export interface CurrentUser {
   id: string;
@@ -27,6 +30,10 @@ export interface GuildRoleSummary {
   name: string;
   /** Couleur du rôle en hexadécimal, ou null s'il n'en a pas */
   color: string | null;
+  /** Le bot peut-il le distribuer par un panel ? */
+  assignable: boolean;
+  /** Pourquoi il ne peut pas, affiché sur le site ; null s'il peut */
+  blockedReason: string | null;
 }
 
 /** Corps d'une réponse d'erreur de l'API (format NestJS). */
@@ -54,4 +61,20 @@ export interface LeaderboardPage {
   pageCount: number;
   /** Membres ayant au moins 1 XP */
   totalMembers: number;
+}
+
+export interface RolePanelSummary {
+  id: number;
+  title: string;
+  channelId: string;
+  mode: RolePanelMode;
+  optionCount: number;
+  status: PublicationStatus;
+  publishError: string | null;
+}
+
+export interface RolePanelDetail extends RolePanelInput {
+  id: number;
+  status: PublicationStatus;
+  publishError: string | null;
 }
