@@ -34,3 +34,24 @@ export interface ApiErrorBody {
   statusCode: number;
   message: string | string[];
 }
+
+/** Une ligne du classement public. La progression se recalcule avec levelProgress(xp). */
+export interface LeaderboardEntry {
+  rank: number;
+  userId: string;
+  displayName: string;
+  avatarUrl: string | null;
+  level: number;
+  xp: number;
+  messages: number;
+}
+
+export interface LeaderboardPage {
+  guild: { id: string; name: string; iconUrl: string | null };
+  entries: LeaderboardEntry[];
+  /** Page renvoyée, de 1 à pageCount : une page trop loin renvoie la dernière */
+  page: number;
+  pageCount: number;
+  /** Membres ayant au moins 1 XP */
+  totalMembers: number;
+}

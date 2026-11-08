@@ -1,13 +1,13 @@
-import { BadRequestException, Injectable, Logger } from '@nestjs/common';
+import { BadRequestException, Injectable } from '@nestjs/common';
 import { PrismaClient } from '@phenix/database';
-import {
-  BOT_EVENTS_CHANNEL,
-  type BotEvent,
-  type GeneralConfig,
-  type GeneralConfigPatch,
-} from '@phenix/shared';
-import { Redis } from 'ioredis';
+import { type GeneralConfig, type GeneralConfigPatch } from '@phenix/shared';
 import { GuildsService } from '../guilds/guilds.service.js';
+import type { BotEventsService } from '../../core/bot-events.service.js';
+
+/** Une config neuve : les listes de Postgres n'ont pas de valeur par défaut dans Prisma. */
+export function newGuildConfig(guildId: string) {
+  return { guildId, staffRoleIds: [], ticketStaffRoleIds: [], td2ReportViewerRoleIds: [] };
+}
 
 const GENERAL_FIELDS = {
   timezone: true,
@@ -18,11 +18,9 @@ const GENERAL_FIELDS = {
 
 @Injectable()
 export class GuildConfigService {
-  private readonly logger = new Logger(GuildConfigService.name);
-
   constructor(
     private readonly db: PrismaClient,
-    private readonly redis: Redis,
+    private readonly botEvents: BotEventsService,
     private readonly guilds: GuildsService,
   ) {}
 
@@ -31,7 +29,7 @@ export class GuildConfigService {
     return this.db.guildConfig.upsert({
       where: { guildId },
       update: {},
-      create: { guildId, staffRoleIds: [], ticketStaffRoleIds: [], td2ReportViewerRoleIds: [] },
+      create: newGuildConfig(guildId),
       select: GENERAL_FIELDS,
     });
   }
@@ -45,7 +43,7 @@ export class GuildConfigService {
       data: patch,
       select: GENERAL_FIELDS,
     });
-    await this.notifyBot({ type: 'config.updated', guildId });
+    await this.botEvents.notify({ type: 'config.updated', guildId });
     return config;
   }
 
@@ -65,15 +63,6 @@ export class GuildConfigService {
       if (patch.staffRoleIds.some((id) => !known.has(id))) {
         throw new BadRequestException('Rôle inconnu sur ce serveur');
       }
-    }
-  }
-
-  /** Prévient le bot. Un échec n'annule pas l'enregistrement : le bot relit sa config sous 5 minutes. */
-  private async notifyBot(event: BotEvent): Promise<void> {
-    try {
-      await this.redis.publish(BOT_EVENTS_CHANNEL, JSON.stringify(event));
-    } catch (err) {
-      this.logger.warn({ err, event }, 'Événement non publié sur Valkey');
     }
   }
 }

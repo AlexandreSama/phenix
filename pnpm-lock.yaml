@@ -421,6 +421,9 @@ importers:
 
   packages/database:
     dependencies:
+      '@phenix/shared':
+        specifier: workspace:*
+        version: link:../shared
       '@prisma/adapter-pg':
         specifier: 'catalog:'
         version: 7.10.1

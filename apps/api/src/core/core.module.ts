@@ -11,6 +11,8 @@ import type { Env } from '../env.js';
 import { ENV } from './tokens.js';
 import { DiscordService } from '../discord/discord.service.js';
 import { SessionService } from '../modules/auth/session.service.js';
+import { BotEventsService } from './bot-events.service.js';
+import { CacheService } from './cache.service.js';
 
 /** Ferme proprement la base et Valkey quand l'API s'arrête. */
 @Injectable()
@@ -36,11 +38,21 @@ export class CoreModule {
         { provide: ENV, useValue: env },
         { provide: PrismaClient, useFactory: () => createPrismaClient(env.DATABASE_URL) },
         { provide: Redis, useFactory: () => new Redis(env.REDIS_URL, { maxRetriesPerRequest: 2 }) },
+        BotEventsService,
+        CacheService,
         DiscordService,
         SessionService,
         ConnectionsShutdown,
       ],
-      exports: [ENV, PrismaClient, Redis, DiscordService, SessionService],
+      exports: [
+        ENV,
+        PrismaClient,
+        Redis,
+        BotEventsService,
+        CacheService,
+        DiscordService,
+        SessionService,
+      ],
     };
   }
 }

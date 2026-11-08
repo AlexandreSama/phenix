@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { guildInitials } from './guild-card';
+import { guildInitials } from './guild-icon';
 
 describe('guildInitials', () => {
   it('prend la première lettre des trois premiers mots, comme Discord', () => {

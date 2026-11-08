@@ -12,6 +12,9 @@ import { GuildPickerPage } from './features/dashboard/guild-picker/guild-picker-
 import { HomePage } from './features/home/home-page';
 import { queryClient } from './lib/query';
 import { NotFound, RootLayout } from './root-layout';
+import { GuildLayout } from './features/dashboard/guild-layout';
+import { LevelingSettingsPage } from './features/dashboard/leveling/leveling-settings-page';
+import { LeaderboardPage } from './features/leaderboard/leaderboard-page';
 
 const rootRoute = createRootRouteWithContext<{ queryClient: QueryClient }>()({
   component: RootLayout,
@@ -35,21 +38,46 @@ const dashboardRoute = createRoute({
   },
 });
 
+/** Un serveur : en-tête et onglets communs, chaque onglet est une route enfant. */
+const guildRoute = createRoute({
+  getParentRoute: () => dashboardRoute,
+  path: '$guildId',
+  component: GuildLayout,
+});
+
+const guildGeneralRoute = createRoute({
+  getParentRoute: () => guildRoute,
+  path: '/',
+  component: GeneralSettingsPage,
+});
+
+const guildLevelingRoute = createRoute({
+  getParentRoute: () => guildRoute,
+  path: 'niveaux',
+  component: LevelingSettingsPage,
+});
+
 const guildPickerRoute = createRoute({
   getParentRoute: () => dashboardRoute,
   path: '/',
   component: GuildPickerPage,
 });
 
-const guildGeneralRoute = createRoute({
-  getParentRoute: () => dashboardRoute,
-  path: '$guildId',
-  component: GeneralSettingsPage,
+/** Classement public : aucune connexion demandée. Une page invalide dans l'URL revient à la 1. */
+const leaderboardRoute = createRoute({
+  getParentRoute: () => rootRoute,
+  path: 'classement/$guildId',
+  validateSearch: z.object({ page: z.number().int().min(1).optional().catch(undefined) }),
+  component: LeaderboardPage,
 });
 
 const routeTree = rootRoute.addChildren([
   homeRoute,
-  dashboardRoute.addChildren([guildPickerRoute, guildGeneralRoute]),
+  leaderboardRoute,
+  dashboardRoute.addChildren([
+    guildPickerRoute,
+    guildRoute.addChildren([guildGeneralRoute, guildLevelingRoute]),
+  ]),
 ]);
 
 export const router = createRouter({

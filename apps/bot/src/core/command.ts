@@ -7,7 +7,7 @@ import type {
 } from 'discord.js';
 import type { BotContext } from './context.js';
 
-export type CommandCategory = 'fun' | 'utils' | 'moderation' | 'admin' | 'td2';
+export type CommandCategory = 'fun' | 'utils' | 'moderation' | 'admin' | 'td2' | 'leveling';
 
 /** Une slash command : sa définition pour Discord et ce qu'elle fait. */
 export interface SlashCommand {

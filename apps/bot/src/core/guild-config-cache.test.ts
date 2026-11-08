@@ -7,6 +7,12 @@ const settings = {
   modLogChannelId: '400000000000000001',
   announceChannelId: null,
   staffRoleIds: [],
+  xpEnabled: true,
+  xpMin: 15,
+  xpMax: 25,
+  xpCooldownSec: 60,
+  levelUpChannelId: null,
+  leaderboardPublic: true,
 };
 
 function setup() {

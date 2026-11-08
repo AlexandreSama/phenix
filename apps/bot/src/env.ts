@@ -14,6 +14,8 @@ const envSchema = z.object({
   DISCORD_TOKEN: z.string().min(1),
   DISCORD_CLIENT_ID: snowflake,
   DISCORD_DEV_GUILD_ID: optional(snowflake),
+  /** Adresse du site : /leaderboard y renvoie vers le classement complet. Vide = pas de lien. */
+  PUBLIC_URL: optional(z.url()),
   BOT_OWNER_IDS: z
     .string()
     .default('')

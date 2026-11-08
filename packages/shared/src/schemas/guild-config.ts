@@ -25,18 +25,3 @@ export const generalConfigPatchSchema = generalConfigSchema.partial();
 
 export type GeneralConfig = z.infer<typeof generalConfigSchema>;
 export type GeneralConfigPatch = z.infer<typeof generalConfigPatchSchema>;
-
-/** Toute la config d'un serveur : général + XP (page de la phase 5). */
-export const guildConfigSchema = generalConfigSchema
-  .extend({
-    xpEnabled: z.boolean(),
-    xpMin: z.number().int().min(1).max(100),
-    xpMax: z.number().int().min(1).max(100),
-    xpCooldownSec: z.number().int().min(0).max(3600),
-  })
-  .refine((config) => config.xpMin <= config.xpMax, {
-    message: "Le minimum d'XP doit être inférieur ou égal au maximum",
-    path: ['xpMin'],
-  });
-
-export type GuildConfigInput = z.infer<typeof guildConfigSchema>;

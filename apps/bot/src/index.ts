@@ -11,11 +11,17 @@ import { logger } from './logger.js';
 import { startBanExpiry } from './modules/moderation/index.js';
 import { createGuildConfigCache } from './core/guild-config-cache.js';
 import { subscribeToBotEvents } from './events/bot-events.js';
+import { createMessageXpHandler, levelingComponents } from './modules/leveling/index.js';
 
 const env = loadEnv();
 const client = createClient();
 const configs = createGuildConfigCache(prisma);
-const context: BotContext = { db: prisma, logger, configs };
+const context: BotContext = {
+  db: prisma,
+  logger,
+  configs,
+  publicUrl: env.PUBLIC_URL?.replace(/\/$/, ''),
+};
 const unsubscribe = subscribeToBotEvents(env.REDIS_URL, { configs, logger });
 let stopBanExpiry: (() => void) | undefined;
 
@@ -23,10 +29,12 @@ client.on(
   Events.InteractionCreate,
   createInteractionHandler({
     commands: createCommandRegistry(commands),
-    components: createComponentRegistry([]),
+    components: createComponentRegistry([...levelingComponents]),
     context,
   }),
 );
+
+client.on(Events.MessageCreate, createMessageXpHandler(context));
 
 client.once(Events.ClientReady, (ready) => {
   logger.info({ user: ready.user.tag, guilds: ready.guilds.cache.size }, 'Bot connecté');

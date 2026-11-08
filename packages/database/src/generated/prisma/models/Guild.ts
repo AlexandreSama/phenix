@@ -39,6 +39,7 @@ export type GuildSumAggregateOutputType = {
 export type GuildMinAggregateOutputType = {
   id: string | null
   name: string | null
+  icon: string | null
   caseCounter: number | null
   ticketCounter: number | null
   joinedAt: Date | null
@@ -48,6 +49,7 @@ export type GuildMinAggregateOutputType = {
 export type GuildMaxAggregateOutputType = {
   id: string | null
   name: string | null
+  icon: string | null
   caseCounter: number | null
   ticketCounter: number | null
   joinedAt: Date | null
@@ -57,6 +59,7 @@ export type GuildMaxAggregateOutputType = {
 export type GuildCountAggregateOutputType = {
   id: number
   name: number
+  icon: number
   caseCounter: number
   ticketCounter: number
   joinedAt: number
@@ -78,6 +81,7 @@ export type GuildSumAggregateInputType = {
 export type GuildMinAggregateInputType = {
   id?: true
   name?: true
+  icon?: true
   caseCounter?: true
   ticketCounter?: true
   joinedAt?: true
@@ -87,6 +91,7 @@ export type GuildMinAggregateInputType = {
 export type GuildMaxAggregateInputType = {
   id?: true
   name?: true
+  icon?: true
   caseCounter?: true
   ticketCounter?: true
   joinedAt?: true
@@ -96,6 +101,7 @@ export type GuildMaxAggregateInputType = {
 export type GuildCountAggregateInputType = {
   id?: true
   name?: true
+  icon?: true
   caseCounter?: true
   ticketCounter?: true
   joinedAt?: true
@@ -192,6 +198,7 @@ export type GuildGroupByArgs<ExtArgs extends runtime.Types.Extensions.InternalAr
 export type GuildGroupByOutputType = {
   id: string
   name: string
+  icon: string | null
   caseCounter: number
   ticketCounter: number
   joinedAt: Date
@@ -224,6 +231,7 @@ export type GuildWhereInput = {
   NOT?: Prisma.GuildWhereInput | Prisma.GuildWhereInput[]
   id?: Prisma.StringFilter<"Guild"> | string
   name?: Prisma.StringFilter<"Guild"> | string
+  icon?: Prisma.StringNullableFilter<"Guild"> | string | null
   caseCounter?: Prisma.IntFilter<"Guild"> | number
   ticketCounter?: Prisma.IntFilter<"Guild"> | number
   joinedAt?: Prisma.DateTimeFilter<"Guild"> | Date | string
@@ -242,6 +250,7 @@ export type GuildWhereInput = {
 export type GuildOrderByWithRelationInput = {
   id?: Prisma.SortOrder
   name?: Prisma.SortOrder
+  icon?: Prisma.SortOrderInput | Prisma.SortOrder
   caseCounter?: Prisma.SortOrder
   ticketCounter?: Prisma.SortOrder
   joinedAt?: Prisma.SortOrder
@@ -263,6 +272,7 @@ export type GuildWhereUniqueInput = Prisma.AtLeast<{
   OR?: Prisma.GuildWhereInput[]
   NOT?: Prisma.GuildWhereInput | Prisma.GuildWhereInput[]
   name?: Prisma.StringFilter<"Guild"> | string
+  icon?: Prisma.StringNullableFilter<"Guild"> | string | null
   caseCounter?: Prisma.IntFilter<"Guild"> | number
   ticketCounter?: Prisma.IntFilter<"Guild"> | number
   joinedAt?: Prisma.DateTimeFilter<"Guild"> | Date | string
@@ -281,6 +291,7 @@ export type GuildWhereUniqueInput = Prisma.AtLeast<{
 export type GuildOrderByWithAggregationInput = {
   id?: Prisma.SortOrder
   name?: Prisma.SortOrder
+  icon?: Prisma.SortOrderInput | Prisma.SortOrder
   caseCounter?: Prisma.SortOrder
   ticketCounter?: Prisma.SortOrder
   joinedAt?: Prisma.SortOrder
@@ -298,6 +309,7 @@ export type GuildScalarWhereWithAggregatesInput = {
   NOT?: Prisma.GuildScalarWhereWithAggregatesInput | Prisma.GuildScalarWhereWithAggregatesInput[]
   id?: Prisma.StringWithAggregatesFilter<"Guild"> | string
   name?: Prisma.StringWithAggregatesFilter<"Guild"> | string
+  icon?: Prisma.StringNullableWithAggregatesFilter<"Guild"> | string | null
   caseCounter?: Prisma.IntWithAggregatesFilter<"Guild"> | number
   ticketCounter?: Prisma.IntWithAggregatesFilter<"Guild"> | number
   joinedAt?: Prisma.DateTimeWithAggregatesFilter<"Guild"> | Date | string
@@ -307,6 +319,7 @@ export type GuildScalarWhereWithAggregatesInput = {
 export type GuildCreateInput = {
   id: string
   name: string
+  icon?: string | null
   caseCounter?: number
   ticketCounter?: number
   joinedAt?: Date | string
@@ -325,6 +338,7 @@ export type GuildCreateInput = {
 export type GuildUncheckedCreateInput = {
   id: string
   name: string
+  icon?: string | null
   caseCounter?: number
   ticketCounter?: number
   joinedAt?: Date | string
@@ -343,6 +357,7 @@ export type GuildUncheckedCreateInput = {
 export type GuildUpdateInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
   name?: Prisma.StringFieldUpdateOperationsInput | string
+  icon?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   caseCounter?: Prisma.IntFieldUpdateOperationsInput | number
   ticketCounter?: Prisma.IntFieldUpdateOperationsInput | number
   joinedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -361,6 +376,7 @@ export type GuildUpdateInput = {
 export type GuildUncheckedUpdateInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
   name?: Prisma.StringFieldUpdateOperationsInput | string
+  icon?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   caseCounter?: Prisma.IntFieldUpdateOperationsInput | number
   ticketCounter?: Prisma.IntFieldUpdateOperationsInput | number
   joinedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -379,6 +395,7 @@ export type GuildUncheckedUpdateInput = {
 export type GuildCreateManyInput = {
   id: string
   name: string
+  icon?: string | null
   caseCounter?: number
   ticketCounter?: number
   joinedAt?: Date | string
@@ -388,6 +405,7 @@ export type GuildCreateManyInput = {
 export type GuildUpdateManyMutationInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
   name?: Prisma.StringFieldUpdateOperationsInput | string
+  icon?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   caseCounter?: Prisma.IntFieldUpdateOperationsInput | number
   ticketCounter?: Prisma.IntFieldUpdateOperationsInput | number
   joinedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -397,6 +415,7 @@ export type GuildUpdateManyMutationInput = {
 export type GuildUncheckedUpdateManyInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
   name?: Prisma.StringFieldUpdateOperationsInput | string
+  icon?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   caseCounter?: Prisma.IntFieldUpdateOperationsInput | number
   ticketCounter?: Prisma.IntFieldUpdateOperationsInput | number
   joinedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -406,6 +425,7 @@ export type GuildUncheckedUpdateManyInput = {
 export type GuildCountOrderByAggregateInput = {
   id?: Prisma.SortOrder
   name?: Prisma.SortOrder
+  icon?: Prisma.SortOrder
   caseCounter?: Prisma.SortOrder
   ticketCounter?: Prisma.SortOrder
   joinedAt?: Prisma.SortOrder
@@ -420,6 +440,7 @@ export type GuildAvgOrderByAggregateInput = {
 export type GuildMaxOrderByAggregateInput = {
   id?: Prisma.SortOrder
   name?: Prisma.SortOrder
+  icon?: Prisma.SortOrder
   caseCounter?: Prisma.SortOrder
   ticketCounter?: Prisma.SortOrder
   joinedAt?: Prisma.SortOrder
@@ -429,6 +450,7 @@ export type GuildMaxOrderByAggregateInput = {
 export type GuildMinOrderByAggregateInput = {
   id?: Prisma.SortOrder
   name?: Prisma.SortOrder
+  icon?: Prisma.SortOrder
   caseCounter?: Prisma.SortOrder
   ticketCounter?: Prisma.SortOrder
   joinedAt?: Prisma.SortOrder
@@ -586,6 +608,7 @@ export type GuildUpdateOneRequiredWithoutTd2ReportsNestedInput = {
 export type GuildCreateWithoutConfigInput = {
   id: string
   name: string
+  icon?: string | null
   caseCounter?: number
   ticketCounter?: number
   joinedAt?: Date | string
@@ -603,6 +626,7 @@ export type GuildCreateWithoutConfigInput = {
 export type GuildUncheckedCreateWithoutConfigInput = {
   id: string
   name: string
+  icon?: string | null
   caseCounter?: number
   ticketCounter?: number
   joinedAt?: Date | string
@@ -636,6 +660,7 @@ export type GuildUpdateToOneWithWhereWithoutConfigInput = {
 export type GuildUpdateWithoutConfigInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
   name?: Prisma.StringFieldUpdateOperationsInput | string
+  icon?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   caseCounter?: Prisma.IntFieldUpdateOperationsInput | number
   ticketCounter?: Prisma.IntFieldUpdateOperationsInput | number
   joinedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -653,6 +678,7 @@ export type GuildUpdateWithoutConfigInput = {
 export type GuildUncheckedUpdateWithoutConfigInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
   name?: Prisma.StringFieldUpdateOperationsInput | string
+  icon?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   caseCounter?: Prisma.IntFieldUpdateOperationsInput | number
   ticketCounter?: Prisma.IntFieldUpdateOperationsInput | number
   joinedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -670,6 +696,7 @@ export type GuildUncheckedUpdateWithoutConfigInput = {
 export type GuildCreateWithoutCasesInput = {
   id: string
   name: string
+  icon?: string | null
   caseCounter?: number
   ticketCounter?: number
   joinedAt?: Date | string
@@ -687,6 +714,7 @@ export type GuildCreateWithoutCasesInput = {
 export type GuildUncheckedCreateWithoutCasesInput = {
   id: string
   name: string
+  icon?: string | null
   caseCounter?: number
   ticketCounter?: number
   joinedAt?: Date | string
@@ -720,6 +748,7 @@ export type GuildUpdateToOneWithWhereWithoutCasesInput = {
 export type GuildUpdateWithoutCasesInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
   name?: Prisma.StringFieldUpdateOperationsInput | string
+  icon?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   caseCounter?: Prisma.IntFieldUpdateOperationsInput | number
   ticketCounter?: Prisma.IntFieldUpdateOperationsInput | number
   joinedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -737,6 +766,7 @@ export type GuildUpdateWithoutCasesInput = {
 export type GuildUncheckedUpdateWithoutCasesInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
   name?: Prisma.StringFieldUpdateOperationsInput | string
+  icon?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   caseCounter?: Prisma.IntFieldUpdateOperationsInput | number
   ticketCounter?: Prisma.IntFieldUpdateOperationsInput | number
   joinedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -754,6 +784,7 @@ export type GuildUncheckedUpdateWithoutCasesInput = {
 export type GuildCreateWithoutLevelsInput = {
   id: string
   name: string
+  icon?: string | null
   caseCounter?: number
   ticketCounter?: number
   joinedAt?: Date | string
@@ -771,6 +802,7 @@ export type GuildCreateWithoutLevelsInput = {
 export type GuildUncheckedCreateWithoutLevelsInput = {
   id: string
   name: string
+  icon?: string | null
   caseCounter?: number
   ticketCounter?: number
   joinedAt?: Date | string
@@ -804,6 +836,7 @@ export type GuildUpdateToOneWithWhereWithoutLevelsInput = {
 export type GuildUpdateWithoutLevelsInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
   name?: Prisma.StringFieldUpdateOperationsInput | string
+  icon?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   caseCounter?: Prisma.IntFieldUpdateOperationsInput | number
   ticketCounter?: Prisma.IntFieldUpdateOperationsInput | number
   joinedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -821,6 +854,7 @@ export type GuildUpdateWithoutLevelsInput = {
 export type GuildUncheckedUpdateWithoutLevelsInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
   name?: Prisma.StringFieldUpdateOperationsInput | string
+  icon?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   caseCounter?: Prisma.IntFieldUpdateOperationsInput | number
   ticketCounter?: Prisma.IntFieldUpdateOperationsInput | number
   joinedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -838,6 +872,7 @@ export type GuildUncheckedUpdateWithoutLevelsInput = {
 export type GuildCreateWithoutMarriagesInput = {
   id: string
   name: string
+  icon?: string | null
   caseCounter?: number
   ticketCounter?: number
   joinedAt?: Date | string
@@ -855,6 +890,7 @@ export type GuildCreateWithoutMarriagesInput = {
 export type GuildUncheckedCreateWithoutMarriagesInput = {
   id: string
   name: string
+  icon?: string | null
   caseCounter?: number
   ticketCounter?: number
   joinedAt?: Date | string
@@ -888,6 +924,7 @@ export type GuildUpdateToOneWithWhereWithoutMarriagesInput = {
 export type GuildUpdateWithoutMarriagesInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
   name?: Prisma.StringFieldUpdateOperationsInput | string
+  icon?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   caseCounter?: Prisma.IntFieldUpdateOperationsInput | number
   ticketCounter?: Prisma.IntFieldUpdateOperationsInput | number
   joinedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -905,6 +942,7 @@ export type GuildUpdateWithoutMarriagesInput = {
 export type GuildUncheckedUpdateWithoutMarriagesInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
   name?: Prisma.StringFieldUpdateOperationsInput | string
+  icon?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   caseCounter?: Prisma.IntFieldUpdateOperationsInput | number
   ticketCounter?: Prisma.IntFieldUpdateOperationsInput | number
   joinedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -922,6 +960,7 @@ export type GuildUncheckedUpdateWithoutMarriagesInput = {
 export type GuildCreateWithoutTicketsInput = {
   id: string
   name: string
+  icon?: string | null
   caseCounter?: number
   ticketCounter?: number
   joinedAt?: Date | string
@@ -939,6 +978,7 @@ export type GuildCreateWithoutTicketsInput = {
 export type GuildUncheckedCreateWithoutTicketsInput = {
   id: string
   name: string
+  icon?: string | null
   caseCounter?: number
   ticketCounter?: number
   joinedAt?: Date | string
@@ -972,6 +1012,7 @@ export type GuildUpdateToOneWithWhereWithoutTicketsInput = {
 export type GuildUpdateWithoutTicketsInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
   name?: Prisma.StringFieldUpdateOperationsInput | string
+  icon?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   caseCounter?: Prisma.IntFieldUpdateOperationsInput | number
   ticketCounter?: Prisma.IntFieldUpdateOperationsInput | number
   joinedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -989,6 +1030,7 @@ export type GuildUpdateWithoutTicketsInput = {
 export type GuildUncheckedUpdateWithoutTicketsInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
   name?: Prisma.StringFieldUpdateOperationsInput | string
+  icon?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   caseCounter?: Prisma.IntFieldUpdateOperationsInput | number
   ticketCounter?: Prisma.IntFieldUpdateOperationsInput | number
   joinedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -1006,6 +1048,7 @@ export type GuildUncheckedUpdateWithoutTicketsInput = {
 export type GuildCreateWithoutGiveawaysInput = {
   id: string
   name: string
+  icon?: string | null
   caseCounter?: number
   ticketCounter?: number
   joinedAt?: Date | string
@@ -1023,6 +1066,7 @@ export type GuildCreateWithoutGiveawaysInput = {
 export type GuildUncheckedCreateWithoutGiveawaysInput = {
   id: string
   name: string
+  icon?: string | null
   caseCounter?: number
   ticketCounter?: number
   joinedAt?: Date | string
@@ -1056,6 +1100,7 @@ export type GuildUpdateToOneWithWhereWithoutGiveawaysInput = {
 export type GuildUpdateWithoutGiveawaysInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
   name?: Prisma.StringFieldUpdateOperationsInput | string
+  icon?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   caseCounter?: Prisma.IntFieldUpdateOperationsInput | number
   ticketCounter?: Prisma.IntFieldUpdateOperationsInput | number
   joinedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -1073,6 +1118,7 @@ export type GuildUpdateWithoutGiveawaysInput = {
 export type GuildUncheckedUpdateWithoutGiveawaysInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
   name?: Prisma.StringFieldUpdateOperationsInput | string
+  icon?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   caseCounter?: Prisma.IntFieldUpdateOperationsInput | number
   ticketCounter?: Prisma.IntFieldUpdateOperationsInput | number
   joinedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -1090,6 +1136,7 @@ export type GuildUncheckedUpdateWithoutGiveawaysInput = {
 export type GuildCreateWithoutRolePanelsInput = {
   id: string
   name: string
+  icon?: string | null
   caseCounter?: number
   ticketCounter?: number
   joinedAt?: Date | string
@@ -1107,6 +1154,7 @@ export type GuildCreateWithoutRolePanelsInput = {
 export type GuildUncheckedCreateWithoutRolePanelsInput = {
   id: string
   name: string
+  icon?: string | null
   caseCounter?: number
   ticketCounter?: number
   joinedAt?: Date | string
@@ -1140,6 +1188,7 @@ export type GuildUpdateToOneWithWhereWithoutRolePanelsInput = {
 export type GuildUpdateWithoutRolePanelsInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
   name?: Prisma.StringFieldUpdateOperationsInput | string
+  icon?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   caseCounter?: Prisma.IntFieldUpdateOperationsInput | number
   ticketCounter?: Prisma.IntFieldUpdateOperationsInput | number
   joinedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -1157,6 +1206,7 @@ export type GuildUpdateWithoutRolePanelsInput = {
 export type GuildUncheckedUpdateWithoutRolePanelsInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
   name?: Prisma.StringFieldUpdateOperationsInput | string
+  icon?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   caseCounter?: Prisma.IntFieldUpdateOperationsInput | number
   ticketCounter?: Prisma.IntFieldUpdateOperationsInput | number
   joinedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -1174,6 +1224,7 @@ export type GuildUncheckedUpdateWithoutRolePanelsInput = {
 export type GuildCreateWithoutTd2EventsInput = {
   id: string
   name: string
+  icon?: string | null
   caseCounter?: number
   ticketCounter?: number
   joinedAt?: Date | string
@@ -1191,6 +1242,7 @@ export type GuildCreateWithoutTd2EventsInput = {
 export type GuildUncheckedCreateWithoutTd2EventsInput = {
   id: string
   name: string
+  icon?: string | null
   caseCounter?: number
   ticketCounter?: number
   joinedAt?: Date | string
@@ -1224,6 +1276,7 @@ export type GuildUpdateToOneWithWhereWithoutTd2EventsInput = {
 export type GuildUpdateWithoutTd2EventsInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
   name?: Prisma.StringFieldUpdateOperationsInput | string
+  icon?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   caseCounter?: Prisma.IntFieldUpdateOperationsInput | number
   ticketCounter?: Prisma.IntFieldUpdateOperationsInput | number
   joinedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -1241,6 +1294,7 @@ export type GuildUpdateWithoutTd2EventsInput = {
 export type GuildUncheckedUpdateWithoutTd2EventsInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
   name?: Prisma.StringFieldUpdateOperationsInput | string
+  icon?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   caseCounter?: Prisma.IntFieldUpdateOperationsInput | number
   ticketCounter?: Prisma.IntFieldUpdateOperationsInput | number
   joinedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -1258,6 +1312,7 @@ export type GuildUncheckedUpdateWithoutTd2EventsInput = {
 export type GuildCreateWithoutTd2ReportsInput = {
   id: string
   name: string
+  icon?: string | null
   caseCounter?: number
   ticketCounter?: number
   joinedAt?: Date | string
@@ -1275,6 +1330,7 @@ export type GuildCreateWithoutTd2ReportsInput = {
 export type GuildUncheckedCreateWithoutTd2ReportsInput = {
   id: string
   name: string
+  icon?: string | null
   caseCounter?: number
   ticketCounter?: number
   joinedAt?: Date | string
@@ -1308,6 +1364,7 @@ export type GuildUpdateToOneWithWhereWithoutTd2ReportsInput = {
 export type GuildUpdateWithoutTd2ReportsInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
   name?: Prisma.StringFieldUpdateOperationsInput | string
+  icon?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   caseCounter?: Prisma.IntFieldUpdateOperationsInput | number
   ticketCounter?: Prisma.IntFieldUpdateOperationsInput | number
   joinedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -1325,6 +1382,7 @@ export type GuildUpdateWithoutTd2ReportsInput = {
 export type GuildUncheckedUpdateWithoutTd2ReportsInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
   name?: Prisma.StringFieldUpdateOperationsInput | string
+  icon?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   caseCounter?: Prisma.IntFieldUpdateOperationsInput | number
   ticketCounter?: Prisma.IntFieldUpdateOperationsInput | number
   joinedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -1436,6 +1494,7 @@ export type GuildCountOutputTypeCountTd2ReportsArgs<ExtArgs extends runtime.Type
 export type GuildSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetSelect<{
   id?: boolean
   name?: boolean
+  icon?: boolean
   caseCounter?: boolean
   ticketCounter?: boolean
   joinedAt?: boolean
@@ -1455,6 +1514,7 @@ export type GuildSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs = 
 export type GuildSelectCreateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetSelect<{
   id?: boolean
   name?: boolean
+  icon?: boolean
   caseCounter?: boolean
   ticketCounter?: boolean
   joinedAt?: boolean
@@ -1464,6 +1524,7 @@ export type GuildSelectCreateManyAndReturn<ExtArgs extends runtime.Types.Extensi
 export type GuildSelectUpdateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetSelect<{
   id?: boolean
   name?: boolean
+  icon?: boolean
   caseCounter?: boolean
   ticketCounter?: boolean
   joinedAt?: boolean
@@ -1473,13 +1534,14 @@ export type GuildSelectUpdateManyAndReturn<ExtArgs extends runtime.Types.Extensi
 export type GuildSelectScalar = {
   id?: boolean
   name?: boolean
+  icon?: boolean
   caseCounter?: boolean
   ticketCounter?: boolean
   joinedAt?: boolean
   leftAt?: boolean
 }
 
-export type GuildOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "name" | "caseCounter" | "ticketCounter" | "joinedAt" | "leftAt", ExtArgs["result"]["guild"]>
+export type GuildOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "name" | "icon" | "caseCounter" | "ticketCounter" | "joinedAt" | "leftAt", ExtArgs["result"]["guild"]>
 export type GuildInclude<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   config?: boolean | Prisma.Guild$configArgs<ExtArgs>
   cases?: boolean | Prisma.Guild$casesArgs<ExtArgs>
@@ -1511,6 +1573,7 @@ export type $GuildPayload<ExtArgs extends runtime.Types.Extensions.InternalArgs 
   scalars: runtime.Types.Extensions.GetPayloadResult<{
     id: string
     name: string
+    icon: string | null
     caseCounter: number
     ticketCounter: number
     joinedAt: Date
@@ -1949,6 +2012,7 @@ export interface Prisma__GuildClient<T, Null = never, ExtArgs extends runtime.Ty
 export interface GuildFieldRefs {
   readonly id: Prisma.FieldRef<"Guild", 'String'>
   readonly name: Prisma.FieldRef<"Guild", 'String'>
+  readonly icon: Prisma.FieldRef<"Guild", 'String'>
   readonly caseCounter: Prisma.FieldRef<"Guild", 'Int'>
   readonly ticketCounter: Prisma.FieldRef<"Guild", 'Int'>
   readonly joinedAt: Prisma.FieldRef<"Guild", 'DateTime'>

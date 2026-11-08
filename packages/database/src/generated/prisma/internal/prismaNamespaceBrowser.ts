@@ -106,6 +106,7 @@ export type UserScalarFieldEnum = (typeof UserScalarFieldEnum)[keyof typeof User
 export const GuildScalarFieldEnum = {
   id: 'id',
   name: 'name',
+  icon: 'icon',
   caseCounter: 'caseCounter',
   ticketCounter: 'ticketCounter',
   joinedAt: 'joinedAt',
@@ -126,6 +127,7 @@ export const GuildConfigScalarFieldEnum = {
   xpMax: 'xpMax',
   xpCooldownSec: 'xpCooldownSec',
   levelUpChannelId: 'levelUpChannelId',
+  leaderboardPublic: 'leaderboardPublic',
   ticketCategoryId: 'ticketCategoryId',
   ticketStaffRoleIds: 'ticketStaffRoleIds',
   ticketLogChannelId: 'ticketLogChannelId',
@@ -162,7 +164,9 @@ export const MemberLevelScalarFieldEnum = {
   xp: 'xp',
   level: 'level',
   messages: 'messages',
-  lastXpAt: 'lastXpAt'
+  lastXpAt: 'lastXpAt',
+  displayName: 'displayName',
+  avatarUrl: 'avatarUrl'
 } as const
 
 export type MemberLevelScalarFieldEnum = (typeof MemberLevelScalarFieldEnum)[keyof typeof MemberLevelScalarFieldEnum]

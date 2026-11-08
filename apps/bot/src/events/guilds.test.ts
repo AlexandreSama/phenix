@@ -11,12 +11,12 @@ describe('synchronisation des serveurs', () => {
   it('crée un serveur avec sa config par défaut', async () => {
     const { db, guild } = fakeDb();
 
-    await upsertGuild(db, { id: '111111111111111111', name: 'Les Agents' });
+    await upsertGuild(db, { id: '111111111111111111', name: 'Les Agents', icon: 'a1b2' });
 
     expect(guild.upsert).toHaveBeenCalledWith(
       expect.objectContaining({
         where: { id: '111111111111111111' },
-        update: { name: 'Les Agents', leftAt: null },
+        update: { name: 'Les Agents', icon: 'a1b2', leftAt: null },
         create: expect.objectContaining({ config: expect.anything() }),
       }),
     );
@@ -37,8 +37,8 @@ describe('synchronisation des serveurs', () => {
     const { db, guild } = fakeDb();
 
     await syncGuilds(db, [
-      { id: '1', name: 'A' },
-      { id: '2', name: 'B' },
+      { id: '1', name: 'A', icon: null },
+      { id: '2', name: 'B', icon: null },
     ]);
 
     expect(guild.upsert).toHaveBeenCalledTimes(2);

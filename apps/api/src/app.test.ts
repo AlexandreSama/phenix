@@ -43,12 +43,43 @@ const config = {
   modLogChannelId: null as string | null,
   announceChannelId: null,
   staffRoleIds: [],
+  xpEnabled: true,
+  xpMin: 15,
+  xpMax: 25,
+  xpCooldownSec: 60,
+  levelUpChannelId: null,
+  leaderboardPublic: true,
 };
+
+const publicGuild = {
+  id: MANAGED,
+  name: 'Les Agents',
+  icon: 'abc',
+  leftAt: null,
+  config: { leaderboardPublic: true },
+};
+
 const db = {
-  guild: { findMany: vi.fn(async () => [{ id: MANAGED }, { id: NOT_MANAGED }]) },
+  guild: {
+    findMany: vi.fn(async () => [{ id: MANAGED }, { id: NOT_MANAGED }]),
+    findUnique: vi.fn(async () => publicGuild),
+  },
   guildConfig: {
     upsert: vi.fn(async () => config),
     update: vi.fn(async ({ data }: { data: object }) => ({ ...config, ...data })),
+  },
+  memberLevel: {
+    count: vi.fn(async () => 1),
+    findMany: vi.fn(async () => [
+      {
+        userId: '500000000000000001',
+        displayName: 'Alpha',
+        avatarUrl: null,
+        level: 4,
+        xp: 900,
+        messages: 40,
+      },
+    ]),
   },
   user: { findUnique: vi.fn(), upsert: vi.fn() },
   $queryRaw: vi.fn(async () => [1]),
@@ -156,6 +187,65 @@ describe('config d’un serveur', () => {
       'bot:events',
       JSON.stringify({ type: 'config.updated', guildId: MANAGED }),
     );
+  });
+});
+
+describe('réglages XP', () => {
+  it('vérifie min ≤ max avec la valeur déjà enregistrée', async () => {
+    const response = await request(app.getHttpServer())
+      .patch(`/api/guilds/${MANAGED}/leveling`)
+      .set('Cookie', cookie)
+      .send({ xpMin: 40 }); // le maximum enregistré est 25
+
+    expect(response.status).toBe(400);
+    expect(response.body.message).toEqual([
+      "Le minimum d'XP doit être inférieur ou égal au maximum",
+    ]);
+    expect(db.guildConfig.update).not.toHaveBeenCalled();
+  });
+
+  it('enregistre les réglages et prévient le bot', async () => {
+    const response = await request(app.getHttpServer())
+      .patch(`/api/guilds/${MANAGED}/leveling`)
+      .set('Cookie', cookie)
+      .send({ xpMin: 20, xpMax: 40, levelUpChannelId: CHANNEL });
+
+    expect(response.status).toBe(200);
+    expect(response.body).toMatchObject({ xpMin: 20, xpMax: 40, levelUpChannelId: CHANNEL });
+    expect(redis.publish).toHaveBeenCalledOnce();
+  });
+});
+
+describe('classement public', () => {
+  it('répond sans connexion, et sert la même page depuis le cache', async () => {
+    const first = await request(app.getHttpServer()).get(`/api/leaderboard/${MANAGED}?page=1`);
+    const second = await request(app.getHttpServer()).get(`/api/leaderboard/${MANAGED}`);
+
+    expect(first.status).toBe(200);
+    expect(first.body).toMatchObject({
+      guild: { name: 'Les Agents', iconUrl: expect.stringContaining('/icons/') },
+      entries: [{ rank: 1, displayName: 'Alpha', level: 4 }],
+      page: 1,
+      pageCount: 1,
+    });
+    expect(second.body).toEqual(first.body);
+    expect(db.memberLevel.findMany).toHaveBeenCalledOnce();
+  });
+
+  it('répond 404 quand le classement est privé', async () => {
+    db.guild.findUnique.mockResolvedValueOnce({
+      ...publicGuild,
+      config: { leaderboardPublic: false },
+    });
+
+    const response = await request(app.getHttpServer()).get(`/api/leaderboard/${MANAGED}`);
+
+    expect(response.status).toBe(404);
+  });
+
+  it('refuse une page qui n’est pas un nombre positif', async () => {
+    const response = await request(app.getHttpServer()).get(`/api/leaderboard/${MANAGED}?page=0`);
+    expect(response.status).toBe(400);
   });
 });
 

@@ -7,6 +7,7 @@ import { HealthController } from './health/health.controller.js';
 import { AuthModule } from './modules/auth/auth.module.js';
 import { GuildConfigModule } from './modules/guild-config/guild-config.module.js';
 import { GuildsModule } from './modules/guilds/guilds.module.js';
+import { LevelingModule } from './modules/leveling/leveling.module.js';
 
 @Module({})
 export class AppModule {
@@ -30,6 +31,7 @@ export class AppModule {
         AuthModule,
         GuildsModule,
         GuildConfigModule,
+        LevelingModule,
       ],
       controllers: [HealthController],
       // Valide chaque @Body({ schema }), @Query({ schema })… avec les schémas zod

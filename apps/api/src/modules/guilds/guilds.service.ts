@@ -2,10 +2,11 @@ import { ForbiddenException, Injectable, NotFoundException } from '@nestjs/commo
 import { PrismaClient } from '@phenix/database';
 import type { GuildChannelSummary, GuildRoleSummary, ManageableGuild } from '@phenix/shared';
 import { ChannelType } from 'discord-api-types/v10';
-import { Redis } from 'ioredis';
+import { CacheService } from '../../core/cache.service.js';
 import { DiscordService } from '../../discord/discord.service.js';
 import type { Session } from '../auth/session.service.js';
 import { canManageGuild } from './permissions.js';
+import { guildIconUrl } from '../../discord/cdn.js';
 
 /** Discord limite fortement ces appels : on garde les réponses une minute. */
 const CACHE_SECONDS = 60;
@@ -35,7 +36,7 @@ export class GuildsService {
   constructor(
     private readonly discord: DiscordService,
     private readonly db: PrismaClient,
-    private readonly redis: Redis,
+    private readonly cache: CacheService,
   ) {}
 
   /** Les serveurs que l'utilisateur peut gérer, ceux où le bot est présent en premier. */
@@ -51,9 +52,7 @@ export class GuildsService {
       .map((guild) => ({
         id: guild.id,
         name: guild.name,
-        iconUrl: guild.icon
-          ? `https://cdn.discordapp.com/icons/${guild.id}/${guild.icon}.png?size=128`
-          : null,
+        iconUrl: guildIconUrl(guild.id, guild.icon),
         botPresent: presentIds.has(guild.id),
       }))
       .toSorted(
@@ -69,7 +68,7 @@ export class GuildsService {
   }
 
   async channels(guildId: string): Promise<GuildChannelSummary[]> {
-    return this.cached(`guild-channels:${guildId}`, async () => {
+    return this.cache.wrap(`guild-channels:${guildId}`, CACHE_SECONDS, async () => {
       const all = (await this.discord.getGuildChannels(guildId)) as DiscordChannel[];
       const categories = new Map(
         all
@@ -88,7 +87,7 @@ export class GuildsService {
   }
 
   async roles(guildId: string): Promise<GuildRoleSummary[]> {
-    return this.cached(`guild-roles:${guildId}`, async () => {
+    return this.cache.wrap(`guild-roles:${guildId}`, CACHE_SECONDS, async () => {
       const all = await this.discord.getGuildRoles(guildId);
       return all
         .filter((role) => role.id !== guildId && !role.managed) // ni @everyone, ni rôle de bot
@@ -102,7 +101,7 @@ export class GuildsService {
   }
 
   private userGuilds(session: Session): Promise<UserGuild[]> {
-    return this.cached(`user-guilds:${session.userId}`, async () => {
+    return this.cache.wrap(`user-guilds:${session.userId}`, CACHE_SECONDS, async () => {
       const guilds = await this.discord.getCurrentUserGuilds(session.accessToken);
       return guilds.map(({ id, name, icon, owner, permissions }) => ({
         id,
@@ -112,14 +111,5 @@ export class GuildsService {
         permissions,
       }));
     });
-  }
-
-  /** Lit la valeur dans Valkey, ou la calcule et l'y range pour une minute. */
-  private async cached<T>(key: string, load: () => Promise<T>): Promise<T> {
-    const hit = await this.redis.get(key);
-    if (hit) return JSON.parse(hit) as T;
-    const value = await load();
-    await this.redis.set(key, JSON.stringify(value), 'EX', CACHE_SECONDS);
-    return value;
   }
 }

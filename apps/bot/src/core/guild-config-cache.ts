@@ -3,7 +3,16 @@ import type { GuildConfig, PrismaClient } from '@phenix/database';
 /** Les réglages qu'utilise le bot. Le reste de GuildConfig arrivera avec ses modules. */
 export type GuildSettings = Pick<
   GuildConfig,
-  'timezone' | 'modLogChannelId' | 'announceChannelId' | 'staffRoleIds'
+  | 'timezone'
+  | 'modLogChannelId'
+  | 'announceChannelId'
+  | 'staffRoleIds'
+  | 'xpEnabled'
+  | 'xpMin'
+  | 'xpMax'
+  | 'xpCooldownSec'
+  | 'levelUpChannelId'
+  | 'leaderboardPublic'
 >;
 
 export interface GuildConfigCache {
@@ -20,7 +29,13 @@ const SELECT = {
   modLogChannelId: true,
   announceChannelId: true,
   staffRoleIds: true,
-} as const;
+  xpEnabled: true,
+  xpMin: true,
+  xpMax: true,
+  xpCooldownSec: true,
+  levelUpChannelId: true,
+  leaderboardPublic: true,
+} satisfies Record<keyof GuildSettings, true>;
 
 /**
  * Garde en mémoire la config de chaque serveur pour ne pas interroger la base à chaque log.

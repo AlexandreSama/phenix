@@ -8,4 +8,6 @@ export interface BotContext {
   logger: Logger;
   /** Réglages des serveurs, tenus à jour par le site via Valkey */
   configs: GuildConfigCache;
+  /** Adresse du site, sans / final ; absente si le site n'est pas déployé */
+  publicUrl?: string;
 }

@@ -7,6 +7,7 @@ import type {
 } from '@phenix/shared';
 import { queryOptions, useMutation, useQueryClient } from '@tanstack/react-query';
 import { api } from '../../lib/api';
+import type { LevelingConfig, LevelingConfigPatch } from '@phenix/shared';
 
 export const guildsQuery = queryOptions({
   queryKey: ['guilds'],
@@ -41,5 +42,27 @@ export function useUpdateConfig(guildId: string) {
       }),
     // La réponse est la config enregistrée : on la range directement dans le cache
     onSuccess: (config) => queryClient.setQueryData(configQuery(guildId).queryKey, config),
+  });
+}
+
+export const levelingQuery = (guildId: string) =>
+  queryOptions({
+    queryKey: ['guilds', guildId, 'leveling'],
+    queryFn: () => api<LevelingConfig>(`/guilds/${guildId}/leveling`),
+  });
+
+export function useUpdateLeveling(guildId: string) {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (patch: LevelingConfigPatch) =>
+      api<LevelingConfig>(`/guilds/${guildId}/leveling`, {
+        method: 'PATCH',
+        body: JSON.stringify(patch),
+      }),
+    onSuccess: async (config) => {
+      queryClient.setQueryData(levelingQuery(guildId).queryKey, config);
+      // Le classement public a pu changer de visibilité
+      await queryClient.invalidateQueries({ queryKey: ['leaderboard', guildId] });
+    },
   });
 }
