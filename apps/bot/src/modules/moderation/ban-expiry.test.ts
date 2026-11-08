@@ -21,7 +21,8 @@ function setup(remove: () => Promise<unknown>) {
     guilds: { cache: new Map([[GUILD_ID, guild]]) },
   } as unknown as Client<true>;
   const context = {
-    db: { guildConfig: { findUnique: vi.fn().mockResolvedValue(null) } },
+    db: {},
+    configs: { get: vi.fn().mockResolvedValue(null) },
     logger: { info: vi.fn(), warn: vi.fn() },
   } as unknown as BotContext;
   return { guild, client, context };

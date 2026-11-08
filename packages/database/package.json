@@ -24,7 +24,8 @@
   "dependencies": {
     "@prisma/adapter-pg": "catalog:",
     "@prisma/client": "catalog:",
-    "pg": "^8.23.1"
+    "pg": "^8.23.1",
+    "@phenix/shared": "workspace:*"
   },
   "devDependencies": {
     "@phenix/config": "workspace:*",

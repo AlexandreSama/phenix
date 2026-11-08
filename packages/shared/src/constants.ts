@@ -16,5 +16,11 @@ export const CASE_TYPE_LABELS = {
   UNBAN: 'Débannissement',
 } as const;
 
+/**
+ * Permissions demandées à l'invitation du bot, en entier Discord.
+ * Le bot vérifie dans ses tests que ce nombre correspond à sa liste BOT_PERMISSIONS.
+ */
+export const BOT_INVITE_PERMISSIONS = '1099780189206';
+
 export type CaseTypeKey = keyof typeof CASE_TYPE_LABELS;
 export type Td2RoleKey = keyof typeof TD2_ROLE_LABELS;

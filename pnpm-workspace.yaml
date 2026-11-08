@@ -25,6 +25,8 @@ allowBuilds:
   protobufjs: false
 
 permissions:
+  '@tanstack/react-router':
+    skills: [router-query, migrate-from-react-router, react-router]
   tsdown:
     skills: true
 

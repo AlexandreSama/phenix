@@ -3,16 +3,17 @@ import type { PrismaClient } from '@phenix/database';
 import type { Logger } from '../logger.js';
 
 type Db = Pick<PrismaClient, 'guild'>;
-type GuildLike = { id: string; name: string };
+type GuildLike = { id: string; name: string; icon: string | null };
 
 /** Crée ou réactive un serveur, avec sa config par défaut. */
 export async function upsertGuild(db: Db, guild: GuildLike): Promise<void> {
   await db.guild.upsert({
     where: { id: guild.id },
-    update: { name: guild.name, leftAt: null },
+    update: { name: guild.name, icon: guild.icon, leftAt: null },
     create: {
       id: guild.id,
       name: guild.name,
+      icon: guild.icon,
       config: {
         create: { staffRoleIds: [], ticketStaffRoleIds: [], td2ReportViewerRoleIds: [] },
       },
@@ -42,6 +43,13 @@ export function registerGuildEvents(client: Client, db: Db, logger: Logger): voi
     upsertGuild(db, guild)
       .then(() => logger.info({ guildId: guild.id, name: guild.name }, 'Serveur rejoint'))
       .catch((err: unknown) => logger.error({ err, guildId: guild.id }, 'Échec : serveur rejoint'));
+  });
+
+  // Nom ou icône changés : le classement public affiche toujours les bons
+  client.on(Events.GuildUpdate, (_old, guild) => {
+    upsertGuild(db, guild).catch((err: unknown) =>
+      logger.error({ err, guildId: guild.id }, 'Échec : serveur modifié'),
+    );
   });
 
   client.on(Events.GuildDelete, (guild) => {

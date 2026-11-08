@@ -1,0 +1,16 @@
+@import 'tailwindcss';
+
+/* Palette du logo PhenixMG : mêmes valeurs que BRAND dans @projet/shared (un test le vérifie) */
+@theme {
+  --color-flame: #f65308;
+  --color-orange: #f17600;
+  --color-gold: #f5aa04;
+  --color-yellow: #ffc500;
+  --color-ember: #ba4b04;
+  --color-brown: #50260b;
+  --color-ink: #1d110c;
+}
+
+body {
+  @apply bg-ink text-stone-100 antialiased;
+}

@@ -9,13 +9,10 @@ import { baseEmbed, COLORS } from '../../core/embeds.js';
 export async function sendModLog(
   guild: Guild,
   embed: EmbedBuilder,
-  { db, logger }: Pick<BotContext, 'db' | 'logger'>,
+  { configs, logger }: Pick<BotContext, 'configs' | 'logger'>,
 ): Promise<void> {
   try {
-    const config = await db.guildConfig.findUnique({
-      where: { guildId: guild.id },
-      select: { modLogChannelId: true },
-    });
+    const config = await configs.get(guild.id);
     if (!config?.modLogChannelId) return;
 
     const channel = guild.channels.cache.get(config.modLogChannelId);

@@ -45,6 +45,8 @@ export type MemberLevelMinAggregateOutputType = {
   level: number | null
   messages: number | null
   lastXpAt: Date | null
+  displayName: string | null
+  avatarUrl: string | null
 }
 
 export type MemberLevelMaxAggregateOutputType = {
@@ -54,6 +56,8 @@ export type MemberLevelMaxAggregateOutputType = {
   level: number | null
   messages: number | null
   lastXpAt: Date | null
+  displayName: string | null
+  avatarUrl: string | null
 }
 
 export type MemberLevelCountAggregateOutputType = {
@@ -63,6 +67,8 @@ export type MemberLevelCountAggregateOutputType = {
   level: number
   messages: number
   lastXpAt: number
+  displayName: number
+  avatarUrl: number
   _all: number
 }
 
@@ -86,6 +92,8 @@ export type MemberLevelMinAggregateInputType = {
   level?: true
   messages?: true
   lastXpAt?: true
+  displayName?: true
+  avatarUrl?: true
 }
 
 export type MemberLevelMaxAggregateInputType = {
@@ -95,6 +103,8 @@ export type MemberLevelMaxAggregateInputType = {
   level?: true
   messages?: true
   lastXpAt?: true
+  displayName?: true
+  avatarUrl?: true
 }
 
 export type MemberLevelCountAggregateInputType = {
@@ -104,6 +114,8 @@ export type MemberLevelCountAggregateInputType = {
   level?: true
   messages?: true
   lastXpAt?: true
+  displayName?: true
+  avatarUrl?: true
   _all?: true
 }
 
@@ -200,6 +212,8 @@ export type MemberLevelGroupByOutputType = {
   level: number
   messages: number
   lastXpAt: Date | null
+  displayName: string | null
+  avatarUrl: string | null
   _count: MemberLevelCountAggregateOutputType | null
   _avg: MemberLevelAvgAggregateOutputType | null
   _sum: MemberLevelSumAggregateOutputType | null
@@ -232,6 +246,8 @@ export type MemberLevelWhereInput = {
   level?: Prisma.IntFilter<"MemberLevel"> | number
   messages?: Prisma.IntFilter<"MemberLevel"> | number
   lastXpAt?: Prisma.DateTimeNullableFilter<"MemberLevel"> | Date | string | null
+  displayName?: Prisma.StringNullableFilter<"MemberLevel"> | string | null
+  avatarUrl?: Prisma.StringNullableFilter<"MemberLevel"> | string | null
   guild?: Prisma.XOR<Prisma.GuildScalarRelationFilter, Prisma.GuildWhereInput>
 }
 
@@ -242,6 +258,8 @@ export type MemberLevelOrderByWithRelationInput = {
   level?: Prisma.SortOrder
   messages?: Prisma.SortOrder
   lastXpAt?: Prisma.SortOrderInput | Prisma.SortOrder
+  displayName?: Prisma.SortOrderInput | Prisma.SortOrder
+  avatarUrl?: Prisma.SortOrderInput | Prisma.SortOrder
   guild?: Prisma.GuildOrderByWithRelationInput
 }
 
@@ -256,6 +274,8 @@ export type MemberLevelWhereUniqueInput = Prisma.AtLeast<{
   level?: Prisma.IntFilter<"MemberLevel"> | number
   messages?: Prisma.IntFilter<"MemberLevel"> | number
   lastXpAt?: Prisma.DateTimeNullableFilter<"MemberLevel"> | Date | string | null
+  displayName?: Prisma.StringNullableFilter<"MemberLevel"> | string | null
+  avatarUrl?: Prisma.StringNullableFilter<"MemberLevel"> | string | null
   guild?: Prisma.XOR<Prisma.GuildScalarRelationFilter, Prisma.GuildWhereInput>
 }, "guildId_userId">
 
@@ -266,6 +286,8 @@ export type MemberLevelOrderByWithAggregationInput = {
   level?: Prisma.SortOrder
   messages?: Prisma.SortOrder
   lastXpAt?: Prisma.SortOrderInput | Prisma.SortOrder
+  displayName?: Prisma.SortOrderInput | Prisma.SortOrder
+  avatarUrl?: Prisma.SortOrderInput | Prisma.SortOrder
   _count?: Prisma.MemberLevelCountOrderByAggregateInput
   _avg?: Prisma.MemberLevelAvgOrderByAggregateInput
   _max?: Prisma.MemberLevelMaxOrderByAggregateInput
@@ -283,6 +305,8 @@ export type MemberLevelScalarWhereWithAggregatesInput = {
   level?: Prisma.IntWithAggregatesFilter<"MemberLevel"> | number
   messages?: Prisma.IntWithAggregatesFilter<"MemberLevel"> | number
   lastXpAt?: Prisma.DateTimeNullableWithAggregatesFilter<"MemberLevel"> | Date | string | null
+  displayName?: Prisma.StringNullableWithAggregatesFilter<"MemberLevel"> | string | null
+  avatarUrl?: Prisma.StringNullableWithAggregatesFilter<"MemberLevel"> | string | null
 }
 
 export type MemberLevelCreateInput = {
@@ -291,6 +315,8 @@ export type MemberLevelCreateInput = {
   level?: number
   messages?: number
   lastXpAt?: Date | string | null
+  displayName?: string | null
+  avatarUrl?: string | null
   guild: Prisma.GuildCreateNestedOneWithoutLevelsInput
 }
 
@@ -301,6 +327,8 @@ export type MemberLevelUncheckedCreateInput = {
   level?: number
   messages?: number
   lastXpAt?: Date | string | null
+  displayName?: string | null
+  avatarUrl?: string | null
 }
 
 export type MemberLevelUpdateInput = {
@@ -309,6 +337,8 @@ export type MemberLevelUpdateInput = {
   level?: Prisma.IntFieldUpdateOperationsInput | number
   messages?: Prisma.IntFieldUpdateOperationsInput | number
   lastXpAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  displayName?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  avatarUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   guild?: Prisma.GuildUpdateOneRequiredWithoutLevelsNestedInput
 }
 
@@ -319,6 +349,8 @@ export type MemberLevelUncheckedUpdateInput = {
   level?: Prisma.IntFieldUpdateOperationsInput | number
   messages?: Prisma.IntFieldUpdateOperationsInput | number
   lastXpAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  displayName?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  avatarUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
 }
 
 export type MemberLevelCreateManyInput = {
@@ -328,6 +360,8 @@ export type MemberLevelCreateManyInput = {
   level?: number
   messages?: number
   lastXpAt?: Date | string | null
+  displayName?: string | null
+  avatarUrl?: string | null
 }
 
 export type MemberLevelUpdateManyMutationInput = {
@@ -336,6 +370,8 @@ export type MemberLevelUpdateManyMutationInput = {
   level?: Prisma.IntFieldUpdateOperationsInput | number
   messages?: Prisma.IntFieldUpdateOperationsInput | number
   lastXpAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  displayName?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  avatarUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
 }
 
 export type MemberLevelUncheckedUpdateManyInput = {
@@ -345,6 +381,8 @@ export type MemberLevelUncheckedUpdateManyInput = {
   level?: Prisma.IntFieldUpdateOperationsInput | number
   messages?: Prisma.IntFieldUpdateOperationsInput | number
   lastXpAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  displayName?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  avatarUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
 }
 
 export type MemberLevelListRelationFilter = {
@@ -369,6 +407,8 @@ export type MemberLevelCountOrderByAggregateInput = {
   level?: Prisma.SortOrder
   messages?: Prisma.SortOrder
   lastXpAt?: Prisma.SortOrder
+  displayName?: Prisma.SortOrder
+  avatarUrl?: Prisma.SortOrder
 }
 
 export type MemberLevelAvgOrderByAggregateInput = {
@@ -384,6 +424,8 @@ export type MemberLevelMaxOrderByAggregateInput = {
   level?: Prisma.SortOrder
   messages?: Prisma.SortOrder
   lastXpAt?: Prisma.SortOrder
+  displayName?: Prisma.SortOrder
+  avatarUrl?: Prisma.SortOrder
 }
 
 export type MemberLevelMinOrderByAggregateInput = {
@@ -393,6 +435,8 @@ export type MemberLevelMinOrderByAggregateInput = {
   level?: Prisma.SortOrder
   messages?: Prisma.SortOrder
   lastXpAt?: Prisma.SortOrder
+  displayName?: Prisma.SortOrder
+  avatarUrl?: Prisma.SortOrder
 }
 
 export type MemberLevelSumOrderByAggregateInput = {
@@ -449,6 +493,8 @@ export type MemberLevelCreateWithoutGuildInput = {
   level?: number
   messages?: number
   lastXpAt?: Date | string | null
+  displayName?: string | null
+  avatarUrl?: string | null
 }
 
 export type MemberLevelUncheckedCreateWithoutGuildInput = {
@@ -457,6 +503,8 @@ export type MemberLevelUncheckedCreateWithoutGuildInput = {
   level?: number
   messages?: number
   lastXpAt?: Date | string | null
+  displayName?: string | null
+  avatarUrl?: string | null
 }
 
 export type MemberLevelCreateOrConnectWithoutGuildInput = {
@@ -495,6 +543,8 @@ export type MemberLevelScalarWhereInput = {
   level?: Prisma.IntFilter<"MemberLevel"> | number
   messages?: Prisma.IntFilter<"MemberLevel"> | number
   lastXpAt?: Prisma.DateTimeNullableFilter<"MemberLevel"> | Date | string | null
+  displayName?: Prisma.StringNullableFilter<"MemberLevel"> | string | null
+  avatarUrl?: Prisma.StringNullableFilter<"MemberLevel"> | string | null
 }
 
 export type MemberLevelCreateManyGuildInput = {
@@ -503,6 +553,8 @@ export type MemberLevelCreateManyGuildInput = {
   level?: number
   messages?: number
   lastXpAt?: Date | string | null
+  displayName?: string | null
+  avatarUrl?: string | null
 }
 
 export type MemberLevelUpdateWithoutGuildInput = {
@@ -511,6 +563,8 @@ export type MemberLevelUpdateWithoutGuildInput = {
   level?: Prisma.IntFieldUpdateOperationsInput | number
   messages?: Prisma.IntFieldUpdateOperationsInput | number
   lastXpAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  displayName?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  avatarUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
 }
 
 export type MemberLevelUncheckedUpdateWithoutGuildInput = {
@@ -519,6 +573,8 @@ export type MemberLevelUncheckedUpdateWithoutGuildInput = {
   level?: Prisma.IntFieldUpdateOperationsInput | number
   messages?: Prisma.IntFieldUpdateOperationsInput | number
   lastXpAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  displayName?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  avatarUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
 }
 
 export type MemberLevelUncheckedUpdateManyWithoutGuildInput = {
@@ -527,6 +583,8 @@ export type MemberLevelUncheckedUpdateManyWithoutGuildInput = {
   level?: Prisma.IntFieldUpdateOperationsInput | number
   messages?: Prisma.IntFieldUpdateOperationsInput | number
   lastXpAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  displayName?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  avatarUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
 }
 
 
@@ -538,6 +596,8 @@ export type MemberLevelSelect<ExtArgs extends runtime.Types.Extensions.InternalA
   level?: boolean
   messages?: boolean
   lastXpAt?: boolean
+  displayName?: boolean
+  avatarUrl?: boolean
   guild?: boolean | Prisma.GuildDefaultArgs<ExtArgs>
 }, ExtArgs["result"]["memberLevel"]>
 
@@ -548,6 +608,8 @@ export type MemberLevelSelectCreateManyAndReturn<ExtArgs extends runtime.Types.E
   level?: boolean
   messages?: boolean
   lastXpAt?: boolean
+  displayName?: boolean
+  avatarUrl?: boolean
   guild?: boolean | Prisma.GuildDefaultArgs<ExtArgs>
 }, ExtArgs["result"]["memberLevel"]>
 
@@ -558,6 +620,8 @@ export type MemberLevelSelectUpdateManyAndReturn<ExtArgs extends runtime.Types.E
   level?: boolean
   messages?: boolean
   lastXpAt?: boolean
+  displayName?: boolean
+  avatarUrl?: boolean
   guild?: boolean | Prisma.GuildDefaultArgs<ExtArgs>
 }, ExtArgs["result"]["memberLevel"]>
 
@@ -568,9 +632,11 @@ export type MemberLevelSelectScalar = {
   level?: boolean
   messages?: boolean
   lastXpAt?: boolean
+  displayName?: boolean
+  avatarUrl?: boolean
 }
 
-export type MemberLevelOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"guildId" | "userId" | "xp" | "level" | "messages" | "lastXpAt", ExtArgs["result"]["memberLevel"]>
+export type MemberLevelOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"guildId" | "userId" | "xp" | "level" | "messages" | "lastXpAt" | "displayName" | "avatarUrl", ExtArgs["result"]["memberLevel"]>
 export type MemberLevelInclude<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   guild?: boolean | Prisma.GuildDefaultArgs<ExtArgs>
 }
@@ -593,6 +659,8 @@ export type $MemberLevelPayload<ExtArgs extends runtime.Types.Extensions.Interna
     level: number
     messages: number
     lastXpAt: Date | null
+    displayName: string | null
+    avatarUrl: string | null
   }, ExtArgs["result"]["memberLevel"]>
   composites: {}
 }
@@ -1023,6 +1091,8 @@ export interface MemberLevelFieldRefs {
   readonly level: Prisma.FieldRef<"MemberLevel", 'Int'>
   readonly messages: Prisma.FieldRef<"MemberLevel", 'Int'>
   readonly lastXpAt: Prisma.FieldRef<"MemberLevel", 'DateTime'>
+  readonly displayName: Prisma.FieldRef<"MemberLevel", 'String'>
+  readonly avatarUrl: Prisma.FieldRef<"MemberLevel", 'String'>
 }
     
 
