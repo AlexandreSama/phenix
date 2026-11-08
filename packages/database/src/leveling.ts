@@ -51,14 +51,14 @@ export async function awardXp(db: Db, gain: XpGain): Promise<XpResult | null> {
   // 2. Sinon : premier message du membre, ou délai pas écoulé. L'insertion tranche :
   // ON CONFLICT DO NOTHING ne crée rien si la ligne existe déjà
   const row =
-    updated ??
-    (
-      await db.memberLevel.createManyAndReturn({
-        data: [{ ...where, ...profile, xp: gain.amount, messages: 1, lastXpAt: now }],
-        skipDuplicates: true,
-        select,
-      })
-    )[0];
+      updated ??
+      (
+          await db.memberLevel.createManyAndReturn({
+            data: [{ ...where, ...profile, xp: gain.amount, messages: 1, lastXpAt: now }],
+            skipDuplicates: true,
+            select,
+          })
+      )[0];
   if (!row) return null;
 
   // 3. Changement de niveau : seule la requête qui fait monter le niveau gagne l'annonce
@@ -84,9 +84,9 @@ export interface MemberRank extends MemberLevel {
 
 /** Le profil XP d'un membre avec sa place, ou null s'il n'a encore rien gagné. */
 export async function getMemberRank(
-  db: Db,
-  guildId: string,
-  userId: string,
+    db: Db,
+    guildId: string,
+    userId: string,
 ): Promise<MemberRank | null> {
   const member = await db.memberLevel.findUnique({
     where: { guildId_userId: { guildId, userId } },
@@ -118,10 +118,10 @@ export interface LeaderboardSlice {
  * Une page trop loin renvoie la dernière : le nombre de membres classés bouge entre deux clics.
  */
 export async function getLeaderboard(
-  db: Db,
-  guildId: string,
-  page: number,
-  pageSize: number,
+    db: Db,
+    guildId: string,
+    page: number,
+    pageSize: number,
 ): Promise<LeaderboardSlice> {
   const where = { guildId, xp: { gt: 0 } };
   const total = await db.memberLevel.count({ where });

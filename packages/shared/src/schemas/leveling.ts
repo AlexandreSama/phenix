@@ -2,10 +2,10 @@ import { z } from 'zod';
 import { snowflakeSchema } from './guild-config.js';
 
 const xpAmount = z
-  .number({ error: 'Entre un nombre' })
-  .int('Nombre entier attendu')
-  .min(1, '1 XP au moins')
-  .max(100, '100 XP au plus');
+    .number({ error: 'Entre un nombre' })
+    .int('Nombre entier attendu')
+    .min(1, '1 XP au moins')
+    .max(100, '100 XP au plus');
 
 /** Les champs de la page « Niveaux », sans la règle qui relie le minimum et le maximum. */
 export const levelingConfigFields = z.object({
@@ -13,10 +13,10 @@ export const levelingConfigFields = z.object({
   xpMin: xpAmount,
   xpMax: xpAmount,
   xpCooldownSec: z
-    .number({ error: 'Entre un nombre' })
-    .int('Nombre entier attendu')
-    .min(0, 'Pas de délai négatif')
-    .max(3600, 'Une heure au plus'),
+      .number({ error: 'Entre un nombre' })
+      .int('Nombre entier attendu')
+      .min(0, 'Pas de délai négatif')
+      .max(3600, 'Une heure au plus'),
   levelUpChannelId: snowflakeSchema.nullable(),
   leaderboardPublic: z.boolean(),
 });
@@ -28,8 +28,8 @@ export const levelingConfigFields = z.object({
  */
 export function withXpRange<T extends z.ZodType<{ xpMin?: number; xpMax?: number }>>(schema: T): T {
   return schema.refine(
-    ({ xpMin, xpMax }) => xpMin === undefined || xpMax === undefined || xpMin <= xpMax,
-    { message: "Le minimum d'XP doit être inférieur ou égal au maximum", path: ['xpMin'] },
+      ({ xpMin, xpMax }) => xpMin === undefined || xpMax === undefined || xpMin <= xpMax,
+      { message: "Le minimum d'XP doit être inférieur ou égal au maximum", path: ['xpMin'] },
   );
 }
 
@@ -45,11 +45,11 @@ export type LevelingConfigPatch = z.infer<typeof levelingConfigPatchSchema>;
 /** Paramètre ?page= du classement public. */
 export const leaderboardQuerySchema = z.object({
   page: z.coerce
-    .number({ error: 'Numéro de page invalide' })
-    .int('Numéro de page invalide')
-    .min(1, 'Numéro de page invalide')
-    .max(1000, 'Numéro de page invalide')
-    .default(1),
+      .number({ error: 'Numéro de page invalide' })
+      .int('Numéro de page invalide')
+      .min(1, 'Numéro de page invalide')
+      .max(1000, 'Numéro de page invalide')
+      .default(1),
 });
 
 export type LeaderboardQuery = z.infer<typeof leaderboardQuerySchema>;

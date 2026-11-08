@@ -1,10 +1,10 @@
-import { getMemberRank } from '@phenix/database';
 import type { ChatInputCommandInteraction } from 'discord.js';
 import { describe, expect, it, vi } from 'vitest';
 import type { BotContext } from '../../../core/context.js';
 import { rank } from './rank.js';
 
-vi.mock('@projet/database', () => ({ getMemberRank: vi.fn() }));
+const database = vi.hoisted(() => ({ getMemberRank: vi.fn() }));
+vi.mock('@phenix/database', () => database);
 
 const me = { id: '200000000000000001', bot: false, displayName: 'Moi' };
 
@@ -31,11 +31,11 @@ async function run(target: object | null) {
 describe('/rank', () => {
   it('rappelle que les bots ne gagnent pas d’XP', async () => {
     expect((await run({ id: '9', bot: true })).content).toBe("Les bots ne gagnent pas d'XP.");
-    expect(getMemberRank).not.toHaveBeenCalled();
+    expect(database.getMemberRank).not.toHaveBeenCalled();
   });
 
   it('prévient un membre qui n’a encore rien gagné', async () => {
-    vi.mocked(getMemberRank).mockResolvedValue(null);
+    database.getMemberRank.mockResolvedValue(null);
     expect((await run(null)).content).toContain("Tu n'as pas encore gagné d'XP");
   });
 });

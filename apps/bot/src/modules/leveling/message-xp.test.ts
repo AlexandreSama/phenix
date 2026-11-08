@@ -1,4 +1,3 @@
-import { awardXp } from '@phenix/database';
 import type { Message } from 'discord.js';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import type { BotContext } from '../../core/context.js';
@@ -6,8 +5,9 @@ import type { GuildSettings } from '../../core/guild-config-cache.js';
 import { createMessageXpHandler } from './message-xp.js';
 import { createCooldowns } from './xp.js';
 
-vi.mock('@projet/database', () => ({ awardXp: vi.fn() }));
-const award = vi.mocked(awardXp);
+const database = vi.hoisted(() => ({ awardXp: vi.fn() }));
+vi.mock('@phenix/database', () => database);
+const award = database.awardXp;
 
 const settings: GuildSettings = {
   timezone: 'Europe/Paris',
@@ -78,13 +78,13 @@ describe('gain d’XP sur les messages', () => {
 
     expect(award).toHaveBeenCalledTimes(1);
     expect(award).toHaveBeenCalledWith(
-      {},
-      expect.objectContaining({
-        amount: 10,
-        cooldownMs: 60_000,
-        displayName: 'Agent Phénix',
-        avatarUrl: 'https://cdn/avatar.png',
-      }),
+        {},
+        expect.objectContaining({
+          amount: 10,
+          cooldownMs: 60_000,
+          displayName: 'Agent Phénix',
+          avatarUrl: 'https://cdn/avatar.png',
+        }),
     );
   });
 
