@@ -78,13 +78,13 @@ describe('gain d’XP sur les messages', () => {
 
     expect(award).toHaveBeenCalledTimes(1);
     expect(award).toHaveBeenCalledWith(
-        {},
-        expect.objectContaining({
-          amount: 10,
-          cooldownMs: 60_000,
-          displayName: 'Agent Phénix',
-          avatarUrl: 'https://cdn/avatar.png',
-        }),
+      {},
+      expect.objectContaining({
+        amount: 10,
+        cooldownMs: 60_000,
+        displayName: 'Agent Phénix',
+        avatarUrl: 'https://cdn/avatar.png',
+      }),
     );
   });
 

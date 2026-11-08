@@ -9,9 +9,9 @@ import { createCooldowns, levelingSettings, randomXp, type Cooldowns } from './x
  * Les bots, les webhooks et les messages système ne comptent pas.
  */
 export function createMessageXpHandler(
-    context: BotContext,
-    cooldowns: Cooldowns = createCooldowns(),
-    random: () => number = Math.random,
+  context: BotContext,
+  cooldowns: Cooldowns = createCooldowns(),
+  random: () => number = Math.random,
 ) {
   const { db, configs, logger } = context;
 

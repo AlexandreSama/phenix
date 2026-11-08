@@ -48,7 +48,7 @@ export function registerGuildEvents(client: Client, db: Db, logger: Logger): voi
   // Nom ou icône changés : le classement public affiche toujours les bons
   client.on(Events.GuildUpdate, (_old, guild) => {
     upsertGuild(db, guild).catch((err: unknown) =>
-        logger.error({ err, guildId: guild.id }, 'Échec : serveur modifié'),
+      logger.error({ err, guildId: guild.id }, 'Échec : serveur modifié'),
     );
   });
 

@@ -6,12 +6,12 @@ import { rankEmbed } from '../rank-card.js';
 export const rank: SlashCommand = {
   category: 'leveling',
   data: new SlashCommandBuilder()
-      .setName('rank')
-      .setDescription("Affiche le niveau et l'XP d'un membre")
-      .setContexts(InteractionContextType.Guild)
-      .addUserOption((option) =>
-          option.setName('membre').setDescription('Le membre (toi par défaut)').setRequired(false),
-      ),
+    .setName('rank')
+    .setDescription("Affiche le niveau et l'XP d'un membre")
+    .setContexts(InteractionContextType.Guild)
+    .addUserOption((option) =>
+      option.setName('membre').setDescription('Le membre (toi par défaut)').setRequired(false),
+    ),
 
   async execute(interaction, { db }) {
     if (!interaction.inCachedGuild()) return;
