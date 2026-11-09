@@ -23,5 +23,7 @@ export async function api<T>(path: string, init: RequestInit = {}): Promise<T> {
     const message = Array.isArray(body?.message) ? body.message.join(' · ') : body?.message;
     throw new ApiError(response.status, message ?? 'Erreur inattendue, réessaie.');
   }
-  return (response.status === 204 ? undefined : await response.json()) as T;
+  // 204, ou 202 « demande prise en compte » : pas de corps à lire
+  const text = await response.text();
+  return (text === '' ? undefined : JSON.parse(text)) as T;
 }

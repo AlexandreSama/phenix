@@ -23,10 +23,12 @@ allowBuilds:
   cpu-features: false # accélérations natives facultatives (ssh2, via Testcontainers)
   ssh2: false
   protobufjs: false
-
+  msgpackr-extract: false # accélération native facultative de msgpackr (via BullMQ)
 permissions:
   '@tanstack/react-router':
     skills: [router-query, migrate-from-react-router, react-router]
+  msgpackr-extract:
+    build: true
   tsdown:
     skills: true
 

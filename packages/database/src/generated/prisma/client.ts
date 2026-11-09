@@ -77,6 +77,12 @@ export type Marriage = Prisma.MarriageModel
  */
 export type Ticket = Prisma.TicketModel
 /**
+ * Model TicketPanel
+ * *
+ *  * Le message « Ouvrir un ticket » d'un serveur : un seul par serveur.
+ */
+export type TicketPanel = Prisma.TicketPanelModel
+/**
  * Model Giveaway
  * 
  */

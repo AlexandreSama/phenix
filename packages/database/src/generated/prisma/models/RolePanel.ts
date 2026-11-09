@@ -42,6 +42,9 @@ export type RolePanelMinAggregateOutputType = {
   title: string | null
   description: string | null
   mode: $Enums.RolePanelMode | null
+  publishedAt: Date | null
+  publishError: string | null
+  createdAt: Date | null
 }
 
 export type RolePanelMaxAggregateOutputType = {
@@ -52,6 +55,9 @@ export type RolePanelMaxAggregateOutputType = {
   title: string | null
   description: string | null
   mode: $Enums.RolePanelMode | null
+  publishedAt: Date | null
+  publishError: string | null
+  createdAt: Date | null
 }
 
 export type RolePanelCountAggregateOutputType = {
@@ -62,6 +68,9 @@ export type RolePanelCountAggregateOutputType = {
   title: number
   description: number
   mode: number
+  publishedAt: number
+  publishError: number
+  createdAt: number
   _all: number
 }
 
@@ -82,6 +91,9 @@ export type RolePanelMinAggregateInputType = {
   title?: true
   description?: true
   mode?: true
+  publishedAt?: true
+  publishError?: true
+  createdAt?: true
 }
 
 export type RolePanelMaxAggregateInputType = {
@@ -92,6 +104,9 @@ export type RolePanelMaxAggregateInputType = {
   title?: true
   description?: true
   mode?: true
+  publishedAt?: true
+  publishError?: true
+  createdAt?: true
 }
 
 export type RolePanelCountAggregateInputType = {
@@ -102,6 +117,9 @@ export type RolePanelCountAggregateInputType = {
   title?: true
   description?: true
   mode?: true
+  publishedAt?: true
+  publishError?: true
+  createdAt?: true
   _all?: true
 }
 
@@ -199,6 +217,9 @@ export type RolePanelGroupByOutputType = {
   title: string
   description: string | null
   mode: $Enums.RolePanelMode
+  publishedAt: Date | null
+  publishError: string | null
+  createdAt: Date
   _count: RolePanelCountAggregateOutputType | null
   _avg: RolePanelAvgAggregateOutputType | null
   _sum: RolePanelSumAggregateOutputType | null
@@ -232,6 +253,9 @@ export type RolePanelWhereInput = {
   title?: Prisma.StringFilter<"RolePanel"> | string
   description?: Prisma.StringNullableFilter<"RolePanel"> | string | null
   mode?: Prisma.EnumRolePanelModeFilter<"RolePanel"> | $Enums.RolePanelMode
+  publishedAt?: Prisma.DateTimeNullableFilter<"RolePanel"> | Date | string | null
+  publishError?: Prisma.StringNullableFilter<"RolePanel"> | string | null
+  createdAt?: Prisma.DateTimeFilter<"RolePanel"> | Date | string
   guild?: Prisma.XOR<Prisma.GuildScalarRelationFilter, Prisma.GuildWhereInput>
   options?: Prisma.RolePanelOptionListRelationFilter
 }
@@ -244,6 +268,9 @@ export type RolePanelOrderByWithRelationInput = {
   title?: Prisma.SortOrder
   description?: Prisma.SortOrderInput | Prisma.SortOrder
   mode?: Prisma.SortOrder
+  publishedAt?: Prisma.SortOrderInput | Prisma.SortOrder
+  publishError?: Prisma.SortOrderInput | Prisma.SortOrder
+  createdAt?: Prisma.SortOrder
   guild?: Prisma.GuildOrderByWithRelationInput
   options?: Prisma.RolePanelOptionOrderByRelationAggregateInput
 }
@@ -259,6 +286,9 @@ export type RolePanelWhereUniqueInput = Prisma.AtLeast<{
   title?: Prisma.StringFilter<"RolePanel"> | string
   description?: Prisma.StringNullableFilter<"RolePanel"> | string | null
   mode?: Prisma.EnumRolePanelModeFilter<"RolePanel"> | $Enums.RolePanelMode
+  publishedAt?: Prisma.DateTimeNullableFilter<"RolePanel"> | Date | string | null
+  publishError?: Prisma.StringNullableFilter<"RolePanel"> | string | null
+  createdAt?: Prisma.DateTimeFilter<"RolePanel"> | Date | string
   guild?: Prisma.XOR<Prisma.GuildScalarRelationFilter, Prisma.GuildWhereInput>
   options?: Prisma.RolePanelOptionListRelationFilter
 }, "id" | "messageId">
@@ -271,6 +301,9 @@ export type RolePanelOrderByWithAggregationInput = {
   title?: Prisma.SortOrder
   description?: Prisma.SortOrderInput | Prisma.SortOrder
   mode?: Prisma.SortOrder
+  publishedAt?: Prisma.SortOrderInput | Prisma.SortOrder
+  publishError?: Prisma.SortOrderInput | Prisma.SortOrder
+  createdAt?: Prisma.SortOrder
   _count?: Prisma.RolePanelCountOrderByAggregateInput
   _avg?: Prisma.RolePanelAvgOrderByAggregateInput
   _max?: Prisma.RolePanelMaxOrderByAggregateInput
@@ -289,6 +322,9 @@ export type RolePanelScalarWhereWithAggregatesInput = {
   title?: Prisma.StringWithAggregatesFilter<"RolePanel"> | string
   description?: Prisma.StringNullableWithAggregatesFilter<"RolePanel"> | string | null
   mode?: Prisma.EnumRolePanelModeWithAggregatesFilter<"RolePanel"> | $Enums.RolePanelMode
+  publishedAt?: Prisma.DateTimeNullableWithAggregatesFilter<"RolePanel"> | Date | string | null
+  publishError?: Prisma.StringNullableWithAggregatesFilter<"RolePanel"> | string | null
+  createdAt?: Prisma.DateTimeWithAggregatesFilter<"RolePanel"> | Date | string
 }
 
 export type RolePanelCreateInput = {
@@ -297,6 +333,9 @@ export type RolePanelCreateInput = {
   title: string
   description?: string | null
   mode?: $Enums.RolePanelMode
+  publishedAt?: Date | string | null
+  publishError?: string | null
+  createdAt?: Date | string
   guild: Prisma.GuildCreateNestedOneWithoutRolePanelsInput
   options?: Prisma.RolePanelOptionCreateNestedManyWithoutPanelInput
 }
@@ -309,6 +348,9 @@ export type RolePanelUncheckedCreateInput = {
   title: string
   description?: string | null
   mode?: $Enums.RolePanelMode
+  publishedAt?: Date | string | null
+  publishError?: string | null
+  createdAt?: Date | string
   options?: Prisma.RolePanelOptionUncheckedCreateNestedManyWithoutPanelInput
 }
 
@@ -318,6 +360,9 @@ export type RolePanelUpdateInput = {
   title?: Prisma.StringFieldUpdateOperationsInput | string
   description?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   mode?: Prisma.EnumRolePanelModeFieldUpdateOperationsInput | $Enums.RolePanelMode
+  publishedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  publishError?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   guild?: Prisma.GuildUpdateOneRequiredWithoutRolePanelsNestedInput
   options?: Prisma.RolePanelOptionUpdateManyWithoutPanelNestedInput
 }
@@ -330,6 +375,9 @@ export type RolePanelUncheckedUpdateInput = {
   title?: Prisma.StringFieldUpdateOperationsInput | string
   description?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   mode?: Prisma.EnumRolePanelModeFieldUpdateOperationsInput | $Enums.RolePanelMode
+  publishedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  publishError?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   options?: Prisma.RolePanelOptionUncheckedUpdateManyWithoutPanelNestedInput
 }
 
@@ -341,6 +389,9 @@ export type RolePanelCreateManyInput = {
   title: string
   description?: string | null
   mode?: $Enums.RolePanelMode
+  publishedAt?: Date | string | null
+  publishError?: string | null
+  createdAt?: Date | string
 }
 
 export type RolePanelUpdateManyMutationInput = {
@@ -349,6 +400,9 @@ export type RolePanelUpdateManyMutationInput = {
   title?: Prisma.StringFieldUpdateOperationsInput | string
   description?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   mode?: Prisma.EnumRolePanelModeFieldUpdateOperationsInput | $Enums.RolePanelMode
+  publishedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  publishError?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
 }
 
 export type RolePanelUncheckedUpdateManyInput = {
@@ -359,6 +413,9 @@ export type RolePanelUncheckedUpdateManyInput = {
   title?: Prisma.StringFieldUpdateOperationsInput | string
   description?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   mode?: Prisma.EnumRolePanelModeFieldUpdateOperationsInput | $Enums.RolePanelMode
+  publishedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  publishError?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
 }
 
 export type RolePanelListRelationFilter = {
@@ -379,6 +436,9 @@ export type RolePanelCountOrderByAggregateInput = {
   title?: Prisma.SortOrder
   description?: Prisma.SortOrder
   mode?: Prisma.SortOrder
+  publishedAt?: Prisma.SortOrder
+  publishError?: Prisma.SortOrder
+  createdAt?: Prisma.SortOrder
 }
 
 export type RolePanelAvgOrderByAggregateInput = {
@@ -393,6 +453,9 @@ export type RolePanelMaxOrderByAggregateInput = {
   title?: Prisma.SortOrder
   description?: Prisma.SortOrder
   mode?: Prisma.SortOrder
+  publishedAt?: Prisma.SortOrder
+  publishError?: Prisma.SortOrder
+  createdAt?: Prisma.SortOrder
 }
 
 export type RolePanelMinOrderByAggregateInput = {
@@ -403,6 +466,9 @@ export type RolePanelMinOrderByAggregateInput = {
   title?: Prisma.SortOrder
   description?: Prisma.SortOrder
   mode?: Prisma.SortOrder
+  publishedAt?: Prisma.SortOrder
+  publishError?: Prisma.SortOrder
+  createdAt?: Prisma.SortOrder
 }
 
 export type RolePanelSumOrderByAggregateInput = {
@@ -480,6 +546,9 @@ export type RolePanelCreateWithoutGuildInput = {
   title: string
   description?: string | null
   mode?: $Enums.RolePanelMode
+  publishedAt?: Date | string | null
+  publishError?: string | null
+  createdAt?: Date | string
   options?: Prisma.RolePanelOptionCreateNestedManyWithoutPanelInput
 }
 
@@ -490,6 +559,9 @@ export type RolePanelUncheckedCreateWithoutGuildInput = {
   title: string
   description?: string | null
   mode?: $Enums.RolePanelMode
+  publishedAt?: Date | string | null
+  publishError?: string | null
+  createdAt?: Date | string
   options?: Prisma.RolePanelOptionUncheckedCreateNestedManyWithoutPanelInput
 }
 
@@ -530,6 +602,9 @@ export type RolePanelScalarWhereInput = {
   title?: Prisma.StringFilter<"RolePanel"> | string
   description?: Prisma.StringNullableFilter<"RolePanel"> | string | null
   mode?: Prisma.EnumRolePanelModeFilter<"RolePanel"> | $Enums.RolePanelMode
+  publishedAt?: Prisma.DateTimeNullableFilter<"RolePanel"> | Date | string | null
+  publishError?: Prisma.StringNullableFilter<"RolePanel"> | string | null
+  createdAt?: Prisma.DateTimeFilter<"RolePanel"> | Date | string
 }
 
 export type RolePanelCreateWithoutOptionsInput = {
@@ -538,6 +613,9 @@ export type RolePanelCreateWithoutOptionsInput = {
   title: string
   description?: string | null
   mode?: $Enums.RolePanelMode
+  publishedAt?: Date | string | null
+  publishError?: string | null
+  createdAt?: Date | string
   guild: Prisma.GuildCreateNestedOneWithoutRolePanelsInput
 }
 
@@ -549,6 +627,9 @@ export type RolePanelUncheckedCreateWithoutOptionsInput = {
   title: string
   description?: string | null
   mode?: $Enums.RolePanelMode
+  publishedAt?: Date | string | null
+  publishError?: string | null
+  createdAt?: Date | string
 }
 
 export type RolePanelCreateOrConnectWithoutOptionsInput = {
@@ -573,6 +654,9 @@ export type RolePanelUpdateWithoutOptionsInput = {
   title?: Prisma.StringFieldUpdateOperationsInput | string
   description?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   mode?: Prisma.EnumRolePanelModeFieldUpdateOperationsInput | $Enums.RolePanelMode
+  publishedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  publishError?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   guild?: Prisma.GuildUpdateOneRequiredWithoutRolePanelsNestedInput
 }
 
@@ -584,6 +668,9 @@ export type RolePanelUncheckedUpdateWithoutOptionsInput = {
   title?: Prisma.StringFieldUpdateOperationsInput | string
   description?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   mode?: Prisma.EnumRolePanelModeFieldUpdateOperationsInput | $Enums.RolePanelMode
+  publishedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  publishError?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
 }
 
 export type RolePanelCreateManyGuildInput = {
@@ -593,6 +680,9 @@ export type RolePanelCreateManyGuildInput = {
   title: string
   description?: string | null
   mode?: $Enums.RolePanelMode
+  publishedAt?: Date | string | null
+  publishError?: string | null
+  createdAt?: Date | string
 }
 
 export type RolePanelUpdateWithoutGuildInput = {
@@ -601,6 +691,9 @@ export type RolePanelUpdateWithoutGuildInput = {
   title?: Prisma.StringFieldUpdateOperationsInput | string
   description?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   mode?: Prisma.EnumRolePanelModeFieldUpdateOperationsInput | $Enums.RolePanelMode
+  publishedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  publishError?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   options?: Prisma.RolePanelOptionUpdateManyWithoutPanelNestedInput
 }
 
@@ -611,6 +704,9 @@ export type RolePanelUncheckedUpdateWithoutGuildInput = {
   title?: Prisma.StringFieldUpdateOperationsInput | string
   description?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   mode?: Prisma.EnumRolePanelModeFieldUpdateOperationsInput | $Enums.RolePanelMode
+  publishedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  publishError?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   options?: Prisma.RolePanelOptionUncheckedUpdateManyWithoutPanelNestedInput
 }
 
@@ -621,6 +717,9 @@ export type RolePanelUncheckedUpdateManyWithoutGuildInput = {
   title?: Prisma.StringFieldUpdateOperationsInput | string
   description?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   mode?: Prisma.EnumRolePanelModeFieldUpdateOperationsInput | $Enums.RolePanelMode
+  publishedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  publishError?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
 }
 
 
@@ -662,6 +761,9 @@ export type RolePanelSelect<ExtArgs extends runtime.Types.Extensions.InternalArg
   title?: boolean
   description?: boolean
   mode?: boolean
+  publishedAt?: boolean
+  publishError?: boolean
+  createdAt?: boolean
   guild?: boolean | Prisma.GuildDefaultArgs<ExtArgs>
   options?: boolean | Prisma.RolePanel$optionsArgs<ExtArgs>
   _count?: boolean | Prisma.RolePanelCountOutputTypeDefaultArgs<ExtArgs>
@@ -675,6 +777,9 @@ export type RolePanelSelectCreateManyAndReturn<ExtArgs extends runtime.Types.Ext
   title?: boolean
   description?: boolean
   mode?: boolean
+  publishedAt?: boolean
+  publishError?: boolean
+  createdAt?: boolean
   guild?: boolean | Prisma.GuildDefaultArgs<ExtArgs>
 }, ExtArgs["result"]["rolePanel"]>
 
@@ -686,6 +791,9 @@ export type RolePanelSelectUpdateManyAndReturn<ExtArgs extends runtime.Types.Ext
   title?: boolean
   description?: boolean
   mode?: boolean
+  publishedAt?: boolean
+  publishError?: boolean
+  createdAt?: boolean
   guild?: boolean | Prisma.GuildDefaultArgs<ExtArgs>
 }, ExtArgs["result"]["rolePanel"]>
 
@@ -697,9 +805,12 @@ export type RolePanelSelectScalar = {
   title?: boolean
   description?: boolean
   mode?: boolean
+  publishedAt?: boolean
+  publishError?: boolean
+  createdAt?: boolean
 }
 
-export type RolePanelOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "guildId" | "channelId" | "messageId" | "title" | "description" | "mode", ExtArgs["result"]["rolePanel"]>
+export type RolePanelOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "guildId" | "channelId" | "messageId" | "title" | "description" | "mode" | "publishedAt" | "publishError" | "createdAt", ExtArgs["result"]["rolePanel"]>
 export type RolePanelInclude<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   guild?: boolean | Prisma.GuildDefaultArgs<ExtArgs>
   options?: boolean | Prisma.RolePanel$optionsArgs<ExtArgs>
@@ -726,6 +837,9 @@ export type $RolePanelPayload<ExtArgs extends runtime.Types.Extensions.InternalA
     title: string
     description: string | null
     mode: $Enums.RolePanelMode
+    publishedAt: Date | null
+    publishError: string | null
+    createdAt: Date
   }, ExtArgs["result"]["rolePanel"]>
   composites: {}
 }
@@ -1158,6 +1272,9 @@ export interface RolePanelFieldRefs {
   readonly title: Prisma.FieldRef<"RolePanel", 'String'>
   readonly description: Prisma.FieldRef<"RolePanel", 'String'>
   readonly mode: Prisma.FieldRef<"RolePanel", 'RolePanelMode'>
+  readonly publishedAt: Prisma.FieldRef<"RolePanel", 'DateTime'>
+  readonly publishError: Prisma.FieldRef<"RolePanel", 'String'>
+  readonly createdAt: Prisma.FieldRef<"RolePanel", 'DateTime'>
 }
     
 

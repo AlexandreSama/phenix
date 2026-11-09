@@ -5,6 +5,7 @@ import { AuthGuard } from '../../common/guards/auth.guard.js';
 import { GuildAdminGuard } from '../../common/guards/guild-admin.guard.js';
 import type { Session } from '../auth/session.service.js';
 import { GuildsService } from './guilds.service.js';
+import type { GuildCategorySummary } from '@phenix/shared';
 
 @Controller('guilds')
 @UseGuards(AuthGuard)
@@ -26,5 +27,11 @@ export class GuildsController {
   @UseGuards(GuildAdminGuard)
   roles(@Param('guildId') guildId: string): Promise<GuildRoleSummary[]> {
     return this.guilds.roles(guildId);
+  }
+
+  @Get(':guildId/categories')
+  @UseGuards(GuildAdminGuard)
+  categories(@Param('guildId') guildId: string): Promise<GuildCategorySummary[]> {
+    return this.guilds.categories(guildId);
   }
 }

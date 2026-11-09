@@ -37,18 +37,21 @@ export type GiveawayEntrySumAggregateOutputType = {
 export type GiveawayEntryMinAggregateOutputType = {
   giveawayId: number | null
   userId: string | null
+  displayName: string | null
   createdAt: Date | null
 }
 
 export type GiveawayEntryMaxAggregateOutputType = {
   giveawayId: number | null
   userId: string | null
+  displayName: string | null
   createdAt: Date | null
 }
 
 export type GiveawayEntryCountAggregateOutputType = {
   giveawayId: number
   userId: number
+  displayName: number
   createdAt: number
   _all: number
 }
@@ -65,18 +68,21 @@ export type GiveawayEntrySumAggregateInputType = {
 export type GiveawayEntryMinAggregateInputType = {
   giveawayId?: true
   userId?: true
+  displayName?: true
   createdAt?: true
 }
 
 export type GiveawayEntryMaxAggregateInputType = {
   giveawayId?: true
   userId?: true
+  displayName?: true
   createdAt?: true
 }
 
 export type GiveawayEntryCountAggregateInputType = {
   giveawayId?: true
   userId?: true
+  displayName?: true
   createdAt?: true
   _all?: true
 }
@@ -170,6 +176,7 @@ export type GiveawayEntryGroupByArgs<ExtArgs extends runtime.Types.Extensions.In
 export type GiveawayEntryGroupByOutputType = {
   giveawayId: number
   userId: string
+  displayName: string | null
   createdAt: Date
   _count: GiveawayEntryCountAggregateOutputType | null
   _avg: GiveawayEntryAvgAggregateOutputType | null
@@ -199,6 +206,7 @@ export type GiveawayEntryWhereInput = {
   NOT?: Prisma.GiveawayEntryWhereInput | Prisma.GiveawayEntryWhereInput[]
   giveawayId?: Prisma.IntFilter<"GiveawayEntry"> | number
   userId?: Prisma.StringFilter<"GiveawayEntry"> | string
+  displayName?: Prisma.StringNullableFilter<"GiveawayEntry"> | string | null
   createdAt?: Prisma.DateTimeFilter<"GiveawayEntry"> | Date | string
   giveaway?: Prisma.XOR<Prisma.GiveawayScalarRelationFilter, Prisma.GiveawayWhereInput>
 }
@@ -206,6 +214,7 @@ export type GiveawayEntryWhereInput = {
 export type GiveawayEntryOrderByWithRelationInput = {
   giveawayId?: Prisma.SortOrder
   userId?: Prisma.SortOrder
+  displayName?: Prisma.SortOrderInput | Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   giveaway?: Prisma.GiveawayOrderByWithRelationInput
 }
@@ -217,6 +226,7 @@ export type GiveawayEntryWhereUniqueInput = Prisma.AtLeast<{
   NOT?: Prisma.GiveawayEntryWhereInput | Prisma.GiveawayEntryWhereInput[]
   giveawayId?: Prisma.IntFilter<"GiveawayEntry"> | number
   userId?: Prisma.StringFilter<"GiveawayEntry"> | string
+  displayName?: Prisma.StringNullableFilter<"GiveawayEntry"> | string | null
   createdAt?: Prisma.DateTimeFilter<"GiveawayEntry"> | Date | string
   giveaway?: Prisma.XOR<Prisma.GiveawayScalarRelationFilter, Prisma.GiveawayWhereInput>
 }, "giveawayId_userId">
@@ -224,6 +234,7 @@ export type GiveawayEntryWhereUniqueInput = Prisma.AtLeast<{
 export type GiveawayEntryOrderByWithAggregationInput = {
   giveawayId?: Prisma.SortOrder
   userId?: Prisma.SortOrder
+  displayName?: Prisma.SortOrderInput | Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   _count?: Prisma.GiveawayEntryCountOrderByAggregateInput
   _avg?: Prisma.GiveawayEntryAvgOrderByAggregateInput
@@ -238,11 +249,13 @@ export type GiveawayEntryScalarWhereWithAggregatesInput = {
   NOT?: Prisma.GiveawayEntryScalarWhereWithAggregatesInput | Prisma.GiveawayEntryScalarWhereWithAggregatesInput[]
   giveawayId?: Prisma.IntWithAggregatesFilter<"GiveawayEntry"> | number
   userId?: Prisma.StringWithAggregatesFilter<"GiveawayEntry"> | string
+  displayName?: Prisma.StringNullableWithAggregatesFilter<"GiveawayEntry"> | string | null
   createdAt?: Prisma.DateTimeWithAggregatesFilter<"GiveawayEntry"> | Date | string
 }
 
 export type GiveawayEntryCreateInput = {
   userId: string
+  displayName?: string | null
   createdAt?: Date | string
   giveaway: Prisma.GiveawayCreateNestedOneWithoutEntriesInput
 }
@@ -250,11 +263,13 @@ export type GiveawayEntryCreateInput = {
 export type GiveawayEntryUncheckedCreateInput = {
   giveawayId: number
   userId: string
+  displayName?: string | null
   createdAt?: Date | string
 }
 
 export type GiveawayEntryUpdateInput = {
   userId?: Prisma.StringFieldUpdateOperationsInput | string
+  displayName?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   giveaway?: Prisma.GiveawayUpdateOneRequiredWithoutEntriesNestedInput
 }
@@ -262,23 +277,27 @@ export type GiveawayEntryUpdateInput = {
 export type GiveawayEntryUncheckedUpdateInput = {
   giveawayId?: Prisma.IntFieldUpdateOperationsInput | number
   userId?: Prisma.StringFieldUpdateOperationsInput | string
+  displayName?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
 }
 
 export type GiveawayEntryCreateManyInput = {
   giveawayId: number
   userId: string
+  displayName?: string | null
   createdAt?: Date | string
 }
 
 export type GiveawayEntryUpdateManyMutationInput = {
   userId?: Prisma.StringFieldUpdateOperationsInput | string
+  displayName?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
 }
 
 export type GiveawayEntryUncheckedUpdateManyInput = {
   giveawayId?: Prisma.IntFieldUpdateOperationsInput | number
   userId?: Prisma.StringFieldUpdateOperationsInput | string
+  displayName?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
 }
 
@@ -300,6 +319,7 @@ export type GiveawayEntryGiveawayIdUserIdCompoundUniqueInput = {
 export type GiveawayEntryCountOrderByAggregateInput = {
   giveawayId?: Prisma.SortOrder
   userId?: Prisma.SortOrder
+  displayName?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
 }
 
@@ -310,12 +330,14 @@ export type GiveawayEntryAvgOrderByAggregateInput = {
 export type GiveawayEntryMaxOrderByAggregateInput = {
   giveawayId?: Prisma.SortOrder
   userId?: Prisma.SortOrder
+  displayName?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
 }
 
 export type GiveawayEntryMinOrderByAggregateInput = {
   giveawayId?: Prisma.SortOrder
   userId?: Prisma.SortOrder
+  displayName?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
 }
 
@@ -367,11 +389,13 @@ export type GiveawayEntryUncheckedUpdateManyWithoutGiveawayNestedInput = {
 
 export type GiveawayEntryCreateWithoutGiveawayInput = {
   userId: string
+  displayName?: string | null
   createdAt?: Date | string
 }
 
 export type GiveawayEntryUncheckedCreateWithoutGiveawayInput = {
   userId: string
+  displayName?: string | null
   createdAt?: Date | string
 }
 
@@ -407,26 +431,31 @@ export type GiveawayEntryScalarWhereInput = {
   NOT?: Prisma.GiveawayEntryScalarWhereInput | Prisma.GiveawayEntryScalarWhereInput[]
   giveawayId?: Prisma.IntFilter<"GiveawayEntry"> | number
   userId?: Prisma.StringFilter<"GiveawayEntry"> | string
+  displayName?: Prisma.StringNullableFilter<"GiveawayEntry"> | string | null
   createdAt?: Prisma.DateTimeFilter<"GiveawayEntry"> | Date | string
 }
 
 export type GiveawayEntryCreateManyGiveawayInput = {
   userId: string
+  displayName?: string | null
   createdAt?: Date | string
 }
 
 export type GiveawayEntryUpdateWithoutGiveawayInput = {
   userId?: Prisma.StringFieldUpdateOperationsInput | string
+  displayName?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
 }
 
 export type GiveawayEntryUncheckedUpdateWithoutGiveawayInput = {
   userId?: Prisma.StringFieldUpdateOperationsInput | string
+  displayName?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
 }
 
 export type GiveawayEntryUncheckedUpdateManyWithoutGiveawayInput = {
   userId?: Prisma.StringFieldUpdateOperationsInput | string
+  displayName?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
 }
 
@@ -435,6 +464,7 @@ export type GiveawayEntryUncheckedUpdateManyWithoutGiveawayInput = {
 export type GiveawayEntrySelect<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetSelect<{
   giveawayId?: boolean
   userId?: boolean
+  displayName?: boolean
   createdAt?: boolean
   giveaway?: boolean | Prisma.GiveawayDefaultArgs<ExtArgs>
 }, ExtArgs["result"]["giveawayEntry"]>
@@ -442,6 +472,7 @@ export type GiveawayEntrySelect<ExtArgs extends runtime.Types.Extensions.Interna
 export type GiveawayEntrySelectCreateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetSelect<{
   giveawayId?: boolean
   userId?: boolean
+  displayName?: boolean
   createdAt?: boolean
   giveaway?: boolean | Prisma.GiveawayDefaultArgs<ExtArgs>
 }, ExtArgs["result"]["giveawayEntry"]>
@@ -449,6 +480,7 @@ export type GiveawayEntrySelectCreateManyAndReturn<ExtArgs extends runtime.Types
 export type GiveawayEntrySelectUpdateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetSelect<{
   giveawayId?: boolean
   userId?: boolean
+  displayName?: boolean
   createdAt?: boolean
   giveaway?: boolean | Prisma.GiveawayDefaultArgs<ExtArgs>
 }, ExtArgs["result"]["giveawayEntry"]>
@@ -456,10 +488,11 @@ export type GiveawayEntrySelectUpdateManyAndReturn<ExtArgs extends runtime.Types
 export type GiveawayEntrySelectScalar = {
   giveawayId?: boolean
   userId?: boolean
+  displayName?: boolean
   createdAt?: boolean
 }
 
-export type GiveawayEntryOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"giveawayId" | "userId" | "createdAt", ExtArgs["result"]["giveawayEntry"]>
+export type GiveawayEntryOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"giveawayId" | "userId" | "displayName" | "createdAt", ExtArgs["result"]["giveawayEntry"]>
 export type GiveawayEntryInclude<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   giveaway?: boolean | Prisma.GiveawayDefaultArgs<ExtArgs>
 }
@@ -478,6 +511,7 @@ export type $GiveawayEntryPayload<ExtArgs extends runtime.Types.Extensions.Inter
   scalars: runtime.Types.Extensions.GetPayloadResult<{
     giveawayId: number
     userId: string
+    displayName: string | null
     createdAt: Date
   }, ExtArgs["result"]["giveawayEntry"]>
   composites: {}
@@ -905,6 +939,7 @@ export interface Prisma__GiveawayEntryClient<T, Null = never, ExtArgs extends ru
 export interface GiveawayEntryFieldRefs {
   readonly giveawayId: Prisma.FieldRef<"GiveawayEntry", 'Int'>
   readonly userId: Prisma.FieldRef<"GiveawayEntry", 'String'>
+  readonly displayName: Prisma.FieldRef<"GiveawayEntry", 'String'>
   readonly createdAt: Prisma.FieldRef<"GiveawayEntry", 'DateTime'>
 }
     

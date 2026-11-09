@@ -1,12 +1,18 @@
 import { ForbiddenException, Injectable, NotFoundException } from '@nestjs/common';
 import { PrismaClient } from '@phenix/database';
-import type { GuildChannelSummary, GuildRoleSummary, ManageableGuild } from '@phenix/shared';
+import type {
+  GuildChannelSummary,
+  GuildRoleSummary,
+  ManageableGuild,
+  GuildCategorySummary,
+} from '@phenix/shared';
 import { ChannelType } from 'discord-api-types/v10';
 import { CacheService } from '../../core/cache.service.js';
 import { DiscordService } from '../../discord/discord.service.js';
 import type { Session } from '../auth/session.service.js';
 import { canManageGuild } from './permissions.js';
 import { guildIconUrl } from '../../discord/cdn.js';
+import { hasForbiddenPermissions } from '@phenix/shared';
 
 /** Discord limite fortement ces appels : on garde les réponses une minute. */
 const CACHE_SECONDS = 60;
@@ -86,17 +92,50 @@ export class GuildsService {
     });
   }
 
+  /** Les catégories du serveur, dans l'ordre de Discord : les tickets s'ouvrent dans l'une d'elles. */
+  async categories(guildId: string): Promise<GuildCategorySummary[]> {
+    return this.cache.wrap(`guild-categories:${guildId}`, CACHE_SECONDS, async () => {
+      const all = (await this.discord.getGuildChannels(guildId)) as DiscordChannel[];
+      return all
+        .filter((channel) => channel.type === ChannelType.GuildCategory)
+        .toSorted((a, b) => (a.position ?? 0) - (b.position ?? 0))
+        .map((category) => ({ id: category.id, name: category.name ?? category.id }));
+    });
+  }
+
+  /**
+   * Les rôles du serveur, du plus haut au plus bas. Chacun dit si le bot peut le distribuer :
+   * Discord refuse qu'un bot donne un rôle placé au-dessus du sien, et on refuse les rôles de staff.
+   */
   async roles(guildId: string): Promise<GuildRoleSummary[]> {
     return this.cache.wrap(`guild-roles:${guildId}`, CACHE_SECONDS, async () => {
-      const all = await this.discord.getGuildRoles(guildId);
+      const [all, bot] = await Promise.all([
+        this.discord.getGuildRoles(guildId),
+        this.discord.getBotMember(guildId),
+      ]);
+      const botTop = Math.max(
+        0,
+        ...all.filter((role) => bot.roles.includes(role.id)).map((role) => role.position),
+      );
+
       return all
         .filter((role) => role.id !== guildId && !role.managed) // ni @everyone, ni rôle de bot
         .toSorted((a, b) => b.position - a.position)
-        .map((role) => ({
-          id: role.id,
-          name: role.name,
-          color: role.color ? `#${role.color.toString(16).padStart(6, '0')}` : null,
-        }));
+        .map((role) => {
+          const blockedReason =
+            role.position >= botTop
+              ? 'Placé au-dessus du rôle du bot'
+              : hasForbiddenPermissions(role.permissions)
+                ? 'Donne des droits de modération ou d’administration'
+                : null;
+          return {
+            id: role.id,
+            name: role.name,
+            color: role.color ? `#${role.color.toString(16).padStart(6, '0')}` : null,
+            assignable: blockedReason === null,
+            blockedReason,
+          };
+        });
     });
   }
 

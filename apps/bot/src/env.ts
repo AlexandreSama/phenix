@@ -1,4 +1,5 @@
 import { z } from 'zod';
+import { storageEnvSchema } from '@phenix/storage';
 
 const snowflake = z.string().regex(/^\d{17,20}$/, 'ID Discord invalide');
 
@@ -6,7 +7,7 @@ const snowflake = z.string().regex(/^\d{17,20}$/, 'ID Discord invalide');
 const optional = <T extends z.ZodType>(schema: T) =>
   z.preprocess((value) => (value === '' ? undefined : value), schema.optional());
 
-const envSchema = z.object({
+const envSchema = storageEnvSchema.extend({
   NODE_ENV: z.enum(['development', 'production', 'test']).default('development'),
   LOG_LEVEL: z.enum(['fatal', 'error', 'warn', 'info', 'debug', 'trace']).default('info'),
   DATABASE_URL: z.string().min(1),

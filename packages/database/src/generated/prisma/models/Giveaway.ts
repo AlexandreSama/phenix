@@ -47,6 +47,9 @@ export type GiveawayMinAggregateOutputType = {
   requiredRoleId: string | null
   endsAt: Date | null
   endedAt: Date | null
+  announcedAt: Date | null
+  publishedAt: Date | null
+  publishError: string | null
   createdAt: Date | null
 }
 
@@ -61,6 +64,9 @@ export type GiveawayMaxAggregateOutputType = {
   requiredRoleId: string | null
   endsAt: Date | null
   endedAt: Date | null
+  announcedAt: Date | null
+  publishedAt: Date | null
+  publishError: string | null
   createdAt: Date | null
 }
 
@@ -76,6 +82,9 @@ export type GiveawayCountAggregateOutputType = {
   endsAt: number
   endedAt: number
   winnerIds: number
+  announcedAt: number
+  publishedAt: number
+  publishError: number
   createdAt: number
   _all: number
 }
@@ -102,6 +111,9 @@ export type GiveawayMinAggregateInputType = {
   requiredRoleId?: true
   endsAt?: true
   endedAt?: true
+  announcedAt?: true
+  publishedAt?: true
+  publishError?: true
   createdAt?: true
 }
 
@@ -116,6 +128,9 @@ export type GiveawayMaxAggregateInputType = {
   requiredRoleId?: true
   endsAt?: true
   endedAt?: true
+  announcedAt?: true
+  publishedAt?: true
+  publishError?: true
   createdAt?: true
 }
 
@@ -131,6 +146,9 @@ export type GiveawayCountAggregateInputType = {
   endsAt?: true
   endedAt?: true
   winnerIds?: true
+  announcedAt?: true
+  publishedAt?: true
+  publishError?: true
   createdAt?: true
   _all?: true
 }
@@ -233,6 +251,9 @@ export type GiveawayGroupByOutputType = {
   endsAt: Date
   endedAt: Date | null
   winnerIds: string[]
+  announcedAt: Date | null
+  publishedAt: Date | null
+  publishError: string | null
   createdAt: Date
   _count: GiveawayCountAggregateOutputType | null
   _avg: GiveawayAvgAggregateOutputType | null
@@ -271,6 +292,9 @@ export type GiveawayWhereInput = {
   endsAt?: Prisma.DateTimeFilter<"Giveaway"> | Date | string
   endedAt?: Prisma.DateTimeNullableFilter<"Giveaway"> | Date | string | null
   winnerIds?: Prisma.StringNullableListFilter<"Giveaway">
+  announcedAt?: Prisma.DateTimeNullableFilter<"Giveaway"> | Date | string | null
+  publishedAt?: Prisma.DateTimeNullableFilter<"Giveaway"> | Date | string | null
+  publishError?: Prisma.StringNullableFilter<"Giveaway"> | string | null
   createdAt?: Prisma.DateTimeFilter<"Giveaway"> | Date | string
   guild?: Prisma.XOR<Prisma.GuildScalarRelationFilter, Prisma.GuildWhereInput>
   entries?: Prisma.GiveawayEntryListRelationFilter
@@ -288,6 +312,9 @@ export type GiveawayOrderByWithRelationInput = {
   endsAt?: Prisma.SortOrder
   endedAt?: Prisma.SortOrderInput | Prisma.SortOrder
   winnerIds?: Prisma.SortOrder
+  announcedAt?: Prisma.SortOrderInput | Prisma.SortOrder
+  publishedAt?: Prisma.SortOrderInput | Prisma.SortOrder
+  publishError?: Prisma.SortOrderInput | Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   guild?: Prisma.GuildOrderByWithRelationInput
   entries?: Prisma.GiveawayEntryOrderByRelationAggregateInput
@@ -308,6 +335,9 @@ export type GiveawayWhereUniqueInput = Prisma.AtLeast<{
   endsAt?: Prisma.DateTimeFilter<"Giveaway"> | Date | string
   endedAt?: Prisma.DateTimeNullableFilter<"Giveaway"> | Date | string | null
   winnerIds?: Prisma.StringNullableListFilter<"Giveaway">
+  announcedAt?: Prisma.DateTimeNullableFilter<"Giveaway"> | Date | string | null
+  publishedAt?: Prisma.DateTimeNullableFilter<"Giveaway"> | Date | string | null
+  publishError?: Prisma.StringNullableFilter<"Giveaway"> | string | null
   createdAt?: Prisma.DateTimeFilter<"Giveaway"> | Date | string
   guild?: Prisma.XOR<Prisma.GuildScalarRelationFilter, Prisma.GuildWhereInput>
   entries?: Prisma.GiveawayEntryListRelationFilter
@@ -325,6 +355,9 @@ export type GiveawayOrderByWithAggregationInput = {
   endsAt?: Prisma.SortOrder
   endedAt?: Prisma.SortOrderInput | Prisma.SortOrder
   winnerIds?: Prisma.SortOrder
+  announcedAt?: Prisma.SortOrderInput | Prisma.SortOrder
+  publishedAt?: Prisma.SortOrderInput | Prisma.SortOrder
+  publishError?: Prisma.SortOrderInput | Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   _count?: Prisma.GiveawayCountOrderByAggregateInput
   _avg?: Prisma.GiveawayAvgOrderByAggregateInput
@@ -348,6 +381,9 @@ export type GiveawayScalarWhereWithAggregatesInput = {
   endsAt?: Prisma.DateTimeWithAggregatesFilter<"Giveaway"> | Date | string
   endedAt?: Prisma.DateTimeNullableWithAggregatesFilter<"Giveaway"> | Date | string | null
   winnerIds?: Prisma.StringNullableListFilter<"Giveaway">
+  announcedAt?: Prisma.DateTimeNullableWithAggregatesFilter<"Giveaway"> | Date | string | null
+  publishedAt?: Prisma.DateTimeNullableWithAggregatesFilter<"Giveaway"> | Date | string | null
+  publishError?: Prisma.StringNullableWithAggregatesFilter<"Giveaway"> | string | null
   createdAt?: Prisma.DateTimeWithAggregatesFilter<"Giveaway"> | Date | string
 }
 
@@ -361,6 +397,9 @@ export type GiveawayCreateInput = {
   endsAt: Date | string
   endedAt?: Date | string | null
   winnerIds?: Prisma.GiveawayCreatewinnerIdsInput | string[]
+  announcedAt?: Date | string | null
+  publishedAt?: Date | string | null
+  publishError?: string | null
   createdAt?: Date | string
   guild: Prisma.GuildCreateNestedOneWithoutGiveawaysInput
   entries?: Prisma.GiveawayEntryCreateNestedManyWithoutGiveawayInput
@@ -378,6 +417,9 @@ export type GiveawayUncheckedCreateInput = {
   endsAt: Date | string
   endedAt?: Date | string | null
   winnerIds?: Prisma.GiveawayCreatewinnerIdsInput | string[]
+  announcedAt?: Date | string | null
+  publishedAt?: Date | string | null
+  publishError?: string | null
   createdAt?: Date | string
   entries?: Prisma.GiveawayEntryUncheckedCreateNestedManyWithoutGiveawayInput
 }
@@ -392,6 +434,9 @@ export type GiveawayUpdateInput = {
   endsAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   endedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   winnerIds?: Prisma.GiveawayUpdatewinnerIdsInput | string[]
+  announcedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  publishedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  publishError?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   guild?: Prisma.GuildUpdateOneRequiredWithoutGiveawaysNestedInput
   entries?: Prisma.GiveawayEntryUpdateManyWithoutGiveawayNestedInput
@@ -409,6 +454,9 @@ export type GiveawayUncheckedUpdateInput = {
   endsAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   endedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   winnerIds?: Prisma.GiveawayUpdatewinnerIdsInput | string[]
+  announcedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  publishedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  publishError?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   entries?: Prisma.GiveawayEntryUncheckedUpdateManyWithoutGiveawayNestedInput
 }
@@ -425,6 +473,9 @@ export type GiveawayCreateManyInput = {
   endsAt: Date | string
   endedAt?: Date | string | null
   winnerIds?: Prisma.GiveawayCreatewinnerIdsInput | string[]
+  announcedAt?: Date | string | null
+  publishedAt?: Date | string | null
+  publishError?: string | null
   createdAt?: Date | string
 }
 
@@ -438,6 +489,9 @@ export type GiveawayUpdateManyMutationInput = {
   endsAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   endedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   winnerIds?: Prisma.GiveawayUpdatewinnerIdsInput | string[]
+  announcedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  publishedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  publishError?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
 }
 
@@ -453,6 +507,9 @@ export type GiveawayUncheckedUpdateManyInput = {
   endsAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   endedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   winnerIds?: Prisma.GiveawayUpdatewinnerIdsInput | string[]
+  announcedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  publishedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  publishError?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
 }
 
@@ -478,6 +535,9 @@ export type GiveawayCountOrderByAggregateInput = {
   endsAt?: Prisma.SortOrder
   endedAt?: Prisma.SortOrder
   winnerIds?: Prisma.SortOrder
+  announcedAt?: Prisma.SortOrder
+  publishedAt?: Prisma.SortOrder
+  publishError?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
 }
 
@@ -497,6 +557,9 @@ export type GiveawayMaxOrderByAggregateInput = {
   requiredRoleId?: Prisma.SortOrder
   endsAt?: Prisma.SortOrder
   endedAt?: Prisma.SortOrder
+  announcedAt?: Prisma.SortOrder
+  publishedAt?: Prisma.SortOrder
+  publishError?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
 }
 
@@ -511,6 +574,9 @@ export type GiveawayMinOrderByAggregateInput = {
   requiredRoleId?: Prisma.SortOrder
   endsAt?: Prisma.SortOrder
   endedAt?: Prisma.SortOrder
+  announcedAt?: Prisma.SortOrder
+  publishedAt?: Prisma.SortOrder
+  publishError?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
 }
 
@@ -599,6 +665,9 @@ export type GiveawayCreateWithoutGuildInput = {
   endsAt: Date | string
   endedAt?: Date | string | null
   winnerIds?: Prisma.GiveawayCreatewinnerIdsInput | string[]
+  announcedAt?: Date | string | null
+  publishedAt?: Date | string | null
+  publishError?: string | null
   createdAt?: Date | string
   entries?: Prisma.GiveawayEntryCreateNestedManyWithoutGiveawayInput
 }
@@ -614,6 +683,9 @@ export type GiveawayUncheckedCreateWithoutGuildInput = {
   endsAt: Date | string
   endedAt?: Date | string | null
   winnerIds?: Prisma.GiveawayCreatewinnerIdsInput | string[]
+  announcedAt?: Date | string | null
+  publishedAt?: Date | string | null
+  publishError?: string | null
   createdAt?: Date | string
   entries?: Prisma.GiveawayEntryUncheckedCreateNestedManyWithoutGiveawayInput
 }
@@ -659,6 +731,9 @@ export type GiveawayScalarWhereInput = {
   endsAt?: Prisma.DateTimeFilter<"Giveaway"> | Date | string
   endedAt?: Prisma.DateTimeNullableFilter<"Giveaway"> | Date | string | null
   winnerIds?: Prisma.StringNullableListFilter<"Giveaway">
+  announcedAt?: Prisma.DateTimeNullableFilter<"Giveaway"> | Date | string | null
+  publishedAt?: Prisma.DateTimeNullableFilter<"Giveaway"> | Date | string | null
+  publishError?: Prisma.StringNullableFilter<"Giveaway"> | string | null
   createdAt?: Prisma.DateTimeFilter<"Giveaway"> | Date | string
 }
 
@@ -672,6 +747,9 @@ export type GiveawayCreateWithoutEntriesInput = {
   endsAt: Date | string
   endedAt?: Date | string | null
   winnerIds?: Prisma.GiveawayCreatewinnerIdsInput | string[]
+  announcedAt?: Date | string | null
+  publishedAt?: Date | string | null
+  publishError?: string | null
   createdAt?: Date | string
   guild: Prisma.GuildCreateNestedOneWithoutGiveawaysInput
 }
@@ -688,6 +766,9 @@ export type GiveawayUncheckedCreateWithoutEntriesInput = {
   endsAt: Date | string
   endedAt?: Date | string | null
   winnerIds?: Prisma.GiveawayCreatewinnerIdsInput | string[]
+  announcedAt?: Date | string | null
+  publishedAt?: Date | string | null
+  publishError?: string | null
   createdAt?: Date | string
 }
 
@@ -717,6 +798,9 @@ export type GiveawayUpdateWithoutEntriesInput = {
   endsAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   endedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   winnerIds?: Prisma.GiveawayUpdatewinnerIdsInput | string[]
+  announcedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  publishedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  publishError?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   guild?: Prisma.GuildUpdateOneRequiredWithoutGiveawaysNestedInput
 }
@@ -733,6 +817,9 @@ export type GiveawayUncheckedUpdateWithoutEntriesInput = {
   endsAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   endedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   winnerIds?: Prisma.GiveawayUpdatewinnerIdsInput | string[]
+  announcedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  publishedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  publishError?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
 }
 
@@ -747,6 +834,9 @@ export type GiveawayCreateManyGuildInput = {
   endsAt: Date | string
   endedAt?: Date | string | null
   winnerIds?: Prisma.GiveawayCreatewinnerIdsInput | string[]
+  announcedAt?: Date | string | null
+  publishedAt?: Date | string | null
+  publishError?: string | null
   createdAt?: Date | string
 }
 
@@ -760,6 +850,9 @@ export type GiveawayUpdateWithoutGuildInput = {
   endsAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   endedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   winnerIds?: Prisma.GiveawayUpdatewinnerIdsInput | string[]
+  announcedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  publishedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  publishError?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   entries?: Prisma.GiveawayEntryUpdateManyWithoutGiveawayNestedInput
 }
@@ -775,6 +868,9 @@ export type GiveawayUncheckedUpdateWithoutGuildInput = {
   endsAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   endedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   winnerIds?: Prisma.GiveawayUpdatewinnerIdsInput | string[]
+  announcedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  publishedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  publishError?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   entries?: Prisma.GiveawayEntryUncheckedUpdateManyWithoutGiveawayNestedInput
 }
@@ -790,6 +886,9 @@ export type GiveawayUncheckedUpdateManyWithoutGuildInput = {
   endsAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   endedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   winnerIds?: Prisma.GiveawayUpdatewinnerIdsInput | string[]
+  announcedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  publishedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  publishError?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
 }
 
@@ -836,6 +935,9 @@ export type GiveawaySelect<ExtArgs extends runtime.Types.Extensions.InternalArgs
   endsAt?: boolean
   endedAt?: boolean
   winnerIds?: boolean
+  announcedAt?: boolean
+  publishedAt?: boolean
+  publishError?: boolean
   createdAt?: boolean
   guild?: boolean | Prisma.GuildDefaultArgs<ExtArgs>
   entries?: boolean | Prisma.Giveaway$entriesArgs<ExtArgs>
@@ -854,6 +956,9 @@ export type GiveawaySelectCreateManyAndReturn<ExtArgs extends runtime.Types.Exte
   endsAt?: boolean
   endedAt?: boolean
   winnerIds?: boolean
+  announcedAt?: boolean
+  publishedAt?: boolean
+  publishError?: boolean
   createdAt?: boolean
   guild?: boolean | Prisma.GuildDefaultArgs<ExtArgs>
 }, ExtArgs["result"]["giveaway"]>
@@ -870,6 +975,9 @@ export type GiveawaySelectUpdateManyAndReturn<ExtArgs extends runtime.Types.Exte
   endsAt?: boolean
   endedAt?: boolean
   winnerIds?: boolean
+  announcedAt?: boolean
+  publishedAt?: boolean
+  publishError?: boolean
   createdAt?: boolean
   guild?: boolean | Prisma.GuildDefaultArgs<ExtArgs>
 }, ExtArgs["result"]["giveaway"]>
@@ -886,10 +994,13 @@ export type GiveawaySelectScalar = {
   endsAt?: boolean
   endedAt?: boolean
   winnerIds?: boolean
+  announcedAt?: boolean
+  publishedAt?: boolean
+  publishError?: boolean
   createdAt?: boolean
 }
 
-export type GiveawayOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "guildId" | "channelId" | "messageId" | "hostId" | "prize" | "winnersCount" | "requiredRoleId" | "endsAt" | "endedAt" | "winnerIds" | "createdAt", ExtArgs["result"]["giveaway"]>
+export type GiveawayOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "guildId" | "channelId" | "messageId" | "hostId" | "prize" | "winnersCount" | "requiredRoleId" | "endsAt" | "endedAt" | "winnerIds" | "announcedAt" | "publishedAt" | "publishError" | "createdAt", ExtArgs["result"]["giveaway"]>
 export type GiveawayInclude<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   guild?: boolean | Prisma.GuildDefaultArgs<ExtArgs>
   entries?: boolean | Prisma.Giveaway$entriesArgs<ExtArgs>
@@ -920,6 +1031,9 @@ export type $GiveawayPayload<ExtArgs extends runtime.Types.Extensions.InternalAr
     endsAt: Date
     endedAt: Date | null
     winnerIds: string[]
+    announcedAt: Date | null
+    publishedAt: Date | null
+    publishError: string | null
     createdAt: Date
   }, ExtArgs["result"]["giveaway"]>
   composites: {}
@@ -1357,6 +1471,9 @@ export interface GiveawayFieldRefs {
   readonly endsAt: Prisma.FieldRef<"Giveaway", 'DateTime'>
   readonly endedAt: Prisma.FieldRef<"Giveaway", 'DateTime'>
   readonly winnerIds: Prisma.FieldRef<"Giveaway", 'String[]'>
+  readonly announcedAt: Prisma.FieldRef<"Giveaway", 'DateTime'>
+  readonly publishedAt: Prisma.FieldRef<"Giveaway", 'DateTime'>
+  readonly publishError: Prisma.FieldRef<"Giveaway", 'String'>
   readonly createdAt: Prisma.FieldRef<"Giveaway", 'DateTime'>
 }
     

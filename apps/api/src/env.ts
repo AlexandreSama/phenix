@@ -1,6 +1,7 @@
 import { z } from 'zod';
+import { storageEnvSchema } from '@phenix/storage';
 
-const envSchema = z.object({
+const envSchema = storageEnvSchema.extend({
   NODE_ENV: z.enum(['development', 'production', 'test']).default('development'),
   LOG_LEVEL: z.enum(['fatal', 'error', 'warn', 'info', 'debug', 'trace']).default('info'),
   API_PORT: z.coerce.number().int().min(1).max(65_535).default(3000),

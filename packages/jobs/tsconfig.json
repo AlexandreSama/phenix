@@ -1,0 +1,4 @@
+{
+  "extends": "@phenix/config/tsconfig.node.json",
+  "include": ["src", "test"]
+}

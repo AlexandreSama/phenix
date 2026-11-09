@@ -6,8 +6,21 @@ export const BOT_EVENTS_CHANNEL = 'bot:events';
 export const botEventSchema = z.discriminatedUnion('type', [
   z.object({ type: z.literal('config.updated'), guildId: z.string() }),
   z.object({ type: z.literal('rolePanel.publish'), panelId: z.number().int() }),
-  z.object({ type: z.literal('giveaway.publish'), giveawayId: z.number().int() }),
+  // Le panel n'existe plus en base : l'événement porte de quoi retrouver son message
+  z.object({
+    type: z.literal('rolePanel.delete'),
+    guildId: z.string(),
+    channelId: z.string(),
+    messageId: z.string(),
+  }),
   z.object({ type: z.literal('ticketPanel.publish'), guildId: z.string() }),
+  // Le panel change de salon : l'ancien message part, comme pour un panel de rôles
+  z.object({
+    type: z.literal('ticketPanel.delete'),
+    guildId: z.string(),
+    channelId: z.string(),
+    messageId: z.string(),
+  }),
 ]);
 
 export type BotEvent = z.infer<typeof botEventSchema>;

@@ -9,7 +9,15 @@ const config = {
   staffRoleIds: [],
 };
 const channels = [{ id: '400000000000000001', name: 'logs', parentName: 'Staff' }];
-const roles = [{ id: '500000000000000001', name: 'Modérateur', color: null }];
+const roles = [
+  {
+    id: '500000000000000001',
+    name: 'Modérateur',
+    color: null,
+    assignable: false,
+    blockedReason: null,
+  },
+];
 
 function setup(onSubmit = vi.fn().mockResolvedValue(undefined)) {
   render(

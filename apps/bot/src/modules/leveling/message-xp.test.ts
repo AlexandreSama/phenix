@@ -20,6 +20,9 @@ const settings: GuildSettings = {
   xpCooldownSec: 60,
   levelUpChannelId: null,
   leaderboardPublic: true,
+  ticketCategoryId: null,
+  ticketStaffRoleIds: [],
+  ticketLogChannelId: null,
 };
 
 /** Faux message : seulement ce que le handler lit. */

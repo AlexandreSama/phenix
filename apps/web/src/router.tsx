@@ -15,6 +15,13 @@ import { NotFound, RootLayout } from './root-layout';
 import { GuildLayout } from './features/dashboard/guild-layout';
 import { LevelingSettingsPage } from './features/dashboard/leveling/leveling-settings-page';
 import { LeaderboardPage } from './features/leaderboard/leaderboard-page';
+import { RolePanelsPage } from './features/dashboard/roles/role-panels-page';
+import { RolePanelEditorPage } from './features/dashboard/roles/role-panel-editor-page';
+import { TicketsPage } from './features/dashboard/tickets/tickets-page';
+import { TicketSettingsPage } from './features/dashboard/tickets/ticket-settings-page';
+import { TranscriptPage } from './features/dashboard/tickets/transcript-page';
+import { GiveawaysPage } from './features/dashboard/giveaways/giveaway-page';
+import { GiveawayCreatePage } from './features/dashboard/giveaways/giveaway-create-page';
 
 const rootRoute = createRootRouteWithContext<{ queryClient: QueryClient }>()({
   component: RootLayout,
@@ -71,12 +78,90 @@ const leaderboardRoute = createRoute({
   component: LeaderboardPage,
 });
 
+/** Onglet « Rôles » : sans composant, la route affiche simplement sa page enfant. */
+const guildRolesRoute = createRoute({
+  getParentRoute: () => guildRoute,
+  path: 'roles',
+});
+
+const rolePanelsRoute = createRoute({
+  getParentRoute: () => guildRolesRoute,
+  path: '/',
+  component: RolePanelsPage,
+});
+
+/** `nouveau` pour créer, l'ID du panel pour le modifier. */
+const rolePanelEditorRoute = createRoute({
+  getParentRoute: () => guildRolesRoute,
+  path: '$panelId',
+  component: RolePanelEditorPage,
+});
+
+/** Onglet « Tickets » : la liste, les réglages et la lecture d'un transcript. */
+const guildTicketsRoute = createRoute({
+  getParentRoute: () => guildRoute,
+  path: 'tickets',
+});
+
+/** Un filtre ou une page invalide dans l'URL revient à la valeur par défaut. */
+const ticketsRoute = createRoute({
+  getParentRoute: () => guildTicketsRoute,
+  path: '/',
+  validateSearch: z.object({
+    status: z.enum(['open', 'closed']).optional().catch(undefined),
+    page: z.number().int().min(1).optional().catch(undefined),
+  }),
+  component: TicketsPage,
+});
+
+/** Chemin fixe : il passe avant $ticketId, TanStack Router préfère toujours le plus précis. */
+const ticketSettingsRoute = createRoute({
+  getParentRoute: () => guildTicketsRoute,
+  path: 'reglages',
+  component: TicketSettingsPage,
+});
+
+const transcriptRoute = createRoute({
+  getParentRoute: () => guildTicketsRoute,
+  path: '$ticketId',
+  component: TranscriptPage,
+});
+
+/** Onglet « Giveaways » : la liste et le formulaire de création. */
+const guildGiveawaysRoute = createRoute({
+  getParentRoute: () => guildRoute,
+  path: 'giveaways',
+});
+
+const giveawaysRoute = createRoute({
+  getParentRoute: () => guildGiveawaysRoute,
+  path: '/',
+  validateSearch: z.object({
+    status: z.enum(['active', 'ended']).optional().catch(undefined),
+    page: z.number().int().min(1).optional().catch(undefined),
+  }),
+  component: GiveawaysPage,
+});
+
+const giveawayCreateRoute = createRoute({
+  getParentRoute: () => guildGiveawaysRoute,
+  path: 'nouveau',
+  component: GiveawayCreatePage,
+});
+
 const routeTree = rootRoute.addChildren([
   homeRoute,
   leaderboardRoute,
   dashboardRoute.addChildren([
     guildPickerRoute,
     guildRoute.addChildren([guildGeneralRoute, guildLevelingRoute]),
+  ]),
+  guildRoute.addChildren([
+    guildGeneralRoute,
+    guildLevelingRoute,
+    guildRolesRoute.addChildren([rolePanelsRoute, rolePanelEditorRoute]),
+    guildTicketsRoute.addChildren([ticketsRoute, ticketSettingsRoute, transcriptRoute]),
+    guildGiveawaysRoute.addChildren([giveawaysRoute, giveawayCreateRoute]),
   ]),
 ]);
 

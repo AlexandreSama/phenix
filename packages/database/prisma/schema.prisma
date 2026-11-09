@@ -40,6 +40,7 @@ model Guild {
   levels        MemberLevel[]
   marriages     Marriage[]
   tickets       Ticket[]
+  ticketPanel   TicketPanel?
   giveaways     Giveaway[]
   rolePanels    RolePanel[]
   td2Events     Td2Event[]
@@ -141,13 +142,34 @@ model Ticket {
   number        Int
   channelId     String       @unique
   ownerId       String
+  ownerName     String? // pseudo à l'ouverture, pour la liste du site
   status        TicketStatus @default(OPEN)
   closedById    String?
-  transcriptKey String?
+  closedByName  String?
+  messageCount  Int? // messages dans le transcript
+  transcriptKey String? // clé S3 du transcript
   createdAt     DateTime     @default(now())
   closedAt      DateTime?
 
   @@unique([guildId, number])
+  @@index([guildId, status])
+  @@index([guildId, ownerId, status])
+}
+
+/**
+ * Le message « Ouvrir un ticket » d'un serveur : un seul par serveur.
+ */
+model TicketPanel {
+  guildId      String    @id
+  guild        Guild     @relation(fields: [guildId], references: [id], onDelete: Cascade)
+  channelId    String
+  messageId    String?   @unique
+  title        String
+  description  String?
+  buttonLabel  String
+  // publication : mêmes règles que RolePanel
+  publishedAt  DateTime?
+  publishError String?
 }
 
 // ---------- Giveaways ----------
@@ -162,17 +184,24 @@ model Giveaway {
   winnersCount   Int             @default(1)
   requiredRoleId String?
   endsAt         DateTime
-  endedAt        DateTime?
+  endedAt        DateTime? // tirage fait : les gagnants sont dans winnerIds
   winnerIds      String[]
+  announcedAt    DateTime? // message final et félicitations envoyés
+  // publication du message : mêmes règles que les panels
+  publishedAt    DateTime?
+  publishError   String?
   entries        GiveawayEntry[]
   createdAt      DateTime        @default(now())
+
+  @@index([guildId, endedAt])
 }
 
 model GiveawayEntry {
-  giveawayId Int
-  userId     String
-  giveaway   Giveaway @relation(fields: [giveawayId], references: [id], onDelete: Cascade)
-  createdAt  DateTime @default(now())
+  giveawayId  Int
+  userId      String
+  displayName String? // pseudo à l'inscription, pour afficher les gagnants sur le site
+  giveaway    Giveaway @relation(fields: [giveawayId], references: [id], onDelete: Cascade)
+  createdAt   DateTime @default(now())
 
   @@id([giveawayId, userId])
 }
@@ -184,15 +213,21 @@ enum RolePanelMode {
 }
 
 model RolePanel {
-  id          Int               @id @default(autoincrement())
-  guildId     String
-  guild       Guild             @relation(fields: [guildId], references: [id], onDelete: Cascade)
-  channelId   String
-  messageId   String?           @unique
-  title       String
-  description String?
-  mode        RolePanelMode     @default(MULTIPLE)
-  options     RolePanelOption[]
+  id           Int               @id @default(autoincrement())
+  guildId      String
+  guild        Guild             @relation(fields: [guildId], references: [id], onDelete: Cascade)
+  channelId    String
+  messageId    String?           @unique
+  title        String
+  description  String?
+  mode         RolePanelMode     @default(MULTIPLE)
+  options      RolePanelOption[]
+  // publication : le site remet les deux à null, le bot remplit l'un ou l'autre
+  publishedAt  DateTime?
+  publishError String?
+  createdAt    DateTime          @default(now())
+
+  @@index([guildId])
 }
 
 model RolePanelOption {

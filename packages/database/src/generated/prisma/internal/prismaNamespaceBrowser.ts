@@ -58,6 +58,7 @@ export const ModelName = {
   MemberLevel: 'MemberLevel',
   Marriage: 'Marriage',
   Ticket: 'Ticket',
+  TicketPanel: 'TicketPanel',
   Giveaway: 'Giveaway',
   GiveawayEntry: 'GiveawayEntry',
   RolePanel: 'RolePanel',
@@ -189,14 +190,31 @@ export const TicketScalarFieldEnum = {
   number: 'number',
   channelId: 'channelId',
   ownerId: 'ownerId',
+  ownerName: 'ownerName',
   status: 'status',
   closedById: 'closedById',
+  closedByName: 'closedByName',
+  messageCount: 'messageCount',
   transcriptKey: 'transcriptKey',
   createdAt: 'createdAt',
   closedAt: 'closedAt'
 } as const
 
 export type TicketScalarFieldEnum = (typeof TicketScalarFieldEnum)[keyof typeof TicketScalarFieldEnum]
+
+
+export const TicketPanelScalarFieldEnum = {
+  guildId: 'guildId',
+  channelId: 'channelId',
+  messageId: 'messageId',
+  title: 'title',
+  description: 'description',
+  buttonLabel: 'buttonLabel',
+  publishedAt: 'publishedAt',
+  publishError: 'publishError'
+} as const
+
+export type TicketPanelScalarFieldEnum = (typeof TicketPanelScalarFieldEnum)[keyof typeof TicketPanelScalarFieldEnum]
 
 
 export const GiveawayScalarFieldEnum = {
@@ -211,6 +229,9 @@ export const GiveawayScalarFieldEnum = {
   endsAt: 'endsAt',
   endedAt: 'endedAt',
   winnerIds: 'winnerIds',
+  announcedAt: 'announcedAt',
+  publishedAt: 'publishedAt',
+  publishError: 'publishError',
   createdAt: 'createdAt'
 } as const
 
@@ -220,6 +241,7 @@ export type GiveawayScalarFieldEnum = (typeof GiveawayScalarFieldEnum)[keyof typ
 export const GiveawayEntryScalarFieldEnum = {
   giveawayId: 'giveawayId',
   userId: 'userId',
+  displayName: 'displayName',
   createdAt: 'createdAt'
 } as const
 
@@ -233,7 +255,10 @@ export const RolePanelScalarFieldEnum = {
   messageId: 'messageId',
   title: 'title',
   description: 'description',
-  mode: 'mode'
+  mode: 'mode',
+  publishedAt: 'publishedAt',
+  publishError: 'publishError',
+  createdAt: 'createdAt'
 } as const
 
 export type RolePanelScalarFieldEnum = (typeof RolePanelScalarFieldEnum)[keyof typeof RolePanelScalarFieldEnum]
