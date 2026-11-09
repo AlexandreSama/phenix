@@ -9,6 +9,7 @@ import { AppModule } from './app.module.js';
 import { configureApp } from './app.setup.js';
 import { DiscordService } from './discord/discord.service.js';
 import type { Env } from './env.js';
+import { TRANSCRIPTS } from './core/tokens.js';
 
 const env: Env = {
   NODE_ENV: 'test',
@@ -20,6 +21,11 @@ const env: Env = {
   DISCORD_CLIENT_ID: '123456789012345678',
   DISCORD_CLIENT_SECRET: 'secret',
   DISCORD_TOKEN: 'token',
+  S3_ENDPOINT: 'http://garage.invalid:3900',
+  S3_REGION: 'garage',
+  S3_ACCESS_KEY_ID: 'cle',
+  S3_SECRET_ACCESS_KEY: 'secret',
+  S3_TRANSCRIPTS_BUCKET: 'transcripts',
 };
 
 const MANAGED = '300000000000000001';
@@ -29,6 +35,7 @@ const OTHER_CHANNEL = '400000000000000002';
 const GAMER_ROLE = '600000000000000001';
 const MOD_ROLE = '600000000000000002';
 const BOT_ROLE = '600000000000000009';
+const CATEGORY = '400000000000000009';
 const SESSION_ID = 'a'.repeat(43);
 
 /** Valkey en mémoire : sessions, cache et publication. */
@@ -63,13 +70,55 @@ const publicGuild = {
   config: { leaderboardPublic: true },
 };
 
+/** Un ticket fermé, avec son transcript dans Garage. */
+const ticket = {
+  id: 12,
+  guildId: MANAGED,
+  number: 42,
+  channelId: '800000000000000001',
+  ownerId: '500000000000000001',
+  ownerName: 'Alpha',
+  status: 'CLOSED',
+  closedById: '500000000000000002',
+  closedByName: 'Modo',
+  messageCount: 8,
+  transcriptKey: `${MANAGED}/ticket-0042.html`,
+  createdAt: new Date('2026-11-07T12:00:00Z'),
+  closedAt: new Date('2026-11-07T13:00:00Z'),
+};
+const ticketPanel = {
+  guildId: MANAGED,
+  channelId: CHANNEL,
+  messageId: '700000000000000002',
+  title: 'Support',
+  description: null,
+  buttonLabel: 'Ouvrir un ticket',
+  publishedAt: new Date(),
+  publishError: null,
+};
+const transcripts = {
+  put: vi.fn(),
+  getText: vi.fn(async (_key: string): Promise<string | null> => '<!doctype html><p>Bonjour</p>'),
+};
+
 const db = {
+  $transaction: vi.fn(async (run: (tx: unknown) => Promise<unknown>) => run(db)),
+  ticket: {
+    count: vi.fn(async () => 25),
+    findMany: vi.fn(async () => [ticket]),
+    findUnique: vi.fn(async () => ticket as typeof ticket | null),
+  },
+  ticketPanel: {
+    findUnique: vi.fn(async () => ticketPanel as typeof ticketPanel | null),
+    upsert: vi.fn(async ({ update }: { update: object }) => ({ ...ticketPanel, ...update })),
+  },
   guild: {
     findMany: vi.fn(async () => [{ id: MANAGED }, { id: NOT_MANAGED }]),
     findUnique: vi.fn(async () => publicGuild),
   },
   guildConfig: {
-    upsert: vi.fn(async () => config),
+    findUnique: vi.fn(async () => null as object | null),
+    upsert: vi.fn(async (args: { update: object }) => ({ ...config, ...args.update })),
     update: vi.fn(async ({ data }: { data: object }) => ({ ...config, ...data })),
   },
   rolePanel: {
@@ -121,6 +170,7 @@ const discord = {
   getGuildChannels: vi.fn(async () => [
     { id: CHANNEL, type: 0, name: 'logs', position: 1 },
     { id: OTHER_CHANNEL, type: 0, name: 'roles', position: 2 },
+    { id: CATEGORY, type: 4, name: 'Support', position: 0 },
   ]),
   getGuildRoles: vi.fn(async () => [
     { id: MANAGED, name: '@everyone', position: 0, permissions: '0', color: 0, managed: false },
@@ -157,6 +207,8 @@ beforeAll(async () => {
     .useValue(redis)
     .overrideProvider(DiscordService)
     .useValue(discord)
+    .overrideProvider(TRANSCRIPTS)
+    .useValue(transcripts)
     .compile();
   app = moduleRef.createNestApplication<NestExpressApplication>();
   configureApp(app);
@@ -375,6 +427,105 @@ describe('panels de rôles', () => {
       .set('Cookie', cookie);
 
     expect([other.status, unreadable.status]).toEqual([404, 404]);
+  });
+});
+
+describe('tickets', () => {
+  const settings = {
+    categoryId: CATEGORY,
+    staffRoleIds: [MOD_ROLE],
+    logChannelId: null,
+    panel: { channelId: CHANNEL, title: 'Support', description: null, buttonLabel: 'Ouvrir' },
+  };
+
+  it('liste les catégories, où s’ouvrent les tickets', async () => {
+    const response = await request(app.getHttpServer())
+      .get(`/api/guilds/${MANAGED}/categories`)
+      .set('Cookie', cookie);
+
+    expect(response.body).toEqual([{ id: CATEGORY, name: 'Support' }]);
+  });
+
+  it('répond settings: null tant que rien n’est réglé', async () => {
+    const response = await request(app.getHttpServer())
+      .get(`/api/guilds/${MANAGED}/tickets/settings`)
+      .set('Cookie', cookie);
+
+    expect(response.body).toEqual({ settings: null });
+  });
+
+  it('refuse une catégorie et un rôle qui ne sont pas sur ce serveur', async () => {
+    const response = await request(app.getHttpServer())
+      .put(`/api/guilds/${MANAGED}/tickets/settings`)
+      .set('Cookie', cookie)
+      .send({ ...settings, categoryId: CHANNEL, staffRoleIds: ['600000000000000099'] });
+
+    expect(response.status).toBe(400);
+    expect(response.body.message).toEqual([
+      'Catégorie inconnue sur ce serveur',
+      'Rôle inconnu sur ce serveur',
+    ]);
+    expect(db.$transaction).not.toHaveBeenCalled();
+  });
+
+  it('enregistre en une transaction, retire l’ancien panel et publie le nouveau', async () => {
+    const response = await request(app.getHttpServer())
+      .put(`/api/guilds/${MANAGED}/tickets/settings`)
+      .set('Cookie', cookie)
+      .send({ ...settings, panel: { ...settings.panel, channelId: OTHER_CHANNEL } });
+
+    expect(response.status).toBe(200);
+    expect(response.body).toMatchObject({ categoryId: CATEGORY, panelStatus: 'pending' });
+    expect(db.ticketPanel.upsert).toHaveBeenCalledWith(
+      expect.objectContaining({ update: expect.objectContaining({ messageId: null }) }),
+    );
+    expect(redis.publish.mock.calls.map(([, message]) => JSON.parse(message).type)).toEqual([
+      'config.updated',
+      'ticketPanel.delete',
+      'ticketPanel.publish',
+    ]);
+  });
+
+  it('liste les tickets fermés du plus récent au plus ancien, par page', async () => {
+    const response = await request(app.getHttpServer())
+      .get(`/api/guilds/${MANAGED}/tickets?status=closed&page=2`)
+      .set('Cookie', cookie);
+
+    expect(response.body).toMatchObject({ page: 2, pageCount: 2, total: 25 });
+    expect(response.body.tickets[0]).toMatchObject({ number: 42, hasTranscript: true });
+    expect(db.ticket.findMany).toHaveBeenCalledWith(
+      expect.objectContaining({ orderBy: { closedAt: 'desc' }, skip: 20, take: 20 }),
+    );
+  });
+
+  it('sert le transcript sous une politique de sécurité stricte', async () => {
+    const response = await request(app.getHttpServer())
+      .get(`/api/guilds/${MANAGED}/tickets/12/transcript`)
+      .set('Cookie', cookie);
+
+    expect(response.status).toBe(200);
+    expect(response.headers['content-type']).toBe('text/html; charset=utf-8');
+    expect(response.headers['content-security-policy']).toContain("default-src 'none'");
+    expect(response.headers['content-security-policy']).toContain('sandbox');
+    expect(response.headers['content-disposition']).toBe('inline; filename="ticket-0042.html"');
+    expect(response.text).toBe('<!doctype html><p>Bonjour</p>');
+    expect(transcripts.getText).toHaveBeenCalledWith(`${MANAGED}/ticket-0042.html`);
+  });
+
+  it('répond 404 en JSON pour le ticket d’un autre serveur ou sans transcript', async () => {
+    db.ticket.findUnique.mockResolvedValueOnce({ ...ticket, guildId: NOT_MANAGED });
+    const other = await request(app.getHttpServer())
+      .get(`/api/guilds/${MANAGED}/tickets/12/transcript`)
+      .set('Cookie', cookie);
+
+    db.ticket.findUnique.mockResolvedValueOnce({ ...ticket, transcriptKey: null } as never);
+    const none = await request(app.getHttpServer())
+      .get(`/api/guilds/${MANAGED}/tickets/12/transcript`)
+      .set('Cookie', cookie);
+
+    expect([other.status, none.status]).toEqual([404, 404]);
+    expect(other.headers['content-type']).toContain('application/json');
+    expect(transcripts.getText).not.toHaveBeenCalled();
   });
 });
 

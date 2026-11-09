@@ -1,5 +1,5 @@
 import type { PrismaClient, RolePanel, RolePanelOption } from './generated/prisma/client.js';
-import type { PublicationStatus, RolePanelInput } from '@phenix/shared';
+import type { RolePanelInput } from '@phenix/shared';
 
 type Db = Pick<PrismaClient, 'rolePanel'>;
 
@@ -26,14 +26,6 @@ export function findPendingRolePanels(db: Db, guildIds: string[]): Promise<{ id:
     where: { guildId: { in: guildIds }, publishedAt: null, publishError: null },
     select: { id: true },
   });
-}
-
-/** Le site écrit, le bot confirme : l'état se lit sur les deux colonnes que le bot remplit. */
-export function publicationStatus(
-  panel: Pick<RolePanel, 'publishedAt' | 'publishError'>,
-): PublicationStatus {
-  if (panel.publishError) return 'error';
-  return panel.publishedAt ? 'published' : 'pending';
 }
 
 /**

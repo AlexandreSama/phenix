@@ -17,6 +17,9 @@ import { LevelingSettingsPage } from './features/dashboard/leveling/leveling-set
 import { LeaderboardPage } from './features/leaderboard/leaderboard-page';
 import { RolePanelsPage } from './features/dashboard/roles/role-panels-page';
 import { RolePanelEditorPage } from './features/dashboard/roles/role-panel-editor-page';
+import { TicketsPage } from './features/dashboard/tickets/tickets-page';
+import { TicketSettingsPage } from './features/dashboard/tickets/ticket-settings-page';
+import { TranscriptPage } from './features/dashboard/tickets/transcript-page';
 
 const rootRoute = createRootRouteWithContext<{ queryClient: QueryClient }>()({
   component: RootLayout,
@@ -92,6 +95,36 @@ const rolePanelEditorRoute = createRoute({
   component: RolePanelEditorPage,
 });
 
+/** Onglet « Tickets » : la liste, les réglages et la lecture d'un transcript. */
+const guildTicketsRoute = createRoute({
+  getParentRoute: () => guildRoute,
+  path: 'tickets',
+});
+
+/** Un filtre ou une page invalide dans l'URL revient à la valeur par défaut. */
+const ticketsRoute = createRoute({
+  getParentRoute: () => guildTicketsRoute,
+  path: '/',
+  validateSearch: z.object({
+    status: z.enum(['open', 'closed']).optional().catch(undefined),
+    page: z.number().int().min(1).optional().catch(undefined),
+  }),
+  component: TicketsPage,
+});
+
+/** Chemin fixe : il passe avant $ticketId, TanStack Router préfère toujours le plus précis. */
+const ticketSettingsRoute = createRoute({
+  getParentRoute: () => guildTicketsRoute,
+  path: 'reglages',
+  component: TicketSettingsPage,
+});
+
+const transcriptRoute = createRoute({
+  getParentRoute: () => guildTicketsRoute,
+  path: '$ticketId',
+  component: TranscriptPage,
+});
+
 const routeTree = rootRoute.addChildren([
   homeRoute,
   leaderboardRoute,
@@ -103,6 +136,7 @@ const routeTree = rootRoute.addChildren([
     guildGeneralRoute,
     guildLevelingRoute,
     guildRolesRoute.addChildren([rolePanelsRoute, rolePanelEditorRoute]),
+    guildTicketsRoute.addChildren([ticketsRoute, ticketSettingsRoute, transcriptRoute]),
   ]),
 ]);
 

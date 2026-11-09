@@ -13,6 +13,9 @@ export type GuildSettings = Pick<
   | 'xpCooldownSec'
   | 'levelUpChannelId'
   | 'leaderboardPublic'
+  | 'ticketCategoryId'
+  | 'ticketStaffRoleIds'
+  | 'ticketLogChannelId'
 >;
 
 export interface GuildConfigCache {
@@ -35,6 +38,9 @@ const SELECT = {
   xpCooldownSec: true,
   levelUpChannelId: true,
   leaderboardPublic: true,
+  ticketCategoryId: true,
+  ticketStaffRoleIds: true,
+  ticketLogChannelId: true,
 } satisfies Record<keyof GuildSettings, true>;
 
 /**

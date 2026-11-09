@@ -40,6 +40,7 @@ model Guild {
   levels        MemberLevel[]
   marriages     Marriage[]
   tickets       Ticket[]
+  ticketPanel   TicketPanel?
   giveaways     Giveaway[]
   rolePanels    RolePanel[]
   td2Events     Td2Event[]
@@ -141,13 +142,34 @@ model Ticket {
   number        Int
   channelId     String       @unique
   ownerId       String
+  ownerName     String? // pseudo à l'ouverture, pour la liste du site
   status        TicketStatus @default(OPEN)
   closedById    String?
-  transcriptKey String?
+  closedByName  String?
+  messageCount  Int? // messages dans le transcript
+  transcriptKey String? // clé S3 du transcript
   createdAt     DateTime     @default(now())
   closedAt      DateTime?
 
   @@unique([guildId, number])
+  @@index([guildId, status])
+  @@index([guildId, ownerId, status])
+}
+
+/**
+ * Le message « Ouvrir un ticket » d'un serveur : un seul par serveur.
+ */
+model TicketPanel {
+  guildId      String    @id
+  guild        Guild     @relation(fields: [guildId], references: [id], onDelete: Cascade)
+  channelId    String
+  messageId    String?   @unique
+  title        String
+  description  String?
+  buttonLabel  String
+  // publication : mêmes règles que RolePanel
+  publishedAt  DateTime?
+  publishError String?
 }
 
 // ---------- Giveaways ----------

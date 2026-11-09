@@ -3,15 +3,20 @@ import { Redis } from 'ioredis';
 import type { GuildConfigCache } from '../core/guild-config-cache.js';
 import type { Logger } from '../logger.js';
 import type { RolePanelPublisher } from '../modules/roles/index.js';
+import type { TicketPanelPublisher } from '../modules/tickets/index.js';
 
 interface Deps {
   configs: GuildConfigCache;
   rolePanels: RolePanelPublisher;
+  ticketPanels: TicketPanelPublisher;
   logger: Pick<Logger, 'info' | 'warn' | 'debug'>;
 }
 
 // Giveaways, panel de tickets : leurs modules arrivent dans les phases 6.2 et 6.3
-export function handleBotEvent(raw: string, { configs, rolePanels, logger }: Deps): void {
+export function handleBotEvent(
+  raw: string,
+  { configs, rolePanels, ticketPanels, logger }: Deps,
+): void {
   const event = parseBotEvent(raw);
   if (!event) {
     logger.warn({ raw }, 'Événement Valkey ignoré : format inconnu');
@@ -23,7 +28,6 @@ export function handleBotEvent(raw: string, { configs, rolePanels, logger }: Dep
       configs.invalidate(event.guildId);
       logger.info({ guildId: event.guildId }, 'Config du serveur mise à jour depuis le site');
       return;
-    // Les publications passent par Discord : on ne les attend pas, et une erreur reste dans les logs
     case 'rolePanel.publish':
       rolePanels.publish(event.panelId).catch((err: unknown) => {
         logger.warn({ err, panelId: event.panelId }, 'Publication du panel en échec');
@@ -32,6 +36,17 @@ export function handleBotEvent(raw: string, { configs, rolePanels, logger }: Dep
     case 'rolePanel.delete':
       rolePanels.remove(event).catch((err: unknown) => {
         logger.warn({ err, messageId: event.messageId }, 'Retrait du panel en échec');
+      });
+      return;
+    // Les publications passent par Discord : on ne les attend pas, et une erreur reste dans les logs
+    case 'ticketPanel.publish':
+      ticketPanels.publish(event.guildId).catch((err: unknown) => {
+        logger.warn({ err, guildId: event.guildId }, 'Publication du panel de tickets en échec');
+      });
+      return;
+    case 'ticketPanel.delete':
+      ticketPanels.remove(event).catch((err: unknown) => {
+        logger.warn({ err, messageId: event.messageId }, 'Retrait du panel de tickets en échec');
       });
       return;
     default:

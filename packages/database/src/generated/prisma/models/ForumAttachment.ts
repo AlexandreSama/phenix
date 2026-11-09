@@ -489,14 +489,6 @@ export type ForumAttachmentUncheckedUpdateManyWithoutUploaderNestedInput = {
   deleteMany?: Prisma.ForumAttachmentScalarWhereInput | Prisma.ForumAttachmentScalarWhereInput[]
 }
 
-export type NullableIntFieldUpdateOperationsInput = {
-  set?: number | null
-  increment?: number
-  decrement?: number
-  multiply?: number
-  divide?: number
-}
-
 export type ForumAttachmentCreateNestedManyWithoutPostInput = {
   create?: Prisma.XOR<Prisma.ForumAttachmentCreateWithoutPostInput, Prisma.ForumAttachmentUncheckedCreateWithoutPostInput> | Prisma.ForumAttachmentCreateWithoutPostInput[] | Prisma.ForumAttachmentUncheckedCreateWithoutPostInput[]
   connectOrCreate?: Prisma.ForumAttachmentCreateOrConnectWithoutPostInput | Prisma.ForumAttachmentCreateOrConnectWithoutPostInput[]

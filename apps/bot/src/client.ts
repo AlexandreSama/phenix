@@ -17,8 +17,13 @@ export const BOT_PERMISSIONS = [
 
 export function createClient(): Client {
   return new Client({
-    // Aucun intent privilégié. GuildMessages arrivera en phase 5 pour l'XP.
-    intents: [GatewayIntentBits.Guilds, GatewayIntentBits.GuildMessages],
+    // GuildMessages : l'XP compte les messages.
+    // MessageContent (privilégié) : le transcript d'un ticket recopie le texte de ses messages.
+    intents: [
+      GatewayIntentBits.Guilds,
+      GatewayIntentBits.GuildMessages,
+      GatewayIntentBits.MessageContent,
+    ],
     // Jamais de @everyone ni de rôle mentionné par accident
     allowedMentions: { parse: ['users'] },
   });

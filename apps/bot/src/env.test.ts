@@ -6,6 +6,9 @@ const base = {
   REDIS_URL: 'redis://localhost:6379',
   DISCORD_TOKEN: 'token',
   DISCORD_CLIENT_ID: '123456789012345678',
+  S3_ENDPOINT: 'http://localhost:3900',
+  S3_ACCESS_KEY_ID: 'GK123',
+  S3_SECRET_ACCESS_KEY: 'secret',
 };
 
 describe('loadEnv', () => {

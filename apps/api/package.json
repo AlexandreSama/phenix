@@ -17,6 +17,7 @@
     "@nestjs/platform-express": "^12.4.0",
     "@phenix/database": "workspace:*",
     "@phenix/shared": "workspace:*",
+    "@phenix/storage": "workspace:*",
     "cookie-parser": "^1.4.7",
     "discord-api-types": "^0.38.57",
     "ioredis": "^6.0.0",

@@ -15,6 +15,13 @@ export const botEventSchema = z.discriminatedUnion('type', [
   }),
   z.object({ type: z.literal('giveaway.publish'), giveawayId: z.number().int() }),
   z.object({ type: z.literal('ticketPanel.publish'), guildId: z.string() }),
+  // Le panel change de salon : l'ancien message part, comme pour un panel de rôles
+  z.object({
+    type: z.literal('ticketPanel.delete'),
+    guildId: z.string(),
+    channelId: z.string(),
+    messageId: z.string(),
+  }),
 ]);
 
 export type BotEvent = z.infer<typeof botEventSchema>;

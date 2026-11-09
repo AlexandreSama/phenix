@@ -1,6 +1,11 @@
 import { ForbiddenException, Injectable, NotFoundException } from '@nestjs/common';
 import { PrismaClient } from '@phenix/database';
-import type { GuildChannelSummary, GuildRoleSummary, ManageableGuild } from '@phenix/shared';
+import type {
+  GuildChannelSummary,
+  GuildRoleSummary,
+  ManageableGuild,
+  GuildCategorySummary,
+} from '@phenix/shared';
 import { ChannelType } from 'discord-api-types/v10';
 import { CacheService } from '../../core/cache.service.js';
 import { DiscordService } from '../../discord/discord.service.js';
@@ -84,6 +89,17 @@ export class GuildsService {
           name: channel.name ?? channel.id,
           parentName: (channel.parent_id && categories.get(channel.parent_id)) || null,
         }));
+    });
+  }
+
+  /** Les catégories du serveur, dans l'ordre de Discord : les tickets s'ouvrent dans l'une d'elles. */
+  async categories(guildId: string): Promise<GuildCategorySummary[]> {
+    return this.cache.wrap(`guild-categories:${guildId}`, CACHE_SECONDS, async () => {
+      const all = (await this.discord.getGuildChannels(guildId)) as DiscordChannel[];
+      return all
+        .filter((channel) => channel.type === ChannelType.GuildCategory)
+        .toSorted((a, b) => (a.position ?? 0) - (b.position ?? 0))
+        .map((category) => ({ id: category.id, name: category.name ?? category.id }));
     });
   }
 

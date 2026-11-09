@@ -1,14 +1,9 @@
-import type { GuildChannelSummary, PublicationStatus, RolePanelSummary } from '@phenix/shared';
+import type { GuildChannelSummary, RolePanelSummary } from '@phenix/shared';
 import { Link } from '@tanstack/react-router';
 import { useState } from 'react';
 import { Button, buttonClass } from '../../../components/ui/button';
 import { Card } from '../../../components/ui/card';
-
-const STATUS: Record<PublicationStatus, { label: string; className: string }> = {
-  published: { label: 'Publié', className: 'border-gold/60 text-gold' },
-  pending: { label: 'Publication…', className: 'border-stone-500 text-stone-300' },
-  error: { label: 'Erreur', className: 'border-flame text-flame' },
-};
+import { PublicationBadge } from '../publication-badge';
 
 interface Props {
   guildId: string;
@@ -20,16 +15,13 @@ interface Props {
 export function RolePanelCard({ guildId, panel, channel, onDelete }: Props) {
   // Supprimer demande un second clic : pas de fenêtre de confirmation qui bloque la page
   const [confirming, setConfirming] = useState(false);
-  const status = STATUS[panel.status];
 
   return (
     <Card className="flex flex-col gap-3 sm:flex-row sm:items-center">
       <div className="min-w-0 flex-1">
         <div className="flex flex-wrap items-center gap-2">
           <h2 className="truncate font-semibold text-white">{panel.title}</h2>
-          <span className={`rounded-full border px-2 py-0.5 text-xs ${status.className}`}>
-            {status.label}
-          </span>
+          <PublicationBadge status={panel.status} />
         </div>
         <p className="text-sm text-stone-400">
           #{channel?.name ?? 'salon supprimé'} · {panel.optionCount}{' '}

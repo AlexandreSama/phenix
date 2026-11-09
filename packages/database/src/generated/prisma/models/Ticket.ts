@@ -29,11 +29,13 @@ export type AggregateTicket = {
 export type TicketAvgAggregateOutputType = {
   id: number | null
   number: number | null
+  messageCount: number | null
 }
 
 export type TicketSumAggregateOutputType = {
   id: number | null
   number: number | null
+  messageCount: number | null
 }
 
 export type TicketMinAggregateOutputType = {
@@ -42,8 +44,11 @@ export type TicketMinAggregateOutputType = {
   number: number | null
   channelId: string | null
   ownerId: string | null
+  ownerName: string | null
   status: $Enums.TicketStatus | null
   closedById: string | null
+  closedByName: string | null
+  messageCount: number | null
   transcriptKey: string | null
   createdAt: Date | null
   closedAt: Date | null
@@ -55,8 +60,11 @@ export type TicketMaxAggregateOutputType = {
   number: number | null
   channelId: string | null
   ownerId: string | null
+  ownerName: string | null
   status: $Enums.TicketStatus | null
   closedById: string | null
+  closedByName: string | null
+  messageCount: number | null
   transcriptKey: string | null
   createdAt: Date | null
   closedAt: Date | null
@@ -68,8 +76,11 @@ export type TicketCountAggregateOutputType = {
   number: number
   channelId: number
   ownerId: number
+  ownerName: number
   status: number
   closedById: number
+  closedByName: number
+  messageCount: number
   transcriptKey: number
   createdAt: number
   closedAt: number
@@ -80,11 +91,13 @@ export type TicketCountAggregateOutputType = {
 export type TicketAvgAggregateInputType = {
   id?: true
   number?: true
+  messageCount?: true
 }
 
 export type TicketSumAggregateInputType = {
   id?: true
   number?: true
+  messageCount?: true
 }
 
 export type TicketMinAggregateInputType = {
@@ -93,8 +106,11 @@ export type TicketMinAggregateInputType = {
   number?: true
   channelId?: true
   ownerId?: true
+  ownerName?: true
   status?: true
   closedById?: true
+  closedByName?: true
+  messageCount?: true
   transcriptKey?: true
   createdAt?: true
   closedAt?: true
@@ -106,8 +122,11 @@ export type TicketMaxAggregateInputType = {
   number?: true
   channelId?: true
   ownerId?: true
+  ownerName?: true
   status?: true
   closedById?: true
+  closedByName?: true
+  messageCount?: true
   transcriptKey?: true
   createdAt?: true
   closedAt?: true
@@ -119,8 +138,11 @@ export type TicketCountAggregateInputType = {
   number?: true
   channelId?: true
   ownerId?: true
+  ownerName?: true
   status?: true
   closedById?: true
+  closedByName?: true
+  messageCount?: true
   transcriptKey?: true
   createdAt?: true
   closedAt?: true
@@ -219,8 +241,11 @@ export type TicketGroupByOutputType = {
   number: number
   channelId: string
   ownerId: string
+  ownerName: string | null
   status: $Enums.TicketStatus
   closedById: string | null
+  closedByName: string | null
+  messageCount: number | null
   transcriptKey: string | null
   createdAt: Date
   closedAt: Date | null
@@ -255,8 +280,11 @@ export type TicketWhereInput = {
   number?: Prisma.IntFilter<"Ticket"> | number
   channelId?: Prisma.StringFilter<"Ticket"> | string
   ownerId?: Prisma.StringFilter<"Ticket"> | string
+  ownerName?: Prisma.StringNullableFilter<"Ticket"> | string | null
   status?: Prisma.EnumTicketStatusFilter<"Ticket"> | $Enums.TicketStatus
   closedById?: Prisma.StringNullableFilter<"Ticket"> | string | null
+  closedByName?: Prisma.StringNullableFilter<"Ticket"> | string | null
+  messageCount?: Prisma.IntNullableFilter<"Ticket"> | number | null
   transcriptKey?: Prisma.StringNullableFilter<"Ticket"> | string | null
   createdAt?: Prisma.DateTimeFilter<"Ticket"> | Date | string
   closedAt?: Prisma.DateTimeNullableFilter<"Ticket"> | Date | string | null
@@ -269,8 +297,11 @@ export type TicketOrderByWithRelationInput = {
   number?: Prisma.SortOrder
   channelId?: Prisma.SortOrder
   ownerId?: Prisma.SortOrder
+  ownerName?: Prisma.SortOrderInput | Prisma.SortOrder
   status?: Prisma.SortOrder
   closedById?: Prisma.SortOrderInput | Prisma.SortOrder
+  closedByName?: Prisma.SortOrderInput | Prisma.SortOrder
+  messageCount?: Prisma.SortOrderInput | Prisma.SortOrder
   transcriptKey?: Prisma.SortOrderInput | Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   closedAt?: Prisma.SortOrderInput | Prisma.SortOrder
@@ -287,8 +318,11 @@ export type TicketWhereUniqueInput = Prisma.AtLeast<{
   guildId?: Prisma.StringFilter<"Ticket"> | string
   number?: Prisma.IntFilter<"Ticket"> | number
   ownerId?: Prisma.StringFilter<"Ticket"> | string
+  ownerName?: Prisma.StringNullableFilter<"Ticket"> | string | null
   status?: Prisma.EnumTicketStatusFilter<"Ticket"> | $Enums.TicketStatus
   closedById?: Prisma.StringNullableFilter<"Ticket"> | string | null
+  closedByName?: Prisma.StringNullableFilter<"Ticket"> | string | null
+  messageCount?: Prisma.IntNullableFilter<"Ticket"> | number | null
   transcriptKey?: Prisma.StringNullableFilter<"Ticket"> | string | null
   createdAt?: Prisma.DateTimeFilter<"Ticket"> | Date | string
   closedAt?: Prisma.DateTimeNullableFilter<"Ticket"> | Date | string | null
@@ -301,8 +335,11 @@ export type TicketOrderByWithAggregationInput = {
   number?: Prisma.SortOrder
   channelId?: Prisma.SortOrder
   ownerId?: Prisma.SortOrder
+  ownerName?: Prisma.SortOrderInput | Prisma.SortOrder
   status?: Prisma.SortOrder
   closedById?: Prisma.SortOrderInput | Prisma.SortOrder
+  closedByName?: Prisma.SortOrderInput | Prisma.SortOrder
+  messageCount?: Prisma.SortOrderInput | Prisma.SortOrder
   transcriptKey?: Prisma.SortOrderInput | Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   closedAt?: Prisma.SortOrderInput | Prisma.SortOrder
@@ -322,8 +359,11 @@ export type TicketScalarWhereWithAggregatesInput = {
   number?: Prisma.IntWithAggregatesFilter<"Ticket"> | number
   channelId?: Prisma.StringWithAggregatesFilter<"Ticket"> | string
   ownerId?: Prisma.StringWithAggregatesFilter<"Ticket"> | string
+  ownerName?: Prisma.StringNullableWithAggregatesFilter<"Ticket"> | string | null
   status?: Prisma.EnumTicketStatusWithAggregatesFilter<"Ticket"> | $Enums.TicketStatus
   closedById?: Prisma.StringNullableWithAggregatesFilter<"Ticket"> | string | null
+  closedByName?: Prisma.StringNullableWithAggregatesFilter<"Ticket"> | string | null
+  messageCount?: Prisma.IntNullableWithAggregatesFilter<"Ticket"> | number | null
   transcriptKey?: Prisma.StringNullableWithAggregatesFilter<"Ticket"> | string | null
   createdAt?: Prisma.DateTimeWithAggregatesFilter<"Ticket"> | Date | string
   closedAt?: Prisma.DateTimeNullableWithAggregatesFilter<"Ticket"> | Date | string | null
@@ -333,8 +373,11 @@ export type TicketCreateInput = {
   number: number
   channelId: string
   ownerId: string
+  ownerName?: string | null
   status?: $Enums.TicketStatus
   closedById?: string | null
+  closedByName?: string | null
+  messageCount?: number | null
   transcriptKey?: string | null
   createdAt?: Date | string
   closedAt?: Date | string | null
@@ -347,8 +390,11 @@ export type TicketUncheckedCreateInput = {
   number: number
   channelId: string
   ownerId: string
+  ownerName?: string | null
   status?: $Enums.TicketStatus
   closedById?: string | null
+  closedByName?: string | null
+  messageCount?: number | null
   transcriptKey?: string | null
   createdAt?: Date | string
   closedAt?: Date | string | null
@@ -358,8 +404,11 @@ export type TicketUpdateInput = {
   number?: Prisma.IntFieldUpdateOperationsInput | number
   channelId?: Prisma.StringFieldUpdateOperationsInput | string
   ownerId?: Prisma.StringFieldUpdateOperationsInput | string
+  ownerName?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   status?: Prisma.EnumTicketStatusFieldUpdateOperationsInput | $Enums.TicketStatus
   closedById?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  closedByName?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  messageCount?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
   transcriptKey?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   closedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
@@ -372,8 +421,11 @@ export type TicketUncheckedUpdateInput = {
   number?: Prisma.IntFieldUpdateOperationsInput | number
   channelId?: Prisma.StringFieldUpdateOperationsInput | string
   ownerId?: Prisma.StringFieldUpdateOperationsInput | string
+  ownerName?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   status?: Prisma.EnumTicketStatusFieldUpdateOperationsInput | $Enums.TicketStatus
   closedById?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  closedByName?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  messageCount?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
   transcriptKey?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   closedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
@@ -385,8 +437,11 @@ export type TicketCreateManyInput = {
   number: number
   channelId: string
   ownerId: string
+  ownerName?: string | null
   status?: $Enums.TicketStatus
   closedById?: string | null
+  closedByName?: string | null
+  messageCount?: number | null
   transcriptKey?: string | null
   createdAt?: Date | string
   closedAt?: Date | string | null
@@ -396,8 +451,11 @@ export type TicketUpdateManyMutationInput = {
   number?: Prisma.IntFieldUpdateOperationsInput | number
   channelId?: Prisma.StringFieldUpdateOperationsInput | string
   ownerId?: Prisma.StringFieldUpdateOperationsInput | string
+  ownerName?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   status?: Prisma.EnumTicketStatusFieldUpdateOperationsInput | $Enums.TicketStatus
   closedById?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  closedByName?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  messageCount?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
   transcriptKey?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   closedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
@@ -409,8 +467,11 @@ export type TicketUncheckedUpdateManyInput = {
   number?: Prisma.IntFieldUpdateOperationsInput | number
   channelId?: Prisma.StringFieldUpdateOperationsInput | string
   ownerId?: Prisma.StringFieldUpdateOperationsInput | string
+  ownerName?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   status?: Prisma.EnumTicketStatusFieldUpdateOperationsInput | $Enums.TicketStatus
   closedById?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  closedByName?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  messageCount?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
   transcriptKey?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   closedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
@@ -437,8 +498,11 @@ export type TicketCountOrderByAggregateInput = {
   number?: Prisma.SortOrder
   channelId?: Prisma.SortOrder
   ownerId?: Prisma.SortOrder
+  ownerName?: Prisma.SortOrder
   status?: Prisma.SortOrder
   closedById?: Prisma.SortOrder
+  closedByName?: Prisma.SortOrder
+  messageCount?: Prisma.SortOrder
   transcriptKey?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   closedAt?: Prisma.SortOrder
@@ -447,6 +511,7 @@ export type TicketCountOrderByAggregateInput = {
 export type TicketAvgOrderByAggregateInput = {
   id?: Prisma.SortOrder
   number?: Prisma.SortOrder
+  messageCount?: Prisma.SortOrder
 }
 
 export type TicketMaxOrderByAggregateInput = {
@@ -455,8 +520,11 @@ export type TicketMaxOrderByAggregateInput = {
   number?: Prisma.SortOrder
   channelId?: Prisma.SortOrder
   ownerId?: Prisma.SortOrder
+  ownerName?: Prisma.SortOrder
   status?: Prisma.SortOrder
   closedById?: Prisma.SortOrder
+  closedByName?: Prisma.SortOrder
+  messageCount?: Prisma.SortOrder
   transcriptKey?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   closedAt?: Prisma.SortOrder
@@ -468,8 +536,11 @@ export type TicketMinOrderByAggregateInput = {
   number?: Prisma.SortOrder
   channelId?: Prisma.SortOrder
   ownerId?: Prisma.SortOrder
+  ownerName?: Prisma.SortOrder
   status?: Prisma.SortOrder
   closedById?: Prisma.SortOrder
+  closedByName?: Prisma.SortOrder
+  messageCount?: Prisma.SortOrder
   transcriptKey?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   closedAt?: Prisma.SortOrder
@@ -478,6 +549,7 @@ export type TicketMinOrderByAggregateInput = {
 export type TicketSumOrderByAggregateInput = {
   id?: Prisma.SortOrder
   number?: Prisma.SortOrder
+  messageCount?: Prisma.SortOrder
 }
 
 export type TicketCreateNestedManyWithoutGuildInput = {
@@ -526,12 +598,23 @@ export type EnumTicketStatusFieldUpdateOperationsInput = {
   set?: $Enums.TicketStatus
 }
 
+export type NullableIntFieldUpdateOperationsInput = {
+  set?: number | null
+  increment?: number
+  decrement?: number
+  multiply?: number
+  divide?: number
+}
+
 export type TicketCreateWithoutGuildInput = {
   number: number
   channelId: string
   ownerId: string
+  ownerName?: string | null
   status?: $Enums.TicketStatus
   closedById?: string | null
+  closedByName?: string | null
+  messageCount?: number | null
   transcriptKey?: string | null
   createdAt?: Date | string
   closedAt?: Date | string | null
@@ -542,8 +625,11 @@ export type TicketUncheckedCreateWithoutGuildInput = {
   number: number
   channelId: string
   ownerId: string
+  ownerName?: string | null
   status?: $Enums.TicketStatus
   closedById?: string | null
+  closedByName?: string | null
+  messageCount?: number | null
   transcriptKey?: string | null
   createdAt?: Date | string
   closedAt?: Date | string | null
@@ -584,8 +670,11 @@ export type TicketScalarWhereInput = {
   number?: Prisma.IntFilter<"Ticket"> | number
   channelId?: Prisma.StringFilter<"Ticket"> | string
   ownerId?: Prisma.StringFilter<"Ticket"> | string
+  ownerName?: Prisma.StringNullableFilter<"Ticket"> | string | null
   status?: Prisma.EnumTicketStatusFilter<"Ticket"> | $Enums.TicketStatus
   closedById?: Prisma.StringNullableFilter<"Ticket"> | string | null
+  closedByName?: Prisma.StringNullableFilter<"Ticket"> | string | null
+  messageCount?: Prisma.IntNullableFilter<"Ticket"> | number | null
   transcriptKey?: Prisma.StringNullableFilter<"Ticket"> | string | null
   createdAt?: Prisma.DateTimeFilter<"Ticket"> | Date | string
   closedAt?: Prisma.DateTimeNullableFilter<"Ticket"> | Date | string | null
@@ -596,8 +685,11 @@ export type TicketCreateManyGuildInput = {
   number: number
   channelId: string
   ownerId: string
+  ownerName?: string | null
   status?: $Enums.TicketStatus
   closedById?: string | null
+  closedByName?: string | null
+  messageCount?: number | null
   transcriptKey?: string | null
   createdAt?: Date | string
   closedAt?: Date | string | null
@@ -607,8 +699,11 @@ export type TicketUpdateWithoutGuildInput = {
   number?: Prisma.IntFieldUpdateOperationsInput | number
   channelId?: Prisma.StringFieldUpdateOperationsInput | string
   ownerId?: Prisma.StringFieldUpdateOperationsInput | string
+  ownerName?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   status?: Prisma.EnumTicketStatusFieldUpdateOperationsInput | $Enums.TicketStatus
   closedById?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  closedByName?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  messageCount?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
   transcriptKey?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   closedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
@@ -619,8 +714,11 @@ export type TicketUncheckedUpdateWithoutGuildInput = {
   number?: Prisma.IntFieldUpdateOperationsInput | number
   channelId?: Prisma.StringFieldUpdateOperationsInput | string
   ownerId?: Prisma.StringFieldUpdateOperationsInput | string
+  ownerName?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   status?: Prisma.EnumTicketStatusFieldUpdateOperationsInput | $Enums.TicketStatus
   closedById?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  closedByName?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  messageCount?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
   transcriptKey?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   closedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
@@ -631,8 +729,11 @@ export type TicketUncheckedUpdateManyWithoutGuildInput = {
   number?: Prisma.IntFieldUpdateOperationsInput | number
   channelId?: Prisma.StringFieldUpdateOperationsInput | string
   ownerId?: Prisma.StringFieldUpdateOperationsInput | string
+  ownerName?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   status?: Prisma.EnumTicketStatusFieldUpdateOperationsInput | $Enums.TicketStatus
   closedById?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  closedByName?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  messageCount?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
   transcriptKey?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   closedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
@@ -646,8 +747,11 @@ export type TicketSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs =
   number?: boolean
   channelId?: boolean
   ownerId?: boolean
+  ownerName?: boolean
   status?: boolean
   closedById?: boolean
+  closedByName?: boolean
+  messageCount?: boolean
   transcriptKey?: boolean
   createdAt?: boolean
   closedAt?: boolean
@@ -660,8 +764,11 @@ export type TicketSelectCreateManyAndReturn<ExtArgs extends runtime.Types.Extens
   number?: boolean
   channelId?: boolean
   ownerId?: boolean
+  ownerName?: boolean
   status?: boolean
   closedById?: boolean
+  closedByName?: boolean
+  messageCount?: boolean
   transcriptKey?: boolean
   createdAt?: boolean
   closedAt?: boolean
@@ -674,8 +781,11 @@ export type TicketSelectUpdateManyAndReturn<ExtArgs extends runtime.Types.Extens
   number?: boolean
   channelId?: boolean
   ownerId?: boolean
+  ownerName?: boolean
   status?: boolean
   closedById?: boolean
+  closedByName?: boolean
+  messageCount?: boolean
   transcriptKey?: boolean
   createdAt?: boolean
   closedAt?: boolean
@@ -688,14 +798,17 @@ export type TicketSelectScalar = {
   number?: boolean
   channelId?: boolean
   ownerId?: boolean
+  ownerName?: boolean
   status?: boolean
   closedById?: boolean
+  closedByName?: boolean
+  messageCount?: boolean
   transcriptKey?: boolean
   createdAt?: boolean
   closedAt?: boolean
 }
 
-export type TicketOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "guildId" | "number" | "channelId" | "ownerId" | "status" | "closedById" | "transcriptKey" | "createdAt" | "closedAt", ExtArgs["result"]["ticket"]>
+export type TicketOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "guildId" | "number" | "channelId" | "ownerId" | "ownerName" | "status" | "closedById" | "closedByName" | "messageCount" | "transcriptKey" | "createdAt" | "closedAt", ExtArgs["result"]["ticket"]>
 export type TicketInclude<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   guild?: boolean | Prisma.GuildDefaultArgs<ExtArgs>
 }
@@ -717,8 +830,11 @@ export type $TicketPayload<ExtArgs extends runtime.Types.Extensions.InternalArgs
     number: number
     channelId: string
     ownerId: string
+    ownerName: string | null
     status: $Enums.TicketStatus
     closedById: string | null
+    closedByName: string | null
+    messageCount: number | null
     transcriptKey: string | null
     createdAt: Date
     closedAt: Date | null
@@ -1151,8 +1267,11 @@ export interface TicketFieldRefs {
   readonly number: Prisma.FieldRef<"Ticket", 'Int'>
   readonly channelId: Prisma.FieldRef<"Ticket", 'String'>
   readonly ownerId: Prisma.FieldRef<"Ticket", 'String'>
+  readonly ownerName: Prisma.FieldRef<"Ticket", 'String'>
   readonly status: Prisma.FieldRef<"Ticket", 'TicketStatus'>
   readonly closedById: Prisma.FieldRef<"Ticket", 'String'>
+  readonly closedByName: Prisma.FieldRef<"Ticket", 'String'>
+  readonly messageCount: Prisma.FieldRef<"Ticket", 'Int'>
   readonly transcriptKey: Prisma.FieldRef<"Ticket", 'String'>
   readonly createdAt: Prisma.FieldRef<"Ticket", 'DateTime'>
   readonly closedAt: Prisma.FieldRef<"Ticket", 'DateTime'>

@@ -29,6 +29,20 @@ services:
       interval: 5s
       retries: 10
 
+  # Stockage S3 des transcripts de tickets. Image sans shell : les commandes passent par /garage
+  garage:
+    image: dxflrs/garage:v2.4.1
+    environment:
+      GARAGE_RPC_SECRET: ${GARAGE_RPC_SECRET}
+    ports:
+      - '127.0.0.1:3900:3900' # API S3, seulement sur ta machine
+    volumes:
+      - ./docker/garage.toml:/etc/garage.toml:ro
+      - garagemeta:/var/lib/garage/meta
+      - garagedata:/var/lib/garage/data
+
 volumes:
   pgdata:
   redisdata:
+  garagemeta:
+  garagedata:

@@ -4,9 +4,9 @@ import {
   findRolePanel,
   markRolePanelFailed,
   markRolePanelPublished,
-  publicationStatus,
   saveRolePanel,
 } from './role-panels.js';
+import { publicationStatus } from './publication.js';
 
 const prisma = createPrismaClient(inject('databaseUrl'));
 

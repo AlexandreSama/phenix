@@ -404,6 +404,7 @@ export const ModelName = {
   MemberLevel: 'MemberLevel',
   Marriage: 'Marriage',
   Ticket: 'Ticket',
+  TicketPanel: 'TicketPanel',
   Giveaway: 'Giveaway',
   GiveawayEntry: 'GiveawayEntry',
   RolePanel: 'RolePanel',
@@ -435,7 +436,7 @@ export type TypeMap<ExtArgs extends runtime.Types.Extensions.InternalArgs = runt
     omit: GlobalOmitOptions
   }
   meta: {
-    modelProps: "user" | "guild" | "guildConfig" | "case" | "memberLevel" | "marriage" | "ticket" | "giveaway" | "giveawayEntry" | "rolePanel" | "rolePanelOption" | "td2Profile" | "td2Activity" | "td2ActivityMode" | "td2ModeSlot" | "td2Event" | "td2EventSlot" | "td2Signup" | "td2Report" | "forumCategory" | "forumThread" | "forumAttachment" | "forumPost"
+    modelProps: "user" | "guild" | "guildConfig" | "case" | "memberLevel" | "marriage" | "ticket" | "ticketPanel" | "giveaway" | "giveawayEntry" | "rolePanel" | "rolePanelOption" | "td2Profile" | "td2Activity" | "td2ActivityMode" | "td2ModeSlot" | "td2Event" | "td2EventSlot" | "td2Signup" | "td2Report" | "forumCategory" | "forumThread" | "forumAttachment" | "forumPost"
     txIsolationLevel: TransactionIsolationLevel
   }
   model: {
@@ -954,6 +955,80 @@ export type TypeMap<ExtArgs extends runtime.Types.Extensions.InternalArgs = runt
         count: {
           args: Prisma.TicketCountArgs<ExtArgs>
           result: runtime.Types.Utils.Optional<Prisma.TicketCountAggregateOutputType> | number
+        }
+      }
+    }
+    TicketPanel: {
+      payload: Prisma.$TicketPanelPayload<ExtArgs>
+      fields: Prisma.TicketPanelFieldRefs
+      operations: {
+        findUnique: {
+          args: Prisma.TicketPanelFindUniqueArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$TicketPanelPayload> | null
+        }
+        findUniqueOrThrow: {
+          args: Prisma.TicketPanelFindUniqueOrThrowArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$TicketPanelPayload>
+        }
+        findFirst: {
+          args: Prisma.TicketPanelFindFirstArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$TicketPanelPayload> | null
+        }
+        findFirstOrThrow: {
+          args: Prisma.TicketPanelFindFirstOrThrowArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$TicketPanelPayload>
+        }
+        findMany: {
+          args: Prisma.TicketPanelFindManyArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$TicketPanelPayload>[]
+        }
+        create: {
+          args: Prisma.TicketPanelCreateArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$TicketPanelPayload>
+        }
+        createMany: {
+          args: Prisma.TicketPanelCreateManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        createManyAndReturn: {
+          args: Prisma.TicketPanelCreateManyAndReturnArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$TicketPanelPayload>[]
+        }
+        delete: {
+          args: Prisma.TicketPanelDeleteArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$TicketPanelPayload>
+        }
+        update: {
+          args: Prisma.TicketPanelUpdateArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$TicketPanelPayload>
+        }
+        deleteMany: {
+          args: Prisma.TicketPanelDeleteManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        updateMany: {
+          args: Prisma.TicketPanelUpdateManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        updateManyAndReturn: {
+          args: Prisma.TicketPanelUpdateManyAndReturnArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$TicketPanelPayload>[]
+        }
+        upsert: {
+          args: Prisma.TicketPanelUpsertArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$TicketPanelPayload>
+        }
+        aggregate: {
+          args: Prisma.TicketPanelAggregateArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.AggregateTicketPanel>
+        }
+        groupBy: {
+          args: Prisma.TicketPanelGroupByArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.TicketPanelGroupByOutputType>[]
+        }
+        count: {
+          args: Prisma.TicketPanelCountArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.TicketPanelCountAggregateOutputType> | number
         }
       }
     }
@@ -2277,14 +2352,31 @@ export const TicketScalarFieldEnum = {
   number: 'number',
   channelId: 'channelId',
   ownerId: 'ownerId',
+  ownerName: 'ownerName',
   status: 'status',
   closedById: 'closedById',
+  closedByName: 'closedByName',
+  messageCount: 'messageCount',
   transcriptKey: 'transcriptKey',
   createdAt: 'createdAt',
   closedAt: 'closedAt'
 } as const
 
 export type TicketScalarFieldEnum = (typeof TicketScalarFieldEnum)[keyof typeof TicketScalarFieldEnum]
+
+
+export const TicketPanelScalarFieldEnum = {
+  guildId: 'guildId',
+  channelId: 'channelId',
+  messageId: 'messageId',
+  title: 'title',
+  description: 'description',
+  buttonLabel: 'buttonLabel',
+  publishedAt: 'publishedAt',
+  publishError: 'publishError'
+} as const
+
+export type TicketPanelScalarFieldEnum = (typeof TicketPanelScalarFieldEnum)[keyof typeof TicketPanelScalarFieldEnum]
 
 
 export const GiveawayScalarFieldEnum = {
@@ -2862,6 +2954,7 @@ export type GlobalOmitConfig = {
   memberLevel?: Prisma.MemberLevelOmit
   marriage?: Prisma.MarriageOmit
   ticket?: Prisma.TicketOmit
+  ticketPanel?: Prisma.TicketPanelOmit
   giveaway?: Prisma.GiveawayOmit
   giveawayEntry?: Prisma.GiveawayEntryOmit
   rolePanel?: Prisma.RolePanelOmit

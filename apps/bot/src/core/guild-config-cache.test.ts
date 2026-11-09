@@ -13,6 +13,9 @@ const settings = {
   xpCooldownSec: 60,
   levelUpChannelId: null,
   leaderboardPublic: true,
+  ticketCategoryId: null,
+  ticketStaffRoleIds: [],
+  ticketLogChannelId: null,
 };
 
 function setup() {

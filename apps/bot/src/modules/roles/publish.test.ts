@@ -1,6 +1,7 @@
 import { DiscordAPIError, RESTJSONErrorCodes, type Client } from 'discord.js';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
-import { describePublishError, publishRolePanel } from './publish.js';
+import { publishRolePanel } from './publish.js';
+import { describePublishError } from '../../core/publish.js';
 
 const database = vi.hoisted(() => ({
   findRolePanel: vi.fn(),

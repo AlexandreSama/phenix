@@ -5,10 +5,17 @@ import type {
   GuildRoleSummary,
   ManageableGuild,
 } from '@phenix/shared';
-import { queryOptions, useMutation, useQueryClient } from '@tanstack/react-query';
+import { keepPreviousData, queryOptions, useMutation, useQueryClient } from '@tanstack/react-query';
 import { api } from '../../lib/api';
 import type { LevelingConfig, LevelingConfigPatch } from '@phenix/shared';
 import type { RolePanelDetail, RolePanelInput, RolePanelSummary } from '@phenix/shared';
+import type {
+  GuildCategorySummary,
+  TicketPage,
+  TicketSettings,
+  TicketSettingsInput,
+  TicketSettingsResponse,
+} from '@phenix/shared';
 
 export const guildsQuery = queryOptions({
   queryKey: ['guilds'],
@@ -108,3 +115,47 @@ export function useDeleteRolePanel(guildId: string) {
       queryClient.invalidateQueries({ queryKey: ['guilds', guildId, 'role-panels'] }),
   });
 }
+
+export const categoriesQuery = (guildId: string) =>
+  queryOptions({
+    queryKey: ['guilds', guildId, 'categories'],
+    queryFn: () => api<GuildCategorySummary[]>(`/guilds/${guildId}/categories`),
+  });
+
+export const ticketSettingsQuery = (guildId: string) =>
+  queryOptions({
+    queryKey: ['guilds', guildId, 'tickets', 'settings'],
+    queryFn: () => api<TicketSettingsResponse>(`/guilds/${guildId}/tickets/settings`),
+    // Même règle que les panels de rôles : on relit tant que le bot n'a pas confirmé
+    refetchInterval: (query) =>
+      query.state.data?.settings?.panelStatus === 'pending' ? 2000 : false,
+  });
+
+export function useSaveTicketSettings(guildId: string) {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (input: TicketSettingsInput) =>
+      api<TicketSettings>(`/guilds/${guildId}/tickets/settings`, {
+        method: 'PUT',
+        body: JSON.stringify(input),
+      }),
+    // La réponse est « en attente » : la query se remet à relire toutes les 2 s
+    onSuccess: (settings) =>
+      queryClient.setQueryData(ticketSettingsQuery(guildId).queryKey, { settings }),
+  });
+}
+
+export type TicketStatusFilter = 'open' | 'closed';
+
+export const ticketsQuery = (guildId: string, status: TicketStatusFilter, page: number) =>
+  queryOptions({
+    queryKey: ['guilds', guildId, 'tickets', status, page],
+    queryFn: () => api<TicketPage>(`/guilds/${guildId}/tickets?status=${status}&page=${page}`),
+    placeholderData: keepPreviousData,
+    // Les tickets s'ouvrent et se ferment sur Discord : la liste se rafraîchit seule
+    refetchInterval: 30_000,
+  });
+
+/** Adresse du transcript, servie par l'API ; le cookie de session suit, même dans une iframe. */
+export const transcriptUrl = (guildId: string, ticketId: number) =>
+  `/api/guilds/${guildId}/tickets/${ticketId}/transcript`;

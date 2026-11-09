@@ -1,11 +1,13 @@
 import type { PrismaClient } from '@phenix/database';
-import { Events, type Client } from 'discord.js';
-import type { Logger } from '../../logger.js';
-import { publishRolePanel, removeRolePanelMessage } from './publish.js';
-export { publishPendingRolePanels } from './publish.js';
-import { rolePanelButton } from './toggle.js';
+import type { Client } from 'discord.js';
 import type { ComponentHandler, SlashCommand } from '../../core/command.js';
+import { deleteMessageQuietly, whenReady } from '../../core/publish.js';
+import type { Logger } from '../../logger.js';
 import { gestionrole } from './commands/gestionrole.js';
+import { publishRolePanel } from './publish.js';
+import { rolePanelButton } from './toggle.js';
+
+export { publishPendingRolePanels } from './publish.js';
 
 export const roleCommands: SlashCommand[] = [gestionrole];
 
@@ -22,18 +24,14 @@ export function createRolePanelPublisher(
   db: Pick<PrismaClient, 'rolePanel'>,
   logger: Pick<Logger, 'info' | 'warn'>,
 ): RolePanelPublisher {
-  const ready = () =>
-    client.isReady()
-      ? Promise.resolve()
-      : new Promise<void>((resolve) => client.once(Events.ClientReady, () => resolve()));
   return {
     async publish(panelId) {
-      await ready();
+      await whenReady(client);
       await publishRolePanel(client, db, panelId, logger);
     },
     async remove(message) {
-      await ready();
-      await removeRolePanelMessage(client, message, logger);
+      await whenReady(client);
+      await deleteMessageQuietly(client, message, logger);
     },
   };
 }

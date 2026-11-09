@@ -4,9 +4,15 @@ import { handleBotEvent } from './bot-events.js';
 
 function deps() {
   const configs = { get: vi.fn(), invalidate: vi.fn(), clear: vi.fn() };
-  const logger = { info: vi.fn(), warn: vi.fn(), debug: vi.fn() };
   const rolePanels = { publish: vi.fn(async () => {}), remove: vi.fn(async () => {}) };
-  return { configs: configs as unknown as GuildConfigCache & typeof configs, logger, rolePanels };
+  const ticketPanels = { publish: vi.fn(async () => {}), remove: vi.fn(async () => {}) };
+  const logger = { info: vi.fn(), warn: vi.fn(), debug: vi.fn() };
+  return {
+    configs: configs as unknown as GuildConfigCache & typeof configs,
+    rolePanels,
+    ticketPanels,
+    logger,
+  };
 }
 
 describe('handleBotEvent', () => {
@@ -41,5 +47,21 @@ describe('handleBotEvent', () => {
     expect(d.rolePanels.remove).toHaveBeenCalledWith(
       expect.objectContaining({ channelId: '2', messageId: '3' }),
     );
+  });
+
+  it('publie le panel de tickets du serveur, ou retire son ancien message', () => {
+    const d = deps();
+
+    handleBotEvent(JSON.stringify({ type: 'ticketPanel.publish', guildId: '1' }), d);
+    handleBotEvent(
+      JSON.stringify({ type: 'ticketPanel.delete', guildId: '1', channelId: '2', messageId: '3' }),
+      d,
+    );
+
+    expect(d.ticketPanels.publish).toHaveBeenCalledWith('1');
+    expect(d.ticketPanels.remove).toHaveBeenCalledWith(
+      expect.objectContaining({ channelId: '2', messageId: '3' }),
+    );
+    expect(d.rolePanels.publish).not.toHaveBeenCalled();
   });
 });

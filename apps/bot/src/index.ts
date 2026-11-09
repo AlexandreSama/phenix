@@ -17,6 +17,14 @@ import {
   publishPendingRolePanels,
   roleComponents,
 } from './modules/roles/index.js';
+import { createTranscriptStorage } from '@phenix/storage';
+import {
+  closeOrphanTickets,
+  createTicketChannelDeleteHandler,
+  createTicketPanelPublisher,
+  publishPendingTicketPanels,
+  ticketComponents,
+} from './modules/tickets/index.js';
 
 const env = loadEnv();
 const client = createClient();
@@ -26,24 +34,32 @@ const context: BotContext = {
   logger,
   configs,
   publicUrl: env.PUBLIC_URL?.replace(/\/$/, ''),
+  transcripts: createTranscriptStorage(env),
 };
 const unsubscribe = subscribeToBotEvents(env.REDIS_URL, {
   configs,
   rolePanels: createRolePanelPublisher(client, prisma, logger),
+  ticketPanels: createTicketPanelPublisher(client, prisma, logger),
   logger,
 });
+
 let stopBanExpiry: (() => void) | undefined;
 
 client.on(
   Events.InteractionCreate,
   createInteractionHandler({
     commands: createCommandRegistry(commands),
-    components: createComponentRegistry([...levelingComponents, ...roleComponents]),
+    components: createComponentRegistry([
+      ...levelingComponents,
+      ...roleComponents,
+      ...ticketComponents,
+    ]),
     context,
   }),
 );
 
 client.on(Events.MessageCreate, createMessageXpHandler(context));
+client.on(Events.ChannelDelete, createTicketChannelDeleteHandler(prisma, logger));
 
 client.once(Events.ClientReady, (ready) => {
   logger.info({ user: ready.user.tag, guilds: ready.guilds.cache.size }, 'Bot connecté');
@@ -53,6 +69,12 @@ client.once(Events.ClientReady, (ready) => {
   stopBanExpiry = startBanExpiry(ready, context);
   publishPendingRolePanels(ready, prisma, logger).catch((err: unknown) =>
     logger.error({ err }, 'Échec de la publication des panels en attente'),
+  );
+  publishPendingTicketPanels(ready, prisma, logger).catch((err: unknown) =>
+    logger.error({ err }, 'Échec de la publication des panels de tickets'),
+  );
+  closeOrphanTickets(ready, prisma, logger).catch((err: unknown) =>
+    logger.error({ err }, 'Échec du ménage des tickets sans salon'),
   );
 });
 
