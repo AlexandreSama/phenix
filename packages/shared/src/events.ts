@@ -13,7 +13,6 @@ export const botEventSchema = z.discriminatedUnion('type', [
     channelId: z.string(),
     messageId: z.string(),
   }),
-  z.object({ type: z.literal('giveaway.publish'), giveawayId: z.number().int() }),
   z.object({ type: z.literal('ticketPanel.publish'), guildId: z.string() }),
   // Le panel change de salon : l'ancien message part, comme pour un panel de rôles
   z.object({

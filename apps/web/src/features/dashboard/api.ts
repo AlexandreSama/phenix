@@ -4,6 +4,9 @@ import type {
   GuildChannelSummary,
   GuildRoleSummary,
   ManageableGuild,
+  GiveawayInput,
+  GiveawayPage,
+  GiveawaySummary,
 } from '@phenix/shared';
 import { keepPreviousData, queryOptions, useMutation, useQueryClient } from '@tanstack/react-query';
 import { api } from '../../lib/api';
@@ -159,3 +162,51 @@ export const ticketsQuery = (guildId: string, status: TicketStatusFilter, page: 
 /** Adresse du transcript, servie par l'API ; le cookie de session suit, même dans une iframe. */
 export const transcriptUrl = (guildId: string, ticketId: number) =>
   `/api/guilds/${guildId}/tickets/${ticketId}/transcript`;
+
+export type GiveawayStatusFilter = 'active' | 'ended';
+
+/** Le bot n'a pas encore fini : publication, tirage ou annonce en cours. */
+export function isGiveawayBusy(giveaway: GiveawaySummary, now = Date.now()): boolean {
+  if (giveaway.publication === 'pending') return true;
+  if (!giveaway.endedAt) return Date.parse(giveaway.endsAt) <= now;
+  return !giveaway.announced && !giveaway.publishError;
+}
+
+export const giveawaysQuery = (guildId: string, status: GiveawayStatusFilter, page: number) =>
+  queryOptions({
+    queryKey: ['guilds', guildId, 'giveaways', status, page],
+    queryFn: () => api<GiveawayPage>(`/guilds/${guildId}/giveaways?status=${status}&page=${page}`),
+    placeholderData: keepPreviousData,
+    // Toutes les 2 s tant que le bot travaille ; sinon de quoi suivre les participations
+    refetchInterval: (query) =>
+      query.state.data?.giveaways.some((giveaway) => isGiveawayBusy(giveaway)) ? 2000 : 15_000,
+  });
+
+const invalidateGiveaways = (queryClient: ReturnType<typeof useQueryClient>, guildId: string) =>
+  queryClient.invalidateQueries({ queryKey: ['guilds', guildId, 'giveaways'] });
+
+export function useCreateGiveaway(guildId: string) {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (input: GiveawayInput) =>
+      api<GiveawaySummary>(`/guilds/${guildId}/giveaways`, {
+        method: 'POST',
+        body: JSON.stringify(input),
+      }),
+    onSuccess: () => invalidateGiveaways(queryClient, guildId),
+  });
+}
+
+export type GiveawayAction = 'end' | 'reroll' | 'delete';
+
+/** Terminer, relancer ou supprimer : le bot fait le travail, la liste se relit ensuite. */
+export function useGiveawayAction(guildId: string) {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: ({ id, action }: { id: number; action: GiveawayAction }) =>
+      action === 'delete'
+        ? api<void>(`/guilds/${guildId}/giveaways/${id}`, { method: 'DELETE' })
+        : api<void>(`/guilds/${guildId}/giveaways/${id}/${action}`, { method: 'POST' }),
+    onSuccess: () => invalidateGiveaways(queryClient, guildId),
+  });
+}

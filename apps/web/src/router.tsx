@@ -20,6 +20,8 @@ import { RolePanelEditorPage } from './features/dashboard/roles/role-panel-edito
 import { TicketsPage } from './features/dashboard/tickets/tickets-page';
 import { TicketSettingsPage } from './features/dashboard/tickets/ticket-settings-page';
 import { TranscriptPage } from './features/dashboard/tickets/transcript-page';
+import { GiveawaysPage } from './features/dashboard/giveaways/giveaway-page';
+import { GiveawayCreatePage } from './features/dashboard/giveaways/giveaway-create-page';
 
 const rootRoute = createRootRouteWithContext<{ queryClient: QueryClient }>()({
   component: RootLayout,
@@ -125,6 +127,28 @@ const transcriptRoute = createRoute({
   component: TranscriptPage,
 });
 
+/** Onglet « Giveaways » : la liste et le formulaire de création. */
+const guildGiveawaysRoute = createRoute({
+  getParentRoute: () => guildRoute,
+  path: 'giveaways',
+});
+
+const giveawaysRoute = createRoute({
+  getParentRoute: () => guildGiveawaysRoute,
+  path: '/',
+  validateSearch: z.object({
+    status: z.enum(['active', 'ended']).optional().catch(undefined),
+    page: z.number().int().min(1).optional().catch(undefined),
+  }),
+  component: GiveawaysPage,
+});
+
+const giveawayCreateRoute = createRoute({
+  getParentRoute: () => guildGiveawaysRoute,
+  path: 'nouveau',
+  component: GiveawayCreatePage,
+});
+
 const routeTree = rootRoute.addChildren([
   homeRoute,
   leaderboardRoute,
@@ -137,6 +161,7 @@ const routeTree = rootRoute.addChildren([
     guildLevelingRoute,
     guildRolesRoute.addChildren([rolePanelsRoute, rolePanelEditorRoute]),
     guildTicketsRoute.addChildren([ticketsRoute, ticketSettingsRoute, transcriptRoute]),
+    guildGiveawaysRoute.addChildren([giveawaysRoute, giveawayCreateRoute]),
   ]),
 ]);
 

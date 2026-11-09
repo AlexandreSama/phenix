@@ -18,6 +18,7 @@
     "@phenix/database": "workspace:*",
     "@phenix/shared": "workspace:*",
     "@phenix/storage": "workspace:*",
+    "@phenix/jobs": "workspace:*",
     "cookie-parser": "^1.4.7",
     "discord-api-types": "^0.38.57",
     "ioredis": "^6.0.0",

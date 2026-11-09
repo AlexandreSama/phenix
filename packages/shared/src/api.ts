@@ -120,3 +120,33 @@ export interface TicketPage {
   pageCount: number;
   total: number;
 }
+
+export interface GiveawayWinner {
+  id: string;
+  /** Pseudo au moment de la participation ; l'ID si le membre n'en avait pas */
+  name: string;
+}
+
+export interface GiveawaySummary {
+  id: number;
+  prize: string;
+  channelId: string;
+  winnersCount: number;
+  requiredRoleId: string | null;
+  endsAt: string;
+  /** Rempli quand le tirage est fait */
+  endedAt: string | null;
+  /** Faux tant que le message final et les félicitations ne sont pas partis */
+  announced: boolean;
+  entryCount: number;
+  winners: GiveawayWinner[];
+  publication: PublicationStatus;
+  publishError: string | null;
+}
+
+export interface GiveawayPage {
+  giveaways: GiveawaySummary[];
+  page: number;
+  pageCount: number;
+  total: number;
+}

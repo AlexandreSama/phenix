@@ -3,3 +3,9 @@ export const ENV = Symbol('ENV');
 
 /** Jeton d'injection du bucket des transcripts (Garage). */
 export const TRANSCRIPTS = Symbol('TRANSCRIPTS');
+
+/** Jeton d'injection de la file BullMQ des giveaways. */
+export const GIVEAWAY_QUEUE = Symbol('GIVEAWAY_QUEUE');
+
+/** Jeton d'injection du planificateur des giveaways (publications, tirages). */
+export const GIVEAWAYS = Symbol('GIVEAWAYS');

@@ -9,7 +9,7 @@ import { AppModule } from './app.module.js';
 import { configureApp } from './app.setup.js';
 import { DiscordService } from './discord/discord.service.js';
 import type { Env } from './env.js';
-import { TRANSCRIPTS } from './core/tokens.js';
+import { GIVEAWAY_QUEUE, TRANSCRIPTS } from './core/tokens.js';
 
 const env: Env = {
   NODE_ENV: 'test',
@@ -96,6 +96,34 @@ const ticketPanel = {
   publishedAt: new Date(),
   publishError: null,
 };
+
+/** Un giveaway en cours dans CHANNEL, publié, avec 3 participants. */
+const giveaway = {
+  id: 12,
+  guildId: MANAGED,
+  channelId: CHANNEL,
+  messageId: '700000000000000003',
+  hostId: '1',
+  prize: 'Nitro',
+  winnersCount: 1,
+  requiredRoleId: null as string | null,
+  endsAt: new Date('2026-11-20T20:00:00Z'),
+  endedAt: null as Date | null,
+  winnerIds: [] as string[],
+  announcedAt: null as Date | null,
+  publishedAt: new Date(),
+  publishError: null,
+  createdAt: new Date('2026-11-09T12:00:00Z'),
+  _count: { entries: 3 },
+};
+/** La file BullMQ, sans Valkey : on regarde les tâches ajoutées. */
+const giveawayQueue = {
+  add: vi.fn(async () => ({})),
+  getJob: vi.fn(async () => undefined),
+  remove: vi.fn(async () => 1),
+  close: vi.fn(async () => {}),
+};
+
 const transcripts = {
   put: vi.fn(),
   getText: vi.fn(async (_key: string): Promise<string | null> => '<!doctype html><p>Bonjour</p>'),
@@ -103,6 +131,20 @@ const transcripts = {
 
 const db = {
   $transaction: vi.fn(async (run: (tx: unknown) => Promise<unknown>) => run(db)),
+  giveaway: {
+    count: vi.fn(async () => 1),
+    findMany: vi.fn(async () => [giveaway]),
+    findUnique: vi.fn(async () => giveaway as typeof giveaway | null),
+    create: vi.fn(async ({ data }: { data: object }) => ({
+      ...giveaway,
+      messageId: null,
+      publishedAt: null,
+      ...data,
+    })),
+    deleteMany: vi.fn(async () => ({ count: 1 })),
+    updateMany: vi.fn(async () => ({ count: 1 })),
+  },
+  giveawayEntry: { findMany: vi.fn(async () => []) },
   ticket: {
     count: vi.fn(async () => 25),
     findMany: vi.fn(async () => [ticket]),
@@ -207,6 +249,8 @@ beforeAll(async () => {
     .useValue(redis)
     .overrideProvider(DiscordService)
     .useValue(discord)
+    .overrideProvider(GIVEAWAY_QUEUE)
+    .useValue(giveawayQueue)
     .overrideProvider(TRANSCRIPTS)
     .useValue(transcripts)
     .compile();
@@ -526,6 +570,132 @@ describe('tickets', () => {
     expect([other.status, none.status]).toEqual([404, 404]);
     expect(other.headers['content-type']).toContain('application/json');
     expect(transcripts.getText).not.toHaveBeenCalled();
+  });
+});
+
+const tomorrow = () => new Date(Date.now() + 86_400_000);
+const giveawayInput = () => ({
+  channelId: CHANNEL,
+  prize: 'Nitro',
+  winnersCount: 2,
+  endsAt: tomorrow().toISOString(),
+  requiredRoleId: GAMER_ROLE,
+});
+const jobs = () => giveawayQueue.add.mock.calls as unknown as [string, object, object?][];
+
+describe('giveaways', () => {
+  const url = `/api/guilds/${MANAGED}/giveaways`;
+
+  it('liste les giveaways en cours, la fin la plus proche d’abord', async () => {
+    const response = await request(app.getHttpServer()).get(url).set('Cookie', cookie);
+
+    expect(response.body).toMatchObject({ page: 1, pageCount: 1, total: 1 });
+    expect(response.body.giveaways[0]).toMatchObject({
+      id: 12,
+      entryCount: 3,
+      announced: false,
+      publication: 'published',
+      winners: [],
+    });
+    expect(db.giveaway.findMany).toHaveBeenCalledWith(
+      expect.objectContaining({
+        where: { guildId: MANAGED, endedAt: null },
+        orderBy: { endsAt: 'asc' },
+      }),
+    );
+  });
+
+  it('crée le giveaway au nom de l’admin connecté, puis confie publication et tirage à la file', async () => {
+    const body = giveawayInput();
+    const response = await request(app.getHttpServer()).post(url).set('Cookie', cookie).send(body);
+
+    expect(response.status).toBe(201);
+    expect(response.body).toMatchObject({ prize: 'Nitro', entryCount: 0, publication: 'pending' });
+    expect(db.giveaway.create).toHaveBeenCalledWith({
+      data: expect.objectContaining({ hostId: '1', winnersCount: 2, requiredRoleId: GAMER_ROLE }),
+    });
+    expect(jobs()).toEqual([
+      ['publish', { giveawayId: 12 }, { jobId: 'publish-12', delay: 0 }],
+      ['end', { giveawayId: 12 }, { jobId: 'end-12', delay: expect.any(Number) }],
+    ]);
+    const [, , endOptions] = jobs()[1] ?? [];
+    const { delay } = endOptions as { delay: number };
+    expect(delay).toBeGreaterThan(86_000_000);
+    expect(delay).toBeLessThanOrEqual(86_400_000);
+  });
+
+  it('refuse une fin trop proche, un salon et un rôle inconnus', async () => {
+    const response = await request(app.getHttpServer())
+      .post(url)
+      .set('Cookie', cookie)
+      .send({
+        ...giveawayInput(),
+        endsAt: new Date(Date.now() + 10_000).toISOString(),
+        channelId: '400000000000000099',
+        requiredRoleId: '600000000000000099',
+      });
+
+    expect(response.status).toBe(400);
+    expect(response.body.message).toEqual([
+      'La fin doit être dans une minute au moins',
+      'Salon inconnu sur ce serveur',
+      'Rôle inconnu sur ce serveur',
+    ]);
+    expect(db.giveaway.create).not.toHaveBeenCalled();
+    expect(giveawayQueue.add).not.toHaveBeenCalled();
+  });
+
+  it('« Terminer » avance le tirage ; refusé une fois le giveaway annoncé', async () => {
+    const ok = await request(app.getHttpServer()).post(`${url}/12/end`).set('Cookie', cookie);
+    db.giveaway.findUnique.mockResolvedValueOnce({
+      ...giveaway,
+      endedAt: new Date(),
+      announcedAt: new Date(),
+    });
+    const done = await request(app.getHttpServer()).post(`${url}/12/end`).set('Cookie', cookie);
+
+    expect([ok.status, done.status]).toEqual([202, 409]);
+    // La date de fin devient maintenant : le site affiche « tirage en cours »
+    expect(db.giveaway.updateMany).toHaveBeenCalledOnce();
+    expect(db.giveaway.updateMany).toHaveBeenCalledWith({
+      where: { id: 12, endedAt: null },
+      data: { endsAt: expect.any(Date) },
+    });
+    expect(jobs()).toEqual([['end', { giveawayId: 12 }, { jobId: 'end-12' }]]);
+  });
+
+  it('« Relancer » attend un tirage fait et annoncé', async () => {
+    const early = await request(app.getHttpServer()).post(`${url}/12/reroll`).set('Cookie', cookie);
+    db.giveaway.findUnique.mockResolvedValueOnce({
+      ...giveaway,
+      endedAt: new Date(),
+      announcedAt: new Date(),
+    });
+    const ok = await request(app.getHttpServer()).post(`${url}/12/reroll`).set('Cookie', cookie);
+
+    expect([early.status, ok.status]).toEqual([409, 202]);
+    expect(early.body.message).toBe("Ce giveaway n'est pas encore terminé");
+    expect(jobs()).toEqual([['reroll', { giveawayId: 12 }, { jobId: 'reroll-12' }]]);
+  });
+
+  it('supprime, annule les tâches en attente et fait retirer le message', async () => {
+    const response = await request(app.getHttpServer()).delete(`${url}/12`).set('Cookie', cookie);
+
+    expect(response.status).toBe(204);
+    expect(db.giveaway.deleteMany).toHaveBeenCalledWith({ where: { id: 12 } });
+    expect(giveawayQueue.remove.mock.calls).toEqual([['end-12'], ['publish-12']]);
+    expect(jobs()).toEqual([['remove', { channelId: CHANNEL, messageId: '700000000000000003' }]]);
+  });
+
+  it('répond 404 pour le giveaway d’un autre serveur, ou un ID illisible', async () => {
+    db.giveaway.findUnique.mockResolvedValueOnce({ ...giveaway, guildId: NOT_MANAGED });
+    const other = await request(app.getHttpServer()).delete(`${url}/12`).set('Cookie', cookie);
+    const unreadable = await request(app.getHttpServer())
+      .post(`${url}/abc/end`)
+      .set('Cookie', cookie);
+
+    expect([other.status, unreadable.status]).toEqual([404, 404]);
+    expect(db.giveaway.deleteMany).not.toHaveBeenCalled();
   });
 });
 

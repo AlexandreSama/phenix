@@ -184,17 +184,24 @@ model Giveaway {
   winnersCount   Int             @default(1)
   requiredRoleId String?
   endsAt         DateTime
-  endedAt        DateTime?
+  endedAt        DateTime? // tirage fait : les gagnants sont dans winnerIds
   winnerIds      String[]
+  announcedAt    DateTime? // message final et félicitations envoyés
+  // publication du message : mêmes règles que les panels
+  publishedAt    DateTime?
+  publishError   String?
   entries        GiveawayEntry[]
   createdAt      DateTime        @default(now())
+
+  @@index([guildId, endedAt])
 }
 
 model GiveawayEntry {
-  giveawayId Int
-  userId     String
-  giveaway   Giveaway @relation(fields: [giveawayId], references: [id], onDelete: Cascade)
-  createdAt  DateTime @default(now())
+  giveawayId  Int
+  userId      String
+  displayName String? // pseudo à l'inscription, pour afficher les gagnants sur le site
+  giveaway    Giveaway @relation(fields: [giveawayId], references: [id], onDelete: Cascade)
+  createdAt   DateTime @default(now())
 
   @@id([giveawayId, userId])
 }

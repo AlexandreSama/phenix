@@ -49,9 +49,6 @@ export function handleBotEvent(
         logger.warn({ err, messageId: event.messageId }, 'Retrait du panel de tickets en échec');
       });
       return;
-    default:
-      // Panels, giveaways… : leurs modules arrivent dans les phases suivantes
-      logger.debug({ type: event.type }, 'Événement pas encore géré');
   }
 }
 

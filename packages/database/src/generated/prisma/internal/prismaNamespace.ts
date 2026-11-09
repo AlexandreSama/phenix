@@ -2391,6 +2391,9 @@ export const GiveawayScalarFieldEnum = {
   endsAt: 'endsAt',
   endedAt: 'endedAt',
   winnerIds: 'winnerIds',
+  announcedAt: 'announcedAt',
+  publishedAt: 'publishedAt',
+  publishError: 'publishError',
   createdAt: 'createdAt'
 } as const
 
@@ -2400,6 +2403,7 @@ export type GiveawayScalarFieldEnum = (typeof GiveawayScalarFieldEnum)[keyof typ
 export const GiveawayEntryScalarFieldEnum = {
   giveawayId: 'giveawayId',
   userId: 'userId',
+  displayName: 'displayName',
   createdAt: 'createdAt'
 } as const
 

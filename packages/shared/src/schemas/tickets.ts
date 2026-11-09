@@ -1,5 +1,5 @@
 import { z } from 'zod';
-import { snowflakeSchema } from './guild-config.js';
+import { requiredIdSchema as requiredId, snowflakeSchema } from './guild-config.js';
 
 export const TICKET_LIMITS = {
   staffRoles: 10,
@@ -7,9 +7,6 @@ export const TICKET_LIMITS = {
   description: 1000,
   buttonLabel: 80,
 } as const;
-
-/** Un <select> laissé vide envoie '' : on le dit en clair plutôt que « ID Discord invalide ». */
-const requiredId = (message: string) => z.string().min(1, message).pipe(snowflakeSchema);
 
 /** Le message « Ouvrir un ticket » que le bot poste dans un salon. */
 export const ticketPanelSchema = z.object({

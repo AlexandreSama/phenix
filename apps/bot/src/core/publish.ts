@@ -27,6 +27,19 @@ export function describePublishError(err: unknown): string {
   return 'Erreur inattendue : voir les logs du bot';
 }
 
+/** Les échecs qui se répéteraient à l'identique : réessayer ne sert à rien, un admin doit agir. */
+export function isLastingPublishError(err: unknown): boolean {
+  return (
+    err instanceof PublishError ||
+    [
+      RESTJSONErrorCodes.UnknownChannel,
+      RESTJSONErrorCodes.MissingAccess,
+      RESTJSONErrorCodes.MissingPermissions,
+      RESTJSONErrorCodes.InvalidFormBodyOrContentType,
+    ].some((code) => isDiscordError(err, code))
+  );
+}
+
 export interface PublishTarget {
   guildId: string;
   channelId: string;

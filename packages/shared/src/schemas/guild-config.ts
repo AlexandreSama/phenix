@@ -2,6 +2,9 @@ import { z } from 'zod';
 
 /** ID Discord (snowflake) : 17 à 20 chiffres. */
 export const snowflakeSchema = z.string().regex(/^\d{17,20}$/, 'ID Discord invalide');
+/** Un <select> laissé vide envoie '' : on le dit en clair plutôt que « ID Discord invalide ». */
+export const requiredIdSchema = (message: string) =>
+  z.string().min(1, message).pipe(snowflakeSchema);
 
 /** Vrai si le fuseau horaire est connu du moteur JavaScript (« Europe/Paris »…). */
 export function isValidTimeZone(timeZone: string): boolean {
