@@ -1,7 +1,13 @@
 /** Formes des réponses de l'API, partagées avec le site. */
 import type { RolePanelInput, RolePanelMode } from './schemas/role-panel.js';
 import type { TicketSettingsInput } from './schemas/tickets.js';
-import type {Td2KindKey, Td2PlatformKey, Td2ReportReasonKey, Td2ReportStatusKey, Td2RoleKey} from './constants.js';
+import type {
+  Td2KindKey,
+  Td2PlatformKey,
+  Td2ReportReasonKey,
+  Td2ReportStatusKey,
+  Td2RoleKey,
+} from './constants.js';
 /** Où en est la publication d'un panel : le bot la confirme après coup, par la base. */
 export type PublicationStatus = 'published' | 'pending' | 'error';
 

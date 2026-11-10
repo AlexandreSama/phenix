@@ -5,6 +5,7 @@ export * from './giveaways.js';
 export * from './td2-catalogue-admin.js';
 export { seedTd2Catalogue, TD2_CATALOGUE } from './td2-catalogue.js';
 export * from './td2-events.js';
+export * from './td2-profiles.js';
 export * from './td2-reports.js';
 export * from './tickets.js';
 export * from './leveling.js';

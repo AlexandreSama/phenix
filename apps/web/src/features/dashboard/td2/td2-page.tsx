@@ -1,22 +1,28 @@
 import { useQueries } from '@tanstack/react-query';
 import { useParams } from '@tanstack/react-router';
 import { Card } from '../../../components/ui/card';
-import {channelsQuery, rolesQuery, td2EventsQuery, td2SettingsQuery, useSaveTd2Settings} from '../api';
+import {
+  channelsQuery,
+  rolesQuery,
+  td2EventsQuery,
+  td2SettingsQuery,
+  useSaveTd2Settings,
+} from '../api';
 import { Td2EventList } from './td2-event-list';
 import { Td2SettingsForm } from './td2-settings-form';
 
 export function Td2Page() {
   const { guildId } = useParams({ from: '/dashboard/$guildId/td2' });
-    const [settings, channels, roles, events] = useQueries({
-        queries: [
-            td2SettingsQuery(guildId),
-            channelsQuery(guildId),
-            rolesQuery(guildId),
-            td2EventsQuery(guildId),
-        ],
-    });
-    const save = useSaveTd2Settings(guildId);
-    const error = settings.error ?? channels.error ?? roles.error;
+  const [settings, channels, roles, events] = useQueries({
+    queries: [
+      td2SettingsQuery(guildId),
+      channelsQuery(guildId),
+      rolesQuery(guildId),
+      td2EventsQuery(guildId),
+    ],
+  });
+  const save = useSaveTd2Settings(guildId);
+  const error = settings.error ?? channels.error ?? roles.error;
 
   return (
     <section className="flex flex-col gap-6">

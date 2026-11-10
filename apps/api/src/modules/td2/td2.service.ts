@@ -3,8 +3,8 @@ import type { Td2EventSummary, Td2Settings, Td2SettingsInput } from '@phenix/sha
 import { BotEventsService } from '../../core/bot-events.service.js';
 import { newGuildConfig } from '../guild-config/guild-config.service.js';
 import { GuildsService } from '../guilds/guilds.service.js';
-import type {PrismaClient} from "@phenix/database";
-import {listUpcomingTd2Events} from "@phenix/database";
+import type { PrismaClient } from '@phenix/database';
+import { listUpcomingTd2Events } from '@phenix/database';
 
 const SETTINGS_SELECT = {
   td2ChannelId: true,
@@ -51,7 +51,7 @@ export class Td2Service {
    */
   async saveSettings(guildId: string, input: Td2SettingsInput): Promise<Td2Settings> {
     const channelIds = [input.channelId, input.reportChannelId, input.reportFeedChannelId].filter(
-        (id): id is string => id !== null,
+      (id): id is string => id !== null,
     );
     if (channelIds.length > 0) {
       const known = new Set((await this.guilds.channels(guildId)).map((channel) => channel.id));

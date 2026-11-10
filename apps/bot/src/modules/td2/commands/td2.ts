@@ -1,12 +1,4 @@
 import {
-  createTd2Event,
-  deleteTd2Event,
-  listTd2Activities,
-  markTd2EventPublished,
-  type Td2ActivityKind,
-} from '@phenix/database';
-import { parseEventDate, TD2_KIND_LABELS, TD2_ROLE_LABELS } from '@phenix/shared';
-import {
   InteractionContextType,
   MessageFlags,
   PermissionFlagsBits,
@@ -22,7 +14,29 @@ import type { BotContext } from '../../../core/context.js';
 import { describePublishError } from '../../../core/publish.js';
 import { refuse } from '../../moderation/common.js';
 import { ROLE_ORDER, td2EventMessage } from '../messages.js';
-import { lookupPlayer, lookupSubcommand, reportPlayer, reportSubcommand } from '../reports/command.js';
+import {
+  lookupPlayer,
+  lookupSubcommand,
+  reportPlayer,
+  reportSubcommand,
+} from '../reports/command.js';
+import {
+  autocompletePlayer,
+  linkAccount,
+  linkSubcommand,
+  showStats,
+  statsSubcommand,
+  unlinkAccount,
+  unlinkSubcommand,
+} from '../stats/command.js';
+import {
+  listTd2Activities,
+  createTd2Event,
+  deleteTd2Event,
+  markTd2EventPublished,
+} from '@phenix/database';
+import type { Td2ActivityKind } from '@phenix/database';
+import { TD2_KIND_LABELS, TD2_ROLE_LABELS, parseEventDate } from '@phenix/shared';
 
 type Activity = Awaited<ReturnType<typeof listTd2Activities>>[number];
 type Mode = Activity['modes'][number];
@@ -176,13 +190,16 @@ const kindOf = (name: string): Td2ActivityKind => (name === 'raid' ? 'RAID' : 'I
 export const td2: SlashCommand = {
   category: 'td2',
   data: new SlashCommandBuilder()
-      .setName('td2')
-      .setDescription('The Division 2 : raids, incursions et signalements')
-      .setContexts(InteractionContextType.Guild)
-      .addSubcommand(subcommand('RAID'))
-      .addSubcommand(subcommand('INCURSION'))
-      .addSubcommand(reportSubcommand)
-      .addSubcommand(lookupSubcommand),
+    .setName('td2')
+    .setDescription('The Division 2 : raids, incursions, signalements et stats')
+    .setContexts(InteractionContextType.Guild)
+    .addSubcommand(subcommand('RAID'))
+    .addSubcommand(subcommand('INCURSION'))
+    .addSubcommand(reportSubcommand)
+    .addSubcommand(lookupSubcommand)
+    .addSubcommand(statsSubcommand)
+    .addSubcommand(linkSubcommand)
+    .addSubcommand(unlinkSubcommand),
 
   async execute(interaction, context) {
     if (!interaction.inCachedGuild()) return;
@@ -191,17 +208,29 @@ export const td2: SlashCommand = {
         return reportPlayer(interaction, context);
       case 'signalements':
         return lookupPlayer(interaction, context);
+      case 'stats':
+        return showStats(interaction, context);
+      case 'lier':
+        return linkAccount(interaction, context);
+      case 'délier':
+        return unlinkAccount(interaction, context);
       default:
         return create(kindOf(interaction.options.getSubcommand()), interaction, context);
     }
   },
 
-  /** L'activité depuis le catalogue, puis les modes de l'activité déjà choisie. */
-  async autocomplete(interaction, { db }) {
-    const kind = kindOf(interaction.options.getSubcommand());
+  /**
+   * Le pseudo d'un joueur, depuis le service de stats ; sinon l'activité depuis le catalogue,
+   * puis les modes de l'activité déjà choisie.
+   */
+  async autocomplete(interaction, context) {
     const focused = interaction.options.getFocused(true);
+    if (focused.name === 'pseudo') {
+      return autocompletePlayer(interaction, context, String(focused.value));
+    }
+    const kind = kindOf(interaction.options.getSubcommand());
     const typed = normalize(String(focused.value));
-    const activities = await listTd2Activities(db, kind);
+    const activities = await listTd2Activities(context.db, kind);
 
     if (focused.name === 'mode') {
       const activity = pick(activities, interaction.options.getString('activité'));

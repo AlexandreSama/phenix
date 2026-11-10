@@ -45,7 +45,7 @@ export class AuthService {
   async currentUser(userId: string): Promise<CurrentUser | null> {
     const user = await this.db.user.findUnique({ where: { id: userId } });
     return user
-        ? {
+      ? {
           id: user.id,
           username: user.username,
           avatarUrl: avatarUrl(user.id, user.avatar),

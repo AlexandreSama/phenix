@@ -9,7 +9,7 @@ import { AppModule } from './app.module.js';
 import { configureApp } from './app.setup.js';
 import { DiscordService } from './discord/discord.service.js';
 import type { Env } from './env.js';
-import {EVIDENCE, GIVEAWAY_QUEUE, TRANSCRIPTS} from './core/tokens.js';
+import { EVIDENCE, GIVEAWAY_QUEUE, TRANSCRIPTS } from './core/tokens.js';
 
 const env: Env = {
   NODE_ENV: 'test',
@@ -341,10 +341,10 @@ beforeAll(async () => {
     .useValue(discord)
     .overrideProvider(GIVEAWAY_QUEUE)
     .useValue(giveawayQueue)
-      .overrideProvider(TRANSCRIPTS)
-      .useValue(transcripts)
-      .overrideProvider(EVIDENCE)
-      .useValue(evidence)
+    .overrideProvider(TRANSCRIPTS)
+    .useValue(transcripts)
+    .overrideProvider(EVIDENCE)
+    .useValue(evidence)
     .compile();
   app = moduleRef.createNestApplication<NestExpressApplication>();
   configureApp(app);
@@ -359,8 +359,8 @@ beforeEach(() => {
   store.clear();
   store.set(`session:${SESSION_ID}`, JSON.stringify({ userId: '1', accessToken: 'tok' }));
   store.set(
-      `session:${OWNER_SESSION_ID}`,
-      JSON.stringify({ userId: '900000000000000001', accessToken: 'tok' }),
+    `session:${OWNER_SESSION_ID}`,
+    JSON.stringify({ userId: '900000000000000001', accessToken: 'tok' }),
   );
   vi.clearAllMocks();
 });
@@ -806,8 +806,8 @@ describe('TD2', () => {
 
   it('lit les réglages, vides par défaut', async () => {
     const response = await request(app.getHttpServer())
-        .get(`${url}/settings`)
-        .set('Cookie', cookie);
+      .get(`${url}/settings`)
+      .set('Cookie', cookie);
 
     expect(response.body).toEqual({
       channelId: null,
@@ -819,32 +819,32 @@ describe('TD2', () => {
 
   it('enregistre les salons et les rôles, puis prévient le bot', async () => {
     const response = await request(app.getHttpServer())
-        .put(`${url}/settings`)
-        .set('Cookie', cookie)
-        .send(settings);
+      .put(`${url}/settings`)
+      .set('Cookie', cookie)
+      .send(settings);
 
     expect(response.body).toEqual(settings);
     expect(db.guildConfig.upsert).toHaveBeenCalledWith(
-        expect.objectContaining({
-          update: {
-            td2ChannelId: CHANNEL,
-            td2ReportChannelId: OTHER_CHANNEL,
-            td2ReportViewerRoleIds: [GAMER_ROLE],
-            td2ReportFeedChannelId: null,
-          },
-        }),
+      expect.objectContaining({
+        update: {
+          td2ChannelId: CHANNEL,
+          td2ReportChannelId: OTHER_CHANNEL,
+          td2ReportViewerRoleIds: [GAMER_ROLE],
+          td2ReportFeedChannelId: null,
+        },
+      }),
     );
     expect(redis.publish).toHaveBeenCalledWith(
-        'bot:events',
-        JSON.stringify({ type: 'config.updated', guildId: MANAGED }),
+      'bot:events',
+      JSON.stringify({ type: 'config.updated', guildId: MANAGED }),
     );
   });
 
   const put = (body: object) =>
-      request(app.getHttpServer())
-          .put(`${url}/settings`)
-          .set('Cookie', cookie)
-          .send({ ...settings, ...body });
+    request(app.getHttpServer())
+      .put(`${url}/settings`)
+      .set('Cookie', cookie)
+      .send({ ...settings, ...body });
 
   it('refuse un salon ou un rôle inconnu du serveur', async () => {
     const channel = await put({ reportFeedChannelId: '400000000000000099' });
@@ -873,7 +873,7 @@ describe('TD2', () => {
       },
     ]);
     expect(db.td2Event.findMany).toHaveBeenCalledWith(
-        expect.objectContaining({ orderBy: { scheduledAt: 'asc' } }),
+      expect.objectContaining({ orderBy: { scheduledAt: 'asc' } }),
     );
   });
 });
@@ -895,8 +895,8 @@ describe('administration', () => {
 
   it('refuse toute route d’administration à qui n’est pas propriétaire', async () => {
     const response = await request(app.getHttpServer())
-        .get('/api/admin/td2/catalogue')
-        .set('Cookie', cookie);
+      .get('/api/admin/td2/catalogue')
+      .set('Cookie', cookie);
 
     expect(response.status).toBe(403);
     expect(response.body.message).toBe('Réservé aux propriétaires du bot');
@@ -905,8 +905,8 @@ describe('administration', () => {
 
   it('liste le catalogue, compositions complètes et usage de chaque mode', async () => {
     const response = await request(app.getHttpServer())
-        .get('/api/admin/td2/catalogue')
-        .set('Cookie', owner);
+      .get('/api/admin/td2/catalogue')
+      .set('Cookie', owner);
 
     expect(response.body).toEqual([
       {
@@ -930,12 +930,12 @@ describe('administration', () => {
     db.td2Activity.createMany.mockResolvedValueOnce({ count: 0 });
 
     const duplicate = await request(app.getHttpServer())
-        .post('/api/admin/td2/activities')
-        .set('Cookie', owner)
-        .send({ kind: 'RAID', name: 'Dark Hours' });
+      .post('/api/admin/td2/activities')
+      .set('Cookie', owner)
+      .send({ kind: 'RAID', name: 'Dark Hours' });
     const inUse = await request(app.getHttpServer())
-        .delete('/api/admin/td2/modes/3')
-        .set('Cookie', owner);
+      .delete('/api/admin/td2/modes/3')
+      .set('Cookie', owner);
 
     expect(duplicate.status).toBe(409);
     expect(duplicate.body.message).toBe('Ce nom est déjà pris');
@@ -946,9 +946,9 @@ describe('administration', () => {
 
   it('valide une composition avec le schéma partagé', async () => {
     const response = await request(app.getHttpServer())
-        .put('/api/admin/td2/modes/3')
-        .set('Cookie', owner)
-        .send({ name: 'Normal', slots: { DPS: 7, HEAL: 1, TANK: 1, HEAL_TANK: 0 } });
+      .put('/api/admin/td2/modes/3')
+      .set('Cookie', owner)
+      .send({ name: 'Normal', slots: { DPS: 7, HEAL: 1, TANK: 1, HEAL_TANK: 0 } });
 
     expect(response.status).toBe(400);
     expect(response.body.message).toEqual(['slots: Entre 1 et 8 joueurs au total']);
@@ -956,8 +956,8 @@ describe('administration', () => {
 
   it('liste les signalements du réseau, sans l’auteur', async () => {
     const response = await request(app.getHttpServer())
-        .get('/api/admin/td2/reports?status=CONFIRMED&q=agent')
-        .set('Cookie', owner);
+      .get('/api/admin/td2/reports?status=CONFIRMED&q=agent')
+      .set('Cookie', owner);
 
     expect(response.body).toEqual({
       reports: [
@@ -979,16 +979,16 @@ describe('administration', () => {
     });
     expect(JSON.stringify(response.body)).not.toContain('500000000000000001');
     expect(db.td2Report.findMany).toHaveBeenCalledWith(
-        expect.objectContaining({
-          where: { status: 'CONFIRMED', playerNameLower: { contains: 'agent' } },
-        }),
+      expect.objectContaining({
+        where: { status: 'CONFIRMED', playerNameLower: { contains: 'agent' } },
+      }),
     );
   });
 
   it('sert une capture comme une image verrouillée', async () => {
     const response = await request(app.getHttpServer())
-        .get('/api/admin/td2/reports/7/evidence/1')
-        .set('Cookie', owner);
+      .get('/api/admin/td2/reports/7/evidence/1')
+      .set('Cookie', owner);
 
     expect(evidence.getBytes).toHaveBeenCalledWith('td2-reports/b.png');
     expect(response.headers['content-type']).toBe('image/png');
@@ -997,25 +997,25 @@ describe('administration', () => {
     expect(Buffer.from(response.body as Buffer)).toEqual(Buffer.from([0x89, 0x50, 0x4e, 0x47]));
 
     const missing = await request(app.getHttpServer())
-        .get('/api/admin/td2/reports/7/evidence/2')
-        .set('Cookie', owner);
+      .get('/api/admin/td2/reports/7/evidence/2')
+      .set('Cookie', owner);
     expect(missing.status).toBe(404);
   });
 
   it('supprime un signalement, ses captures, et prévient le bot pour l’embed du staff', async () => {
     const response = await request(app.getHttpServer())
-        .delete('/api/admin/td2/reports/7')
-        .set('Cookie', owner);
+      .delete('/api/admin/td2/reports/7')
+      .set('Cookie', owner);
 
     expect(response.status).toBe(204);
     expect(evidence.delete).toHaveBeenCalledWith(['td2-reports/a.png', 'td2-reports/b.png']);
     expect(redis.publish).toHaveBeenCalledWith(
-        'bot:events',
-        JSON.stringify({
-          type: 'td2Report.deleted',
-          guildId: MANAGED,
-          messageId: '700000000000000007',
-        }),
+      'bot:events',
+      JSON.stringify({
+        type: 'td2Report.deleted',
+        guildId: MANAGED,
+        messageId: '700000000000000007',
+      }),
     );
   });
 });

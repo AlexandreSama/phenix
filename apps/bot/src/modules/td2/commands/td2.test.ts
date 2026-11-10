@@ -225,4 +225,26 @@ describe('autocomplétion', () => {
   it('écrit la composition dans l’ordre des boutons', () => {
     expect(compositionText(PARADIS_PERDU.modes[0] as never)).toBe('3 DPS · 1 Heal/Tank');
   });
+
+  it('le pseudo est cherché auprès du service de stats, quelle que soit la sous-commande', async () => {
+    const search = vi.fn(async () => ['Agent47']);
+    const respond = vi.fn(async () => {});
+    const interaction = {
+      options: {
+        getSubcommand: () => 'signaler',
+        getFocused: () => ({ name: 'pseudo', value: 'agent' }),
+        getString: () => 'PSN',
+      },
+      respond,
+    };
+
+    await td2.autocomplete?.(
+      interaction as unknown as AutocompleteInteraction,
+      { stats: { search } } as unknown as BotContext,
+    );
+
+    expect(search).toHaveBeenCalledWith('PSN', 'agent');
+    expect(respond).toHaveBeenCalledWith([{ name: 'Agent47', value: 'Agent47' }]);
+    expect(database.listTd2Activities).not.toHaveBeenCalled();
+  });
 });

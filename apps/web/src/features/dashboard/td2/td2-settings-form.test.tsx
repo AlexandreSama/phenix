@@ -22,16 +22,16 @@ const EMPTY: Td2Settings = {
 };
 
 function setup(
-    settings: Partial<Td2Settings> = {},
-    onSubmit = vi.fn().mockResolvedValue(undefined),
+  settings: Partial<Td2Settings> = {},
+  onSubmit = vi.fn().mockResolvedValue(undefined),
 ) {
   render(
-      <Td2SettingsForm
-          settings={{ ...EMPTY, ...settings }}
-          channels={channels}
-          roles={roles as never}
-          onSubmit={onSubmit}
-      />,
+    <Td2SettingsForm
+      settings={{ ...EMPTY, ...settings }}
+      channels={channels}
+      roles={roles as never}
+      onSubmit={onSubmit}
+    />,
   );
   return onSubmit;
 }
@@ -48,12 +48,12 @@ describe('Td2SettingsForm', () => {
     save();
 
     await vi.waitFor(() =>
-        expect(onSubmit).toHaveBeenCalledWith({
-          channelId: CHANNEL,
-          reportChannelId: STAFF_CHANNEL,
-          reportViewerRoleIds: [ROLE],
-          reportFeedChannelId: null,
-        }),
+      expect(onSubmit).toHaveBeenCalledWith({
+        channelId: CHANNEL,
+        reportChannelId: STAFF_CHANNEL,
+        reportViewerRoleIds: [ROLE],
+        reportFeedChannelId: null,
+      }),
     );
     expect((await screen.findByRole('status')).textContent).toContain('Enregistré');
   });
@@ -71,12 +71,12 @@ describe('Td2SettingsForm', () => {
     save();
 
     await vi.waitFor(() =>
-        expect(onSubmit).toHaveBeenCalledWith({
-          channelId: null,
-          reportChannelId: null,
-          reportViewerRoleIds: [],
-          reportFeedChannelId: null,
-        }),
+      expect(onSubmit).toHaveBeenCalledWith({
+        channelId: null,
+        reportChannelId: null,
+        reportViewerRoleIds: [],
+        reportFeedChannelId: null,
+      }),
     );
   });
 

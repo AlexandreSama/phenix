@@ -9,10 +9,11 @@ import {
   rescheduleTd2Modal,
 } from './manage.js';
 import { joinTd2Button, leaveTd2Button } from './signup.js';
-import {confirmReportButton, rejectReportButton, reviewReportButton} from "./reports/review.js";
+import { confirmReportButton, rejectReportButton, reviewReportButton } from './reports/review.js';
 
 export { createTd2Processor } from './processor.js';
 export { resumeTd2Events } from './resume.js';
+export { createTd2Stats } from './stats/index.js';
 
 export const td2Commands: SlashCommand[] = [td2];
 

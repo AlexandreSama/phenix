@@ -28,29 +28,29 @@ export const td2ActivityInputSchema = z.object({
 });
 
 export const td2ActivityPatchSchema = z
-    .object({ name: catalogueName, active: z.boolean() })
-    .partial()
-    .refine((patch) => Object.keys(patch).length > 0, 'Rien à modifier');
+  .object({ name: catalogueName, active: z.boolean() })
+  .partial()
+  .refine((patch) => Object.keys(patch).length > 0, 'Rien à modifier');
 
 const slotCount = z
-    .number({ error: 'Un nombre de places' })
-    .int('Un nombre entier')
-    .min(0, 'Pas de places négatives')
-    .max(8, '8 places au plus');
+  .number({ error: 'Un nombre de places' })
+  .int('Un nombre entier')
+  .min(0, 'Pas de places négatives')
+  .max(8, '8 places au plus');
 
 /** Un mode = un nom et une composition. Un groupe TD2 compte 8 joueurs au plus. */
 export const td2ModeInputSchema = z
-    .object({
-      name: catalogueName,
-      slots: z.object({ DPS: slotCount, HEAL: slotCount, TANK: slotCount, HEAL_TANK: slotCount }),
-    })
-    .refine(
-        ({ slots }) => {
-          const total = slots.DPS + slots.HEAL + slots.TANK + slots.HEAL_TANK;
-          return total >= 1 && total <= 8;
-        },
-        { message: 'Entre 1 et 8 joueurs au total', path: ['slots'] },
-    );
+  .object({
+    name: catalogueName,
+    slots: z.object({ DPS: slotCount, HEAL: slotCount, TANK: slotCount, HEAL_TANK: slotCount }),
+  })
+  .refine(
+    ({ slots }) => {
+      const total = slots.DPS + slots.HEAL + slots.TANK + slots.HEAL_TANK;
+      return total >= 1 && total <= 8;
+    },
+    { message: 'Entre 1 et 8 joueurs au total', path: ['slots'] },
+  );
 
 export type Td2ActivityInput = z.infer<typeof td2ActivityInputSchema>;
 export type Td2ActivityPatch = z.infer<typeof td2ActivityPatchSchema>;

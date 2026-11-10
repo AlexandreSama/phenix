@@ -37,10 +37,16 @@ import {
   createTd2Worker,
 } from '@phenix/jobs';
 import { adminComponents } from './modules/admin/index.js';
-import { createTd2Processor, resumeTd2Events, td2Components } from './modules/td2/index.js';
-import {removeReportStaffMessage} from "./modules/td2/reports/remove.js";
-import {prisma} from "@phenix/database";
-import {createEvidenceStorage, createTranscriptStorage} from "@phenix/storage";
+import {
+  createTd2Processor,
+  createTd2Stats,
+  resumeTd2Events,
+  td2Components,
+} from './modules/td2/index.js';
+import { removeReportStaffMessage } from './modules/td2/reports/remove.js';
+import { prisma } from '@phenix/database';
+import { createEvidenceStorage, createTranscriptStorage } from '@phenix/storage';
+import { Redis } from 'ioredis';
 
 const env = loadEnv();
 const client = createClient();
@@ -76,6 +82,11 @@ td2Worker.on('failed', (job, err) =>
   ),
 );
 
+// Le cache des stats échoue vite plutôt que d'attendre Valkey : sans lui, le bot interroge tracker.gg
+const statsCache = new Redis(env.REDIS_URL, { enableOfflineQueue: false, maxRetriesPerRequest: 1 });
+statsCache.on('error', (err) => logger.warn({ err }, 'Cache des stats : erreur Valkey'));
+if (!env.TRN_API_KEY) logger.warn('TRN_API_KEY absente : /td2 stats est désactivée');
+
 const context: BotContext = {
   db: prisma,
   logger,
@@ -85,6 +96,7 @@ const context: BotContext = {
   evidence: createEvidenceStorage(env),
   giveaways: createGiveawayScheduler(giveawayQueue),
   td2: createTd2Scheduler(td2Queue),
+  stats: createTd2Stats({ apiKey: env.TRN_API_KEY, baseUrl: env.TRN_API_URL, cache: statsCache }),
   ownerIds: env.BOT_OWNER_IDS,
 };
 const unsubscribe = subscribeToBotEvents(env.REDIS_URL, {
@@ -157,6 +169,7 @@ async function shutdown(signal: string): Promise<void> {
   await giveawayQueue.close();
   await td2Worker.close();
   await td2Queue.close();
+  statsCache.disconnect();
   await unsubscribe();
   await client.destroy();
   await prisma.$disconnect();

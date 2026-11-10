@@ -2,7 +2,8 @@ import type { QueryClient } from '@tanstack/react-query';
 import {
   createRootRouteWithContext,
   createRoute,
-  createRouter, notFound,
+  createRouter,
+  notFound,
   redirect,
 } from '@tanstack/react-router';
 import { z } from 'zod';
@@ -23,9 +24,9 @@ import { TranscriptPage } from './features/dashboard/tickets/transcript-page';
 import { GiveawaysPage } from './features/dashboard/giveaways/giveaway-page';
 import { GiveawayCreatePage } from './features/dashboard/giveaways/giveaway-create-page';
 import { Td2Page } from './features/dashboard/td2/td2-page';
-import {AdminLayout} from "./features/admin/admin-layout";
-import {CataloguePage} from "./features/admin/catalogue/catalogue-page";
-import {ReportsPage} from "./features/admin/report/report-page";
+import { AdminLayout } from './features/admin/admin-layout';
+import { CataloguePage } from './features/admin/catalogue/catalogue-page';
+import { ReportsPage } from './features/admin/report/report-page';
 
 const rootRoute = createRootRouteWithContext<{ queryClient: QueryClient }>()({
   component: RootLayout,

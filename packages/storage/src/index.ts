@@ -1,4 +1,10 @@
-import {DeleteObjectCommand, GetObjectCommand, NoSuchKey, PutObjectCommand, S3Client} from '@aws-sdk/client-s3';
+import {
+  DeleteObjectCommand,
+  GetObjectCommand,
+  NoSuchKey,
+  PutObjectCommand,
+  S3Client,
+} from '@aws-sdk/client-s3';
 import { z } from 'zod';
 
 /**
@@ -32,13 +38,12 @@ export interface ObjectStorage {
   delete(keys: readonly string[]): Promise<void>;
 }
 
-
 /** Un client S3 pour un bucket. `client` se remplace dans les tests. */
 export function createObjectStorage(bucket: string, client: S3Client): ObjectStorage {
   return {
     async put(key, body, contentType) {
       await client.send(
-          new PutObjectCommand({ Bucket: bucket, Key: key, Body: body, ContentType: contentType }),
+        new PutObjectCommand({ Bucket: bucket, Key: key, Body: body, ContentType: contentType }),
       );
     },
     async getText(key) {

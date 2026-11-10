@@ -17,9 +17,9 @@ export type GuildSettings = Pick<
   | 'ticketStaffRoleIds'
   | 'ticketLogChannelId'
   | 'td2ChannelId'
-    | 'td2ReportChannelId'
-    | 'td2ReportViewerRoleIds'
-    | 'td2ReportFeedChannelId'
+  | 'td2ReportChannelId'
+  | 'td2ReportViewerRoleIds'
+  | 'td2ReportFeedChannelId'
 >;
 
 export interface GuildConfigCache {

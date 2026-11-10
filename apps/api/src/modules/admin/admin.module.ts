@@ -8,12 +8,12 @@ import { AdminTd2Service } from './admin-td2.service.js';
 
 /** La page d'administration des propriétaires du bot. */
 @Module({
-    controllers: [AdminTd2Controller],
-    providers: [
-        AdminTd2Service,
-        OwnerGuard,
-        // Le client S3 est créé une fois ; les tests le remplacent par un faux
-        { provide: EVIDENCE, inject: [ENV], useFactory: (env: Env) => createEvidenceStorage(env) },
-    ],
+  controllers: [AdminTd2Controller],
+  providers: [
+    AdminTd2Service,
+    OwnerGuard,
+    // Le client S3 est créé une fois ; les tests le remplacent par un faux
+    { provide: EVIDENCE, inject: [ENV], useFactory: (env: Env) => createEvidenceStorage(env) },
+  ],
 })
 export class AdminModule {}

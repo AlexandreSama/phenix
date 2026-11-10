@@ -10,12 +10,12 @@ import type { Logger } from '../../../logger.js';
  * répondent « supprimé ».
  */
 export async function removeReportStaffMessage(
-    client: Client,
-    configs: GuildConfigCache,
-    { guildId, messageId }: { guildId: string; messageId: string },
-    logger: Pick<Logger, 'warn'>,
+  client: Client,
+  configs: GuildConfigCache,
+  { guildId, messageId }: { guildId: string; messageId: string },
+  logger: Pick<Logger, 'warn'>,
 ): Promise<void> {
-    const channelId = (await configs.get(guildId))?.td2ReportChannelId;
-    if (!channelId) return;
-    await deleteMessageQuietly(client, { channelId, messageId }, logger);
+  const channelId = (await configs.get(guildId))?.td2ReportChannelId;
+  if (!channelId) return;
+  await deleteMessageQuietly(client, { channelId, messageId }, logger);
 }
