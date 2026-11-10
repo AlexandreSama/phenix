@@ -3,6 +3,7 @@ export * from './cases.js';
 export { createPrismaClient, prisma } from './client.js';
 export * from './giveaways.js';
 export { seedTd2Catalogue, TD2_CATALOGUE } from './td2-catalogue.js';
+export * from './td2-events.js';
 export * from './tickets.js';
 export * from './leveling.js';
 export * from './role-panels.js';

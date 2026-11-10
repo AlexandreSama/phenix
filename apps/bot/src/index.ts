@@ -30,8 +30,16 @@ import {
   giveawayComponents,
   resumeGiveaways,
 } from './modules/giveaways/index.js';
-import { createGiveawayQueue, createGiveawayScheduler, createGiveawayWorker } from '@phenix/jobs';
+import {
+  createGiveawayQueue,
+  createGiveawayScheduler,
+  createGiveawayWorker,
+  createTd2Queue,
+  createTd2Scheduler,
+  createTd2Worker,
+} from '@phenix/jobs';
 import { adminComponents } from './modules/admin/index.js';
+import { createTd2Processor, resumeTd2Events, td2Components } from './modules/td2/index.js';
 
 const env = loadEnv();
 const client = createClient();
@@ -52,6 +60,21 @@ giveawayWorker.on('failed', (job, err) =>
   ),
 );
 
+// La file des sorties TD2 : rappels et fermetures, à part pour ne pas attendre les giveaways
+const td2Queue = createTd2Queue(env.REDIS_URL);
+const td2Worker = createTd2Worker(
+  env.REDIS_URL,
+  createTd2Processor({ client, db: prisma, logger }),
+);
+td2Queue.on('error', (err) => logger.error({ err }, 'File TD2 : erreur Valkey'));
+td2Worker.on('error', (err) => logger.error({ err }, 'Worker TD2 : erreur'));
+td2Worker.on('failed', (job, err) =>
+  logger.warn(
+    { err, job: job?.name, data: job?.data, attempts: job?.attemptsMade },
+    'Tâche TD2 en échec',
+  ),
+);
+
 const context: BotContext = {
   db: prisma,
   logger,
@@ -59,6 +82,7 @@ const context: BotContext = {
   publicUrl: env.PUBLIC_URL?.replace(/\/$/, ''),
   transcripts: createTranscriptStorage(env),
   giveaways: createGiveawayScheduler(giveawayQueue),
+  td2: createTd2Scheduler(td2Queue),
   ownerIds: env.BOT_OWNER_IDS,
 };
 const unsubscribe = subscribeToBotEvents(env.REDIS_URL, {
@@ -80,6 +104,7 @@ client.on(
       ...ticketComponents,
       ...giveawayComponents,
       ...adminComponents,
+      ...td2Components,
     ]),
     context,
   }),
@@ -110,6 +135,10 @@ client.once(Events.ClientReady, (ready) => {
   resumeGiveaways(ready, prisma, context.giveaways, logger).catch((err: unknown) =>
     logger.error({ err }, 'Échec de la reprise des giveaways'),
   );
+  td2Worker.run().catch((err: unknown) => logger.error({ err }, 'Worker TD2 arrêté'));
+  resumeTd2Events(ready, prisma, context.td2, logger).catch((err: unknown) =>
+    logger.error({ err }, 'Échec de la reprise des sorties TD2'),
+  );
 });
 
 registerGuildEvents(client, prisma, logger);
@@ -123,6 +152,8 @@ async function shutdown(signal: string): Promise<void> {
   // Laisse finir la tâche en cours ; les autres attendent dans Valkey
   await giveawayWorker.close();
   await giveawayQueue.close();
+  await td2Worker.close();
+  await td2Queue.close();
   await unsubscribe();
   await client.destroy();
   await prisma.$disconnect();

@@ -1,6 +1,7 @@
 import { afterAll, describe, expect, inject, it } from 'vitest';
 import { findAnnounceChannels } from './announcements.js';
 import { createPrismaClient } from './client.js';
+import { newGuildId } from '../test/ids.js';
 
 const prisma = createPrismaClient(inject('databaseUrl'));
 
@@ -8,10 +9,8 @@ afterAll(async () => {
   await prisma.$disconnect();
 });
 
-const runId = Date.now();
-let counter = 0;
 async function newGuild(announceChannelId: string | null, leftAt: Date | null = null) {
-  const id = `${runId}${counter++}`;
+  const id = newGuildId();
   await prisma.guild.create({
     data: { id, name: 'Serveur de test', leftAt, config: { create: { announceChannelId } } },
   });

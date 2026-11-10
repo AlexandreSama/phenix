@@ -9,7 +9,8 @@ type GuildTab =
   | '/dashboard/$guildId/niveaux'
   | '/dashboard/$guildId/roles'
   | '/dashboard/$guildId/tickets'
-  | '/dashboard/$guildId/giveaways';
+  | '/dashboard/$guildId/giveaways'
+  | '/dashboard/$guildId/td2';
 
 /** Un onglet ; le Link marque l'onglet actif (classes + aria-current="page"). */
 function Tab({ to, exact, children }: { to: GuildTab; exact?: boolean; children: ReactNode }) {
@@ -69,6 +70,7 @@ export function GuildLayout() {
           <Tab to="/dashboard/$guildId/roles">Rôles</Tab>
           <Tab to="/dashboard/$guildId/tickets">Tickets</Tab>
           <Tab to="/dashboard/$guildId/giveaways">Giveaways</Tab>
+          <Tab to="/dashboard/$guildId/td2">TD2</Tab>
         </nav>
       </div>
       <Outlet />

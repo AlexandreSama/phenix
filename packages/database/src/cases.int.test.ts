@@ -1,17 +1,13 @@
 import { afterAll, describe, expect, inject, it } from 'vitest';
 import { createCase, findExpiredBans, getCase, listCases, revokeCases } from './cases.js';
 import { createPrismaClient } from './client.js';
+import { newGuildId } from '../test/ids.js';
 
 const prisma = createPrismaClient(inject('databaseUrl'));
 
 afterAll(async () => {
   await prisma.$disconnect();
 });
-
-/** Un ID de serveur neuf par test : les tests partagent la même base, et peuvent être relancés. */
-const runId = Date.now();
-let counter = 0;
-const newGuildId = () => `${runId}${counter++}`;
 
 const base = (guildId: string) => ({
   guildId,

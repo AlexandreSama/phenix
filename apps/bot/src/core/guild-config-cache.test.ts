@@ -16,6 +16,7 @@ const settings = {
   ticketCategoryId: null,
   ticketStaffRoleIds: [],
   ticketLogChannelId: null,
+  td2ChannelId: null,
 };
 
 function setup() {

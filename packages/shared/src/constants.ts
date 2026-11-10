@@ -24,3 +24,11 @@ export const BOT_INVITE_PERMISSIONS = '1099780189206';
 
 export type CaseTypeKey = keyof typeof CASE_TYPE_LABELS;
 export type Td2RoleKey = keyof typeof TD2_ROLE_LABELS;
+
+/** Types d'activité TD2, au singulier, pour les titres et les listes. */
+export const TD2_KIND_LABELS = {
+  RAID: 'Raid',
+  INCURSION: 'Incursion',
+} as const;
+
+export type Td2KindKey = keyof typeof TD2_KIND_LABELS;

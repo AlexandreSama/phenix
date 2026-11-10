@@ -19,6 +19,7 @@ import type {
   TicketSettingsInput,
   TicketSettingsResponse,
 } from '@phenix/shared';
+import type { Td2EventSummary, Td2Settings, Td2SettingsInput } from '@phenix/shared';
 
 export const guildsQuery = queryOptions({
   queryKey: ['guilds'],
@@ -210,3 +211,29 @@ export function useGiveawayAction(guildId: string) {
     onSuccess: () => invalidateGiveaways(queryClient, guildId),
   });
 }
+
+export const td2SettingsQuery = (guildId: string) =>
+  queryOptions({
+    queryKey: ['guilds', guildId, 'td2', 'settings'],
+    queryFn: () => api<Td2Settings>(`/guilds/${guildId}/td2/settings`),
+  });
+
+export function useSaveTd2Settings(guildId: string) {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (input: Td2SettingsInput) =>
+      api<Td2Settings>(`/guilds/${guildId}/td2/settings`, {
+        method: 'PUT',
+        body: JSON.stringify(input),
+      }),
+    onSuccess: (settings) => queryClient.setQueryData(td2SettingsQuery(guildId).queryKey, settings),
+  });
+}
+
+/** Les inscriptions se font sur Discord : la liste se relit toutes les 30 secondes. */
+export const td2EventsQuery = (guildId: string) =>
+  queryOptions({
+    queryKey: ['guilds', guildId, 'td2', 'events'],
+    queryFn: () => api<Td2EventSummary[]>(`/guilds/${guildId}/td2/events`),
+    refetchInterval: 30_000,
+  });

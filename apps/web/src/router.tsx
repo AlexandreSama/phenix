@@ -22,6 +22,7 @@ import { TicketSettingsPage } from './features/dashboard/tickets/ticket-settings
 import { TranscriptPage } from './features/dashboard/tickets/transcript-page';
 import { GiveawaysPage } from './features/dashboard/giveaways/giveaway-page';
 import { GiveawayCreatePage } from './features/dashboard/giveaways/giveaway-create-page';
+import { Td2Page } from './features/dashboard/td2/td2-page';
 
 const rootRoute = createRootRouteWithContext<{ queryClient: QueryClient }>()({
   component: RootLayout,
@@ -149,6 +150,13 @@ const giveawayCreateRoute = createRoute({
   component: GiveawayCreatePage,
 });
 
+/** Onglet « TD2 » : le salon des sorties et les sorties à venir. */
+const td2Route = createRoute({
+  getParentRoute: () => guildRoute,
+  path: 'td2',
+  component: Td2Page,
+});
+
 const routeTree = rootRoute.addChildren([
   homeRoute,
   leaderboardRoute,
@@ -162,6 +170,7 @@ const routeTree = rootRoute.addChildren([
     guildRolesRoute.addChildren([rolePanelsRoute, rolePanelEditorRoute]),
     guildTicketsRoute.addChildren([ticketsRoute, ticketSettingsRoute, transcriptRoute]),
     guildGiveawaysRoute.addChildren([giveawaysRoute, giveawayCreateRoute]),
+    td2Route,
   ]),
 ]);
 

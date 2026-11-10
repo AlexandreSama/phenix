@@ -1,8 +1,27 @@
 /** Formes des réponses de l'API, partagées avec le site. */
 import type { RolePanelInput, RolePanelMode } from './schemas/role-panel.js';
 import type { TicketSettingsInput } from './schemas/tickets.js';
+import type { Td2KindKey } from './constants.js';
 /** Où en est la publication d'un panel : le bot la confirme après coup, par la base. */
 export type PublicationStatus = 'published' | 'pending' | 'error';
+
+export interface Td2Settings {
+  /** Salon des sorties ; null = celui où la commande est lancée */
+  channelId: string | null;
+}
+
+export interface Td2EventSummary {
+  id: number;
+  kind: Td2KindKey;
+  activity: string;
+  mode: string;
+  scheduledAt: string;
+  channelId: string;
+  /** Inscrits confirmés, places au total, joueurs en réserve */
+  confirmed: number;
+  capacity: number;
+  reserve: number;
+}
 
 export interface CurrentUser {
   id: string;

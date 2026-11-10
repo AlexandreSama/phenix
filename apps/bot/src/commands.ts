@@ -11,6 +11,7 @@ import { moderationCommands } from './modules/moderation/index.js';
 import { levelingCommands } from './modules/leveling/index.js';
 import { roleCommands } from './modules/roles/index.js';
 import { giveawayCommands } from './modules/giveaways/index.js';
+import { td2Commands } from './modules/td2/index.js';
 
 /** Toutes les slash commands du bot. Une nouvelle commande s'ajoute ici. */
 export const commands: SlashCommand[] = [
@@ -34,6 +35,8 @@ export const commands: SlashCommand[] = [
   ...roleCommands,
   // Giveaways
   ...giveawayCommands,
+  // The Division
+  ...td2Commands,
 ];
 
 /** Commandes des propriétaires du bot (/broadcast) : jamais enregistrées sur tous les serveurs. */

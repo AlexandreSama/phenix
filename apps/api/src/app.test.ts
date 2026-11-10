@@ -60,6 +60,7 @@ const config = {
   xpCooldownSec: 60,
   levelUpChannelId: null,
   leaderboardPublic: true,
+  td2ChannelId: null as string | null,
 };
 
 const publicGuild = {
@@ -124,6 +125,21 @@ const giveawayQueue = {
   close: vi.fn(async () => {}),
 };
 
+/** Une sortie Dark Hours samedi soir : 3 confirmés sur 8, 1 en réserve. */
+const td2Event = {
+  id: 12,
+  scheduledAt: new Date('2026-11-14T20:00:00Z'),
+  channelId: CHANNEL,
+  mode: { name: 'Normal', activity: { kind: 'RAID', name: 'Dark Hours' } },
+  slots: [{ count: 6 }, { count: 1 }, { count: 1 }],
+  signups: [
+    { status: 'CONFIRMED' },
+    { status: 'CONFIRMED' },
+    { status: 'CONFIRMED' },
+    { status: 'RESERVE' },
+  ],
+};
+
 const transcripts = {
   put: vi.fn(),
   getText: vi.fn(async (_key: string): Promise<string | null> => '<!doctype html><p>Bonjour</p>'),
@@ -185,6 +201,7 @@ const db = {
     ]),
   },
   user: { findUnique: vi.fn(), upsert: vi.fn() },
+  td2Event: { findMany: vi.fn(async () => [td2Event]) },
   $queryRaw: vi.fn(async () => [1]),
   $disconnect: vi.fn(),
 };
@@ -696,6 +713,66 @@ describe('giveaways', () => {
 
     expect([other.status, unreadable.status]).toEqual([404, 404]);
     expect(db.giveaway.deleteMany).not.toHaveBeenCalled();
+  });
+});
+
+describe('TD2', () => {
+  const url = `/api/guilds/${MANAGED}/td2`;
+
+  it('lit le salon des sorties, vide par défaut', async () => {
+    const response = await request(app.getHttpServer())
+      .get(`${url}/settings`)
+      .set('Cookie', cookie);
+
+    expect(response.body).toEqual({ channelId: null });
+  });
+
+  it('enregistre le salon des sorties et prévient le bot', async () => {
+    const response = await request(app.getHttpServer())
+      .put(`${url}/settings`)
+      .set('Cookie', cookie)
+      .send({ channelId: CHANNEL });
+
+    expect(response.body).toEqual({ channelId: CHANNEL });
+    expect(db.guildConfig.upsert).toHaveBeenCalledWith(
+      expect.objectContaining({ update: { td2ChannelId: CHANNEL } }),
+    );
+    expect(redis.publish).toHaveBeenCalledWith(
+      'bot:events',
+      JSON.stringify({ type: 'config.updated', guildId: MANAGED }),
+    );
+  });
+
+  it('refuse un salon inconnu du serveur', async () => {
+    const response = await request(app.getHttpServer())
+      .put(`${url}/settings`)
+      .set('Cookie', cookie)
+      .send({ channelId: '400000000000000099' });
+
+    expect(response.status).toBe(400);
+    expect(response.body.message).toBe('Salon inconnu sur ce serveur');
+    expect(db.guildConfig.upsert).not.toHaveBeenCalled();
+  });
+
+  it('liste les sorties à venir avec leur remplissage', async () => {
+    const response = await request(app.getHttpServer()).get(`${url}/events`).set('Cookie', cookie);
+
+    expect(response.body).toEqual([
+      {
+        id: 12,
+        kind: 'RAID',
+        activity: 'Dark Hours',
+        mode: 'Normal',
+        scheduledAt: '2026-11-14T20:00:00.000Z',
+        channelId: CHANNEL,
+        confirmed: 3,
+        capacity: 8,
+        reserve: 1,
+      },
+    ]);
+    expect(db.td2Event.findMany).toHaveBeenCalledWith(
+      expect.objectContaining({ orderBy: { scheduledAt: 'asc' } }),
+    );
   });
 });
 

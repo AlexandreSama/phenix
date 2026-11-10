@@ -23,6 +23,7 @@ const settings: GuildSettings = {
   ticketCategoryId: null,
   ticketStaffRoleIds: [],
   ticketLogChannelId: null,
+  td2ChannelId: null,
 };
 
 /** Faux message : seulement ce que le handler lit. */
