@@ -22,6 +22,7 @@ import type { BotContext } from '../../../core/context.js';
 import { describePublishError } from '../../../core/publish.js';
 import { refuse } from '../../moderation/common.js';
 import { ROLE_ORDER, td2EventMessage } from '../messages.js';
+import { lookupPlayer, lookupSubcommand, reportPlayer, reportSubcommand } from '../reports/command.js';
 
 type Activity = Awaited<ReturnType<typeof listTd2Activities>>[number];
 type Mode = Activity['modes'][number];
@@ -175,15 +176,24 @@ const kindOf = (name: string): Td2ActivityKind => (name === 'raid' ? 'RAID' : 'I
 export const td2: SlashCommand = {
   category: 'td2',
   data: new SlashCommandBuilder()
-    .setName('td2')
-    .setDescription('The Division 2 : raids et incursions')
-    .setContexts(InteractionContextType.Guild)
-    .addSubcommand(subcommand('RAID'))
-    .addSubcommand(subcommand('INCURSION')),
+      .setName('td2')
+      .setDescription('The Division 2 : raids, incursions et signalements')
+      .setContexts(InteractionContextType.Guild)
+      .addSubcommand(subcommand('RAID'))
+      .addSubcommand(subcommand('INCURSION'))
+      .addSubcommand(reportSubcommand)
+      .addSubcommand(lookupSubcommand),
 
   async execute(interaction, context) {
     if (!interaction.inCachedGuild()) return;
-    return create(kindOf(interaction.options.getSubcommand()), interaction, context);
+    switch (interaction.options.getSubcommand()) {
+      case 'signaler':
+        return reportPlayer(interaction, context);
+      case 'signalements':
+        return lookupPlayer(interaction, context);
+      default:
+        return create(kindOf(interaction.options.getSubcommand()), interaction, context);
+    }
   },
 
   /** L'activité depuis le catalogue, puis les modes de l'activité déjà choisie. */

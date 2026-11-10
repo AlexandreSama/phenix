@@ -12,6 +12,7 @@ import { RolePanelsModule } from './modules/role-panels/role-panels.module.js';
 import { TicketsModule } from './modules/tickets/tickets.module.js';
 import { GiveawaysModule } from './modules/giveaways/giveaways.module.js';
 import { Td2Module } from './modules/td2/td2.module.js';
+import {AdminModule} from "./modules/admin/admin.module.js";
 
 @Module({})
 export class AppModule {
@@ -40,6 +41,7 @@ export class AppModule {
         TicketsModule,
         GiveawaysModule,
         Td2Module,
+        AdminModule
       ],
       controllers: [HealthController],
       // Valide chaque @Body({ schema }), @Query({ schema })… avec les schémas zod

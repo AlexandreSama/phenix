@@ -13,6 +13,16 @@ const envSchema = storageEnvSchema.extend({
   DISCORD_CLIENT_SECRET: z.string().min(1),
   /** Token du bot : l'API lit les salons et rôles d'un serveur même quand le bot redémarre */
   DISCORD_TOKEN: z.string().min(1),
+  /** Les propriétaires du bot, séparés par des virgules : eux seuls voient la page d'administration */
+  BOT_OWNER_IDS: z
+      .string()
+      .default('')
+      .transform((value) =>
+          value
+              .split(',')
+              .map((id) => id.trim())
+              .filter(Boolean),
+      ),
 });
 
 export type Env = z.infer<typeof envSchema>;

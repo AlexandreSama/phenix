@@ -6,11 +6,13 @@ function deps() {
   const configs = { get: vi.fn(), invalidate: vi.fn(), clear: vi.fn() };
   const rolePanels = { publish: vi.fn(async () => {}), remove: vi.fn(async () => {}) };
   const ticketPanels = { publish: vi.fn(async () => {}), remove: vi.fn(async () => {}) };
+  const removeTd2Report = vi.fn(async () => {});
   const logger = { info: vi.fn(), warn: vi.fn(), debug: vi.fn() };
   return {
     configs: configs as unknown as GuildConfigCache & typeof configs,
     rolePanels,
     ticketPanels,
+    removeTd2Report,
     logger,
   };
 }
@@ -63,5 +65,17 @@ describe('handleBotEvent', () => {
       expect.objectContaining({ channelId: '2', messageId: '3' }),
     );
     expect(d.rolePanels.publish).not.toHaveBeenCalled();
+  });
+
+  it('retire l’embed d’un signalement supprimé depuis l’administration', () => {
+    const d = deps();
+
+    handleBotEvent(JSON.stringify({ type: 'td2Report.deleted', guildId: '1', messageId: '3' }), d);
+
+    expect(d.removeTd2Report).toHaveBeenCalledWith({
+      type: 'td2Report.deleted',
+      guildId: '1',
+      messageId: '3',
+    });
   });
 });

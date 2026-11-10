@@ -1,5 +1,4 @@
 import { Events } from 'discord.js';
-import { prisma } from '@phenix/database';
 import { createClient } from './client.js';
 import { commands, ownerCommands } from './commands.js';
 import type { BotContext } from './core/context.js';
@@ -17,7 +16,6 @@ import {
   publishPendingRolePanels,
   roleComponents,
 } from './modules/roles/index.js';
-import { createTranscriptStorage } from '@phenix/storage';
 import {
   closeOrphanTickets,
   createTicketChannelDeleteHandler,
@@ -40,6 +38,9 @@ import {
 } from '@phenix/jobs';
 import { adminComponents } from './modules/admin/index.js';
 import { createTd2Processor, resumeTd2Events, td2Components } from './modules/td2/index.js';
+import {removeReportStaffMessage} from "./modules/td2/reports/remove.js";
+import {prisma} from "@phenix/database";
+import {createEvidenceStorage, createTranscriptStorage} from "@phenix/storage";
 
 const env = loadEnv();
 const client = createClient();
@@ -81,6 +82,7 @@ const context: BotContext = {
   configs,
   publicUrl: env.PUBLIC_URL?.replace(/\/$/, ''),
   transcripts: createTranscriptStorage(env),
+  evidence: createEvidenceStorage(env),
   giveaways: createGiveawayScheduler(giveawayQueue),
   td2: createTd2Scheduler(td2Queue),
   ownerIds: env.BOT_OWNER_IDS,
@@ -89,6 +91,7 @@ const unsubscribe = subscribeToBotEvents(env.REDIS_URL, {
   configs,
   rolePanels: createRolePanelPublisher(client, prisma, logger),
   ticketPanels: createTicketPanelPublisher(client, prisma, logger),
+  removeTd2Report: (event) => removeReportStaffMessage(client, configs, event, logger),
   logger,
 });
 

@@ -14,6 +14,8 @@ export interface BotContext {
   publicUrl?: string;
   /** Bucket des transcripts de tickets, dans Garage */
   transcripts: ObjectStorage;
+  /** Bucket des preuves des signalements TD2 */
+  evidence: ObjectStorage;
   /** File des giveaways : publications, tirages, relances */
   giveaways: GiveawayScheduler;
   /** File des sorties TD2 : rappels et fermetures */

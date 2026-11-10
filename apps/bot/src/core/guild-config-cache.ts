@@ -17,6 +17,9 @@ export type GuildSettings = Pick<
   | 'ticketStaffRoleIds'
   | 'ticketLogChannelId'
   | 'td2ChannelId'
+    | 'td2ReportChannelId'
+    | 'td2ReportViewerRoleIds'
+    | 'td2ReportFeedChannelId'
 >;
 
 export interface GuildConfigCache {
@@ -43,6 +46,9 @@ const SELECT = {
   ticketStaffRoleIds: true,
   ticketLogChannelId: true,
   td2ChannelId: true,
+  td2ReportChannelId: true,
+  td2ReportViewerRoleIds: true,
+  td2ReportFeedChannelId: true,
 } satisfies Record<keyof GuildSettings, true>;
 
 /**

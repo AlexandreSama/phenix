@@ -1,8 +1,10 @@
-import { Injectable } from '@nestjs/common';
 import { PrismaClient } from '@phenix/database';
 import type { CurrentUser } from '@phenix/shared';
 import { DiscordService } from '../../discord/discord.service.js';
 import { SessionService } from './session.service.js';
+import { Inject, Injectable } from '@nestjs/common';
+import { ENV } from '../../core/tokens.js';
+import type { Env } from '../../env.js';
 
 /** Une session dure au plus 7 jours, comme le token Discord qu'elle contient. */
 const MAX_SESSION_SECONDS = 7 * 24 * 3600;
@@ -20,6 +22,7 @@ export class AuthService {
     private readonly discord: DiscordService,
     private readonly sessions: SessionService,
     private readonly db: PrismaClient,
+    @Inject(ENV) private readonly env: Env,
   ) {}
 
   /** Termine la connexion : échange le code, enregistre l'utilisateur, ouvre une session. */
@@ -42,7 +45,12 @@ export class AuthService {
   async currentUser(userId: string): Promise<CurrentUser | null> {
     const user = await this.db.user.findUnique({ where: { id: userId } });
     return user
-      ? { id: user.id, username: user.username, avatarUrl: avatarUrl(user.id, user.avatar) }
+        ? {
+          id: user.id,
+          username: user.username,
+          avatarUrl: avatarUrl(user.id, user.avatar),
+          isOwner: this.env.BOT_OWNER_IDS.includes(user.id),
+        }
       : null;
   }
 }

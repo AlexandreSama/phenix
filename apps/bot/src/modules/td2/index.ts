@@ -9,6 +9,7 @@ import {
   rescheduleTd2Modal,
 } from './manage.js';
 import { joinTd2Button, leaveTd2Button } from './signup.js';
+import {confirmReportButton, rejectReportButton, reviewReportButton} from "./reports/review.js";
 
 export { createTd2Processor } from './processor.js';
 export { resumeTd2Events } from './resume.js';
@@ -24,4 +25,7 @@ export const td2Components: ComponentHandler[] = [
   cancelTd2Button,
   confirmCancelTd2Button,
   keepTd2Button,
+  reviewReportButton,
+  confirmReportButton,
+  rejectReportButton,
 ];

@@ -32,3 +32,40 @@ export const TD2_KIND_LABELS = {
 } as const;
 
 export type Td2KindKey = keyof typeof TD2_KIND_LABELS;
+
+/** Plateformes d'un compte TD2 : le pseudo d'un joueur n'a de sens qu'avec elle. */
+export const TD2_PLATFORM_LABELS = {
+  UBI: 'PC (Ubisoft Connect)',
+  PSN: 'PlayStation',
+  XBL: 'Xbox',
+} as const;
+
+export type Td2PlatformKey = keyof typeof TD2_PLATFORM_LABELS;
+
+/** Motifs d'un signalement : une liste fermée, pour que le fil du réseau reste lisible. */
+export const TD2_REPORT_REASONS = {
+  CHEAT: 'Triche',
+  EXPLOIT: 'Exploit de bug',
+  TOXIC: 'Comportement toxique',
+  SCAM: 'Arnaque',
+  OTHER: 'Autre',
+} as const;
+
+export type Td2ReportReasonKey = keyof typeof TD2_REPORT_REASONS;
+
+/** Où en est un signalement. Hors du serveur d'origine, seuls « confirmé » et « non vérifié » existent. */
+export const TD2_REPORT_STATUS_LABELS = {
+  PENDING: 'Non vérifié',
+  IN_REVIEW: 'En cours d’examen',
+  CONFIRMED: 'Confirmé',
+  REJECTED: 'Rejeté',
+} as const;
+
+export type Td2ReportStatusKey = keyof typeof TD2_REPORT_STATUS_LABELS;
+
+/** Les preuves d'un signalement : des captures d'écran, rangées dans le bucket « evidence ». */
+export const TD2_EVIDENCE_LIMITS = {
+  maxFiles: 3,
+  maxBytes: 8 * 1024 * 1024,
+  contentTypes: ['image/png', 'image/jpeg', 'image/webp', 'image/gif'],
+} as const;

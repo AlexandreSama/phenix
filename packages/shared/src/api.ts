@@ -1,13 +1,19 @@
 /** Formes des réponses de l'API, partagées avec le site. */
 import type { RolePanelInput, RolePanelMode } from './schemas/role-panel.js';
 import type { TicketSettingsInput } from './schemas/tickets.js';
-import type { Td2KindKey } from './constants.js';
+import type {Td2KindKey, Td2PlatformKey, Td2ReportReasonKey, Td2ReportStatusKey, Td2RoleKey} from './constants.js';
 /** Où en est la publication d'un panel : le bot la confirme après coup, par la base. */
 export type PublicationStatus = 'published' | 'pending' | 'error';
 
+// Td2Settings remplace l'ancienne version :
 export interface Td2Settings {
   /** Salon des sorties ; null = celui où la commande est lancée */
   channelId: string | null;
+  /** Salon du staff qui reçoit les signalements ; null = signalements fermés sur ce serveur */
+  reportChannelId: string | null;
+  reportViewerRoleIds: string[];
+  /** Salon du fil des signalements confirmés du réseau ; null = aucun */
+  reportFeedChannelId: string | null;
 }
 
 export interface Td2EventSummary {
@@ -27,6 +33,8 @@ export interface CurrentUser {
   id: string;
   username: string;
   avatarUrl: string;
+  /** Listé dans BOT_OWNER_IDS : voit la page d'administration */
+  isOwner: boolean;
 }
 
 /** Un serveur que l'utilisateur a le droit de gérer (« Gérer le serveur » ou propriétaire). */
@@ -168,4 +176,41 @@ export interface GiveawayPage {
   page: number;
   pageCount: number;
   total: number;
+}
+
+/** Un mode du catalogue, avec le nombre de sorties qui l'utilisent (un mode utilisé ne se supprime pas). */
+export interface Td2CatalogueMode {
+  id: number;
+  name: string;
+  slots: Record<Td2RoleKey, number>;
+  eventCount: number;
+}
+
+export interface Td2CatalogueActivity {
+  id: number;
+  kind: Td2KindKey;
+  name: string;
+  active: boolean;
+  modes: Td2CatalogueMode[];
+}
+
+/** Un signalement vu par l'administration : jamais le pseudo Discord de l'auteur. */
+export interface Td2ReportAdminSummary {
+  id: number;
+  guildId: string;
+  guildName: string;
+  playerName: string;
+  platform: Td2PlatformKey;
+  reason: Td2ReportReasonKey;
+  details: string | null;
+  status: Td2ReportStatusKey;
+  evidenceCount: number;
+  createdAt: string;
+  reviewedAt: string | null;
+}
+
+export interface Td2ReportAdminPage {
+  reports: Td2ReportAdminSummary[];
+  /** À passer en `cursor` pour la page suivante ; null = fin de la liste */
+  nextCursor: number | null;
 }

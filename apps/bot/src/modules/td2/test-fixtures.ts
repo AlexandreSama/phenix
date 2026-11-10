@@ -1,4 +1,4 @@
-import type { Td2EventDetails, Td2Role } from '@phenix/database';
+import type { Td2EventDetails, Td2Role, Td2ReportDetails } from '@phenix/database';
 
 // Données de test partagées par les tests du module TD2 (pas de vi.mock ici)
 
@@ -69,4 +69,28 @@ export function incursionEvent(overrides: Partial<Td2EventDetails> = {}): Td2Eve
     ],
     ...overrides,
   });
+}
+
+export const REPORTER = '500000000000000001';
+
+/** Un signalement « non vérifié » fait sur GUILD, avec une capture. */
+export function td2Report(overrides: Partial<Td2ReportDetails> = {}): Td2ReportDetails {
+  return {
+    id: 7,
+    guildId: GUILD,
+    guild: { name: 'Phenix' },
+    reporterId: REPORTER,
+    playerName: 'Agent47',
+    playerNameLower: 'agent47',
+    platform: 'PSN',
+    reason: 'CHEAT',
+    details: 'Tir à travers les murs',
+    evidenceKeys: ['td2-reports/1/a.png'],
+    status: 'PENDING',
+    reviewedById: null,
+    reviewedAt: null,
+    staffMessageId: '900000000000000007',
+    createdAt: new Date('2026-11-10T12:00:00Z'),
+    ...overrides,
+  };
 }
