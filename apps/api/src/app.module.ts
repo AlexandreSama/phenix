@@ -4,16 +4,16 @@ import { LoggerModule } from 'nestjs-pino';
 import { CoreModule } from './core/core.module.js';
 import type { Env } from './env.js';
 import { HealthController } from './health/health.controller.js';
+import { AdminModule } from './modules/admin/admin.module.js';
 import { AuthModule } from './modules/auth/auth.module.js';
+import { ForumModule } from './modules/forum/forum.module.js';
+import { GiveawaysModule } from './modules/giveaways/giveaways.module.js';
 import { GuildConfigModule } from './modules/guild-config/guild-config.module.js';
 import { GuildsModule } from './modules/guilds/guilds.module.js';
 import { LevelingModule } from './modules/leveling/leveling.module.js';
 import { RolePanelsModule } from './modules/role-panels/role-panels.module.js';
-import { TicketsModule } from './modules/tickets/tickets.module.js';
-import { GiveawaysModule } from './modules/giveaways/giveaways.module.js';
 import { Td2Module } from './modules/td2/td2.module.js';
-import { AdminModule } from './modules/admin/admin.module.js';
-import { ForumModule } from './modules/forum/forum.module.js';
+import { TicketsModule } from './modules/tickets/tickets.module.js';
 
 @Module({})
 export class AppModule {

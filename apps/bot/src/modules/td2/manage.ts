@@ -1,7 +1,9 @@
 import {
   cancelTd2Event,
   findTd2Event,
+  listTd2Directives,
   rescheduleTd2Event,
+  setTd2EventDirectives,
   type Td2EventDetails,
 } from '@phenix/database';
 import { EVENT_DATE_EXAMPLES, parseEventDate } from '@phenix/shared';
@@ -35,6 +37,11 @@ export const MANAGE_REPLIES = {
   cancelled: 'Sortie annulée. Les inscrits sont prévenus.',
   rescheduled: (date: Date) =>
     `Sortie déplacée au ${time(date, TimestampStyles.LongDateTime)}. Les inscrits sont prévenus.`,
+  directives: (names: string[]) =>
+    names.length > 0
+      ? `Directives enregistrées : ${names.join(' · ')}.`
+      : 'Plus aucune directive sur cette mission.',
+  notMission: 'Seule une mission a des directives.',
 } as const;
 
 const DEFAULT_TIMEZONE = 'Europe/Paris';
@@ -123,7 +130,40 @@ export const manageTd2Button: ComponentHandler = {
   async execute(interaction, id, context) {
     if (!interaction.isButton()) return;
     const event = await loadManageable(interaction, id, context);
-    if (event) await interaction.reply({ ...manageMenu(event), flags: MessageFlags.Ephemeral });
+    if (!event) return;
+    // Une mission propose aussi ses directives : la liste du moment, celles retenues cochées
+    const directives = event.mode ? [] : await listTd2Directives(context.db, { activeOnly: true });
+    await interaction.reply({ ...manageMenu(event, directives), flags: MessageFlags.Ephemeral });
+  },
+};
+
+/**
+ * Le menu des directives d'une mission (après /td2 mission, ou dans « Gérer ») : la sélection
+ * remplace les directives de la sortie, puis son message est mis à jour.
+ */
+export const directivesTd2Select: ComponentHandler = {
+  prefix: 'td2:directives',
+  async execute(interaction, id, context) {
+    if (!interaction.isStringSelectMenu()) return;
+    const event = await loadManageable(interaction, id, context);
+    if (!event) return;
+
+    const ids = interaction.values.map(Number).filter(Number.isSafeInteger);
+    const updated = await setTd2EventDirectives(context.db, event.id, ids);
+    if (updated === null || updated === 'closed' || updated === 'not-mission') {
+      const reply = {
+        null: MANAGE_REPLIES.missing,
+        closed: MANAGE_REPLIES.closed,
+        'not-mission': MANAGE_REPLIES.notMission,
+      }[updated ?? 'null'];
+      await interaction.reply(ephemeral(reply));
+      return;
+    }
+    await refreshMessage(interaction, context, updated);
+    await interaction.update({
+      content: MANAGE_REPLIES.directives(updated.directives),
+      components: [],
+    });
   },
 };
 

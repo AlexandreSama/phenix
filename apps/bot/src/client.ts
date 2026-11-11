@@ -2,6 +2,8 @@ import { Client, GatewayIntentBits, PermissionFlagsBits } from 'discord.js';
 
 /** Permissions demandées à l'invitation : de quoi faire tourner tous les modules prévus. */
 export const BOT_PERMISSIONS = [
+  // Le site crée les invitations des serveurs listés sur la page publique des sorties
+  PermissionFlagsBits.CreateInstantInvite,
   PermissionFlagsBits.ViewChannel,
   PermissionFlagsBits.SendMessages,
   PermissionFlagsBits.EmbedLinks,

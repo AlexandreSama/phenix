@@ -55,11 +55,16 @@ function GuildGroup({ title, hint, guilds }: GroupProps) {
   );
 }
 
-/** Les serveurs en deux groupes : ceux où le bot est déjà, puis ceux où l'inviter. */
+/**
+ * Les serveurs en trois groupes : ceux où le bot est déjà, ceux où un administrateur t'a
+ * ouvert des onglets, puis ceux où l'inviter.
+ */
 export function GuildList({ guilds, search = '' }: { guilds: ManageableGuild[]; search?: string }) {
   const visible = filterGuilds(guilds, search);
-  const withBot = visible.filter((guild) => guild.botPresent);
-  const withoutBot = visible.filter((guild) => !guild.botPresent);
+  const managed = visible.filter((guild) => guild.access === 'admin');
+  const withBot = managed.filter((guild) => guild.botPresent);
+  const delegated = visible.filter((guild) => guild.access === 'delegate');
+  const withoutBot = managed.filter((guild) => !guild.botPresent);
 
   return (
     <div className="flex flex-col gap-10">
@@ -72,6 +77,13 @@ export function GuildList({ guilds, search = '' }: { guilds: ManageableGuild[]; 
         </p>
       )}
       {withBot.length > 0 && <GuildGroup title="Avec PhenixMG" guilds={withBot} />}
+      {delegated.length > 0 && (
+        <GuildGroup
+          title="Accès délégués"
+          hint="Un administrateur de ces serveurs t'a ouvert certains onglets du tableau de bord."
+          guilds={delegated}
+        />
+      )}
       {withoutBot.length > 0 && (
         <GuildGroup
           title="Sans PhenixMG"

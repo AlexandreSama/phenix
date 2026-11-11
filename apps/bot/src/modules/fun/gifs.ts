@@ -8,7 +8,7 @@ export type GifProvider = (category: GifCategory) => Promise<string | null>;
  * nekos.best exige un User-Agent « NomDeLApp (contact) » : un nom générique ou celui
  * de Node par défaut est bloqué. Remplace le lien par ton dépôt ou une adresse de contact.
  */
-export const NEKOS_USER_AGENT = 'PhenixBot (https://github.com/AlexandreSama/phenix)';
+export const NEKOS_USER_AGENT = 'PhenixMG (https://github.com/ton-compte/phenix)';
 
 export function createNekosBestProvider(fetchImpl: typeof fetch = fetch): GifProvider {
   return async (category) => {

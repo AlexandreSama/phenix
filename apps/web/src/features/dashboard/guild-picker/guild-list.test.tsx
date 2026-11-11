@@ -9,6 +9,8 @@ const guild = (id: string, name: string, botPresent: boolean): ManageableGuild =
   name,
   iconUrl: null,
   botPresent,
+  access: 'admin',
+  modules: ['GENERAL', 'LEVELING', 'ROLES', 'TICKETS', 'GIVEAWAYS', 'TD2'],
 });
 
 const GUILDS = [
@@ -48,6 +50,28 @@ describe('GuildList', () => {
     });
     expect(invite.getAttribute('href')).toBe('/api/invite?guildId=200');
     expect(invite.getAttribute('target')).toBe('_blank');
+  });
+
+  it('range à part les accès délégués, qui mènent au premier onglet ouvert', async () => {
+    renderWithProviders(
+      <GuildList
+        guilds={[
+          ...GUILDS,
+          {
+            ...guild('300', 'Escouade Delta', true),
+            access: 'delegate',
+            modules: ['TICKETS', 'TD2'],
+          },
+        ]}
+      />,
+    );
+
+    const delegated = await screen.findByRole('region', { name: 'Accès délégués 1 serveur' });
+    const card = within(delegated).getByRole('link', { name: 'Configurer Escouade Delta' });
+    expect(card.getAttribute('href')).toBe('/dashboard/300/tickets');
+    expect(card.textContent).toContain('Tickets, The Division 2');
+    // Les serveurs qu'on gère restent dans leur groupe
+    expect(screen.getByRole('region', { name: 'Avec PhenixMG 2 serveurs' })).toBeTruthy();
   });
 
   it('cache un groupe vide', async () => {

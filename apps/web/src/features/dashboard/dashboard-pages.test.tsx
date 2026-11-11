@@ -18,7 +18,16 @@ const API: Record<string, unknown> = {
     isOwner: false,
     forumRole: 'MEMBER',
   },
-  '/api/guilds': [{ id: GUILD, name: 'Les Agents', iconUrl: null, botPresent: true }],
+  '/api/guilds': [
+    {
+      id: GUILD,
+      name: 'Les Agents',
+      iconUrl: null,
+      botPresent: true,
+      access: 'admin',
+      modules: ['GENERAL', 'LEVELING', 'ROLES', 'TICKETS', 'GIVEAWAYS', 'TD2'],
+    },
+  ],
   [`/api/guilds/${GUILD}/channels`]: [{ id: CHANNEL, name: 'général', parentName: 'Discussion' }],
   [`/api/guilds/${GUILD}/roles`]: [
     { id: ROLE, name: 'Modérateur', color: '#f5aa04', assignable: true, blockedReason: null },
@@ -82,6 +91,7 @@ const API: Record<string, unknown> = {
   },
   [`/api/guilds/${GUILD}/td2/settings`]: {
     channelId: null,
+    publicListing: false,
     reportChannelId: null,
     reportViewerRoleIds: [],
     reportFeedChannelId: null,
@@ -92,6 +102,8 @@ const API: Record<string, unknown> = {
       kind: 'RAID',
       activity: 'Dark Hours',
       mode: 'Normal',
+      difficulty: null,
+      directives: [],
       scheduledAt: '2099-01-03T20:00:00.000Z',
       channelId: CHANNEL,
       confirmed: 6,
@@ -100,6 +112,7 @@ const API: Record<string, unknown> = {
     },
   ],
   [`/api/guilds/${GUILD}/tickets/settings`]: { settings: null },
+  [`/api/guilds/${GUILD}/delegates`]: [],
   [`/api/guilds/${GUILD}/tickets?status=open&page=1`]: {
     tickets: [
       {
@@ -169,6 +182,7 @@ describe('pages du tableau de bord', () => {
       () => screen.findByLabelText('Catégorie des tickets'),
     ],
     [`${base}/tickets/7`, 'Transcript', () => screen.findByTitle('Transcript du ticket')],
+    [`${base}/acces`, 'Accès', () => screen.findByText('Personne n’a d’accès délégué')],
   ])('%s : « %s », chargée avec ses données', async (url, title, loaded) => {
     open(url);
 
@@ -184,6 +198,8 @@ describe('pages du tableau de bord', () => {
     const nav = screen.getByRole('navigation', { name: 'Réglages du serveur' });
     const current = within(nav).getByRole('link', { current: 'page' });
     expect(current.textContent).toBe('Tickets');
+    // Un administrateur voit tous les onglets, et l'onglet Accès en dernier
+    expect(within(nav).getAllByRole('link').at(-1)?.textContent).toBe('Accès');
   });
 
   it('propose de régler les tickets tant que rien ne l’est', async () => {

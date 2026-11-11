@@ -1,9 +1,14 @@
-import type { Td2EventDetails, Td2Promotion, Td2Role } from '@phenix/database';
-import { TD2_KIND_LABELS, TD2_ROLE_LABELS } from '@phenix/shared';
+import type { Td2Directive, Td2EventDetails, Td2Promotion, Td2Role } from '@phenix/database';
+import {
+  TD2_DIFFICULTY_LABELS,
+  TD2_EVENT_KIND_LABELS,
+  TD2_SIGNUP_ROLE_LABELS,
+} from '@phenix/shared';
 import {
   ActionRowBuilder,
   ButtonBuilder,
   ButtonStyle,
+  StringSelectMenuBuilder,
   time,
   TimestampStyles,
   type EmbedBuilder,
@@ -12,8 +17,8 @@ import {
 import { buildCustomId } from '../../core/custom-id.js';
 import { baseEmbed, COLORS } from '../../core/embeds.js';
 
-/** L'ordre d'affichage des rôles, sur l'embed comme sur les boutons. */
-export const ROLE_ORDER: Td2Role[] = ['DPS', 'HEAL', 'TANK', 'HEAL_TANK'];
+/** L'ordre d'affichage des rôles, sur l'embed comme sur les boutons. « Joueur » : les missions. */
+export const ROLE_ORDER: Td2Role[] = ['DPS', 'HEAL', 'TANK', 'HEAL_TANK', 'PLAYER'];
 
 export const isTd2Role = (value: string | undefined): value is Td2Role =>
   ROLE_ORDER.includes(value as Td2Role);
@@ -28,20 +33,39 @@ export const cancelCustomId = (eventId: number) => buildCustomId('td2', 'cancel'
 export const confirmCancelCustomId = (eventId: number) =>
   buildCustomId('td2', 'confirmcancel', eventId);
 export const KEEP_CUSTOM_ID = buildCustomId('td2', 'keep');
+export const directivesCustomId = (eventId: number) => buildCustomId('td2', 'directives', eventId);
 
-type EventView = Pick<
-  Td2EventDetails,
-  'id' | 'scheduledAt' | 'organizerId' | 'cancelledAt' | 'mode' | 'slots' | 'signups'
->;
+/** Ce qu'il faut d'une sortie pour la nommer : son activité, ou le nom et la difficulté d'une mission. */
+type TitleView = Pick<Td2EventDetails, 'mode' | 'missionName' | 'difficulty'>;
 
-const KIND_ICONS = { RAID: '⚔️', INCURSION: '🛡️' } as const;
+type EventView = TitleView &
+  Pick<
+    Td2EventDetails,
+    'id' | 'scheduledAt' | 'organizerId' | 'cancelledAt' | 'directives' | 'slots' | 'signups'
+  >;
 
-/** « ⚔️ Raid Dark Hours · Normal », « 🛡️ Incursion Paradis Perdu » : les incursions n'ont qu'un mode. */
-export function eventTitle(event: Pick<EventView, 'mode'>): string {
+const KIND_ICONS = { RAID: '⚔️', INCURSION: '🛡️', MISSION: '🎯' } as const;
+
+/**
+ * « ⚔️ Raid Dark Hours · Normal », « 🛡️ Incursion Paradis Perdu » (les incursions n'ont qu'un
+ * mode), « 🎯 Mission Capitole · Héroïque » (le nom choisi par l'organisateur, et la difficulté).
+ */
+export function eventTitle(event: TitleView): string {
+  if (!event.mode) {
+    const difficulty = event.difficulty ? ` · ${TD2_DIFFICULTY_LABELS[event.difficulty]}` : '';
+    return `${KIND_ICONS.MISSION} ${TD2_EVENT_KIND_LABELS.MISSION} ${event.missionName ?? ''}${difficulty}`;
+  }
   const { activity } = event.mode;
   const mode = activity.kind === 'RAID' ? ` · ${event.mode.name}` : '';
-  return `${KIND_ICONS[activity.kind]} ${TD2_KIND_LABELS[activity.kind]} ${activity.name}${mode}`;
+  return `${KIND_ICONS[activity.kind]} ${TD2_EVENT_KIND_LABELS[activity.kind]} ${activity.name}${mode}`;
 }
+
+/** Le nom d'un rôle sur l'embed : la place unique d'une mission, c'est « l'équipe ». */
+const slotName = (role: Td2Role) => (role === 'PLAYER' ? 'Équipe' : TD2_SIGNUP_ROLE_LABELS[role]);
+
+/** Un joueur de la réserve, avec son rôle quand la sortie en a plusieurs. */
+const reserveLine = ({ userId, role }: { userId: string; role: Td2Role }) =>
+  role === 'PLAYER' ? `<@${userId}>` : `<@${userId}> (${TD2_SIGNUP_ROLE_LABELS[role]})`;
 
 const mentions = (userIds: string[]) => userIds.map((id) => `<@${id}>`).join(' ');
 const slotsInOrder = (event: Pick<EventView, 'slots'>) =>
@@ -88,7 +112,9 @@ export function td2EventMessage(
           : `📅 ${when}`,
         `Organisée par <@${event.organizerId}>`,
         `👥 ${filled}/${capacity} joueurs${reserve.length > 0 ? ` · ${reserve.length} en réserve` : ''}`,
-      ];
+        // Les directives d'une mission : ce qui corse la partie
+        event.directives.length > 0 ? `🧩 Directives : ${event.directives.join(' · ')}` : '',
+      ].filter(Boolean);
 
   const color = event.cancelledAt ? COLORS.danger : started ? COLORS.warning : COLORS.primary;
   const embed = baseEmbed(color)
@@ -101,7 +127,7 @@ export function td2EventMessage(
       slots.map((slot) => {
         const players = confirmed(slot.role);
         return {
-          name: `${TD2_ROLE_LABELS[slot.role]} (${players.length}/${slot.count})`,
+          name: `${slotName(slot.role)} (${players.length}/${slot.count})`,
           value: players.length > 0 ? mentions(players.map((signup) => signup.userId)) : '—',
           inline: true,
         };
@@ -110,9 +136,7 @@ export function td2EventMessage(
     if (reserve.length > 0) {
       embed.addFields({
         name: 'Réserve',
-        value: reserve
-          .map((signup) => `<@${signup.userId}> (${TD2_ROLE_LABELS[signup.role]})`)
-          .join('\n'),
+        value: reserve.map(reserveLine).join('\n'),
       });
     }
   }
@@ -126,7 +150,9 @@ export function td2EventMessage(
       return (
         new ButtonBuilder()
           .setCustomId(joinCustomId(event.id, slot.role))
-          .setLabel(`${TD2_ROLE_LABELS[slot.role]} ${count}/${slot.count}`)
+          .setLabel(
+            `${slot.role === 'PLAYER' ? 'Rejoindre' : TD2_SIGNUP_ROLE_LABELS[slot.role]} ${count}/${slot.count}`,
+          )
           // Un rôle complet reste cliquable : on y entre en réserve
           .setStyle(count < slot.count ? ButtonStyle.Primary : ButtonStyle.Secondary)
       );
@@ -183,7 +209,8 @@ export function promotionMessage(
   const content = promotions
     .map(
       ({ userId, role }) =>
-        `🎉 <@${userId}>, une place de ${TD2_ROLE_LABELS[role]} s’est libérée : tu passes dans l’équipe de **${eventTitle(event)}** !`,
+        `🎉 <@${userId}>, une place${role === 'PLAYER' ? '' : ` de ${TD2_SIGNUP_ROLE_LABELS[role]}`} s’est libérée : ` +
+        `tu passes dans l’équipe de **${eventTitle(event)}** !`,
     )
     .join('\n');
   return notice(
@@ -213,11 +240,43 @@ export function cancelNotice(
   return notice(content.trim(), event.messageId, everyone(event));
 }
 
-/** Le menu « Gérer », visible du seul organisateur. */
-export function manageMenu(event: Pick<EventView, 'id' | 'mode'>) {
+/**
+ * Le menu des directives d'une mission : plusieurs choix, ou aucun. Celles déjà retenues sont
+ * cochées. null sans directive active : Discord refuse un menu vide.
+ */
+export function directivesMenu(
+  event: Pick<EventView, 'id' | 'directives'>,
+  directives: Pick<Td2Directive, 'id' | 'name' | 'description'>[],
+): ActionRowBuilder<StringSelectMenuBuilder> | null {
+  const options = directives.slice(0, 25);
+  if (options.length === 0) return null;
+  return new ActionRowBuilder<StringSelectMenuBuilder>().addComponents(
+    new StringSelectMenuBuilder()
+      .setCustomId(directivesCustomId(event.id))
+      .setPlaceholder('Directives : aucune')
+      .setMinValues(0)
+      .setMaxValues(options.length)
+      .addOptions(
+        options.map((directive) => ({
+          label: directive.name.slice(0, 100),
+          value: String(directive.id),
+          ...(directive.description && { description: directive.description.slice(0, 100) }),
+          default: event.directives.includes(directive.name),
+        })),
+      ),
+  );
+}
+
+/** Le menu « Gérer », visible du seul organisateur ; une mission y règle aussi ses directives. */
+export function manageMenu(
+  event: Pick<EventView, 'id' | 'mode' | 'missionName' | 'difficulty' | 'directives'>,
+  directives: Pick<Td2Directive, 'id' | 'name' | 'description'>[] = [],
+) {
+  const directiveRow = event.mode ? null : directivesMenu(event, directives);
   return {
     content: `Que veux-tu faire pour **${eventTitle(event)}** ?`,
     components: [
+      ...(directiveRow ? [directiveRow] : []),
       new ActionRowBuilder<ButtonBuilder>().addComponents(
         new ButtonBuilder()
           .setCustomId(rescheduleCustomId(event.id))
@@ -234,7 +293,7 @@ export function manageMenu(event: Pick<EventView, 'id' | 'mode'>) {
 }
 
 /** La question avant d'annuler. */
-export function confirmCancelMenu(event: Pick<EventView, 'id' | 'mode'>) {
+export function confirmCancelMenu(event: Pick<EventView, 'id'> & TitleView) {
   return {
     content: `Annuler **${eventTitle(event)}** ? Les inscrits seront prévenus.`,
     components: [

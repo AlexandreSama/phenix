@@ -321,6 +321,23 @@ export type EnumTd2RoleWithAggregatesFilter<$PrismaModel = never> = {
   _max?: Prisma.NestedEnumTd2RoleFilter<$PrismaModel>
 }
 
+export type EnumTd2DifficultyNullableFilter<$PrismaModel = never> = {
+  equals?: $Enums.Td2Difficulty | Prisma.EnumTd2DifficultyFieldRefInput<$PrismaModel> | null
+  in?: $Enums.Td2Difficulty[] | Prisma.ListEnumTd2DifficultyFieldRefInput<$PrismaModel> | null
+  notIn?: $Enums.Td2Difficulty[] | Prisma.ListEnumTd2DifficultyFieldRefInput<$PrismaModel> | null
+  not?: Prisma.NestedEnumTd2DifficultyNullableFilter<$PrismaModel> | $Enums.Td2Difficulty | null
+}
+
+export type EnumTd2DifficultyNullableWithAggregatesFilter<$PrismaModel = never> = {
+  equals?: $Enums.Td2Difficulty | Prisma.EnumTd2DifficultyFieldRefInput<$PrismaModel> | null
+  in?: $Enums.Td2Difficulty[] | Prisma.ListEnumTd2DifficultyFieldRefInput<$PrismaModel> | null
+  notIn?: $Enums.Td2Difficulty[] | Prisma.ListEnumTd2DifficultyFieldRefInput<$PrismaModel> | null
+  not?: Prisma.NestedEnumTd2DifficultyNullableWithAggregatesFilter<$PrismaModel> | $Enums.Td2Difficulty | null
+  _count?: Prisma.NestedIntNullableFilter<$PrismaModel>
+  _min?: Prisma.NestedEnumTd2DifficultyNullableFilter<$PrismaModel>
+  _max?: Prisma.NestedEnumTd2DifficultyNullableFilter<$PrismaModel>
+}
+
 export type EnumTd2SignupStatusFilter<$PrismaModel = never> = {
   equals?: $Enums.Td2SignupStatus | Prisma.EnumTd2SignupStatusFieldRefInput<$PrismaModel>
   in?: $Enums.Td2SignupStatus[] | Prisma.ListEnumTd2SignupStatusFieldRefInput<$PrismaModel>
@@ -673,6 +690,23 @@ export type NestedEnumTd2RoleWithAggregatesFilter<$PrismaModel = never> = {
   _count?: Prisma.NestedIntFilter<$PrismaModel>
   _min?: Prisma.NestedEnumTd2RoleFilter<$PrismaModel>
   _max?: Prisma.NestedEnumTd2RoleFilter<$PrismaModel>
+}
+
+export type NestedEnumTd2DifficultyNullableFilter<$PrismaModel = never> = {
+  equals?: $Enums.Td2Difficulty | Prisma.EnumTd2DifficultyFieldRefInput<$PrismaModel> | null
+  in?: $Enums.Td2Difficulty[] | Prisma.ListEnumTd2DifficultyFieldRefInput<$PrismaModel> | null
+  notIn?: $Enums.Td2Difficulty[] | Prisma.ListEnumTd2DifficultyFieldRefInput<$PrismaModel> | null
+  not?: Prisma.NestedEnumTd2DifficultyNullableFilter<$PrismaModel> | $Enums.Td2Difficulty | null
+}
+
+export type NestedEnumTd2DifficultyNullableWithAggregatesFilter<$PrismaModel = never> = {
+  equals?: $Enums.Td2Difficulty | Prisma.EnumTd2DifficultyFieldRefInput<$PrismaModel> | null
+  in?: $Enums.Td2Difficulty[] | Prisma.ListEnumTd2DifficultyFieldRefInput<$PrismaModel> | null
+  notIn?: $Enums.Td2Difficulty[] | Prisma.ListEnumTd2DifficultyFieldRefInput<$PrismaModel> | null
+  not?: Prisma.NestedEnumTd2DifficultyNullableWithAggregatesFilter<$PrismaModel> | $Enums.Td2Difficulty | null
+  _count?: Prisma.NestedIntNullableFilter<$PrismaModel>
+  _min?: Prisma.NestedEnumTd2DifficultyNullableFilter<$PrismaModel>
+  _max?: Prisma.NestedEnumTd2DifficultyNullableFilter<$PrismaModel>
 }
 
 export type NestedEnumTd2SignupStatusFilter<$PrismaModel = never> = {

@@ -400,6 +400,7 @@ export const ModelName = {
   User: 'User',
   Guild: 'Guild',
   GuildConfig: 'GuildConfig',
+  GuildDelegate: 'GuildDelegate',
   Case: 'Case',
   MemberLevel: 'MemberLevel',
   Marriage: 'Marriage',
@@ -413,6 +414,7 @@ export const ModelName = {
   Td2Activity: 'Td2Activity',
   Td2ActivityMode: 'Td2ActivityMode',
   Td2ModeSlot: 'Td2ModeSlot',
+  Td2Directive: 'Td2Directive',
   Td2Event: 'Td2Event',
   Td2EventSlot: 'Td2EventSlot',
   Td2Signup: 'Td2Signup',
@@ -436,7 +438,7 @@ export type TypeMap<ExtArgs extends runtime.Types.Extensions.InternalArgs = runt
     omit: GlobalOmitOptions
   }
   meta: {
-    modelProps: "user" | "guild" | "guildConfig" | "case" | "memberLevel" | "marriage" | "ticket" | "ticketPanel" | "giveaway" | "giveawayEntry" | "rolePanel" | "rolePanelOption" | "td2Profile" | "td2Activity" | "td2ActivityMode" | "td2ModeSlot" | "td2Event" | "td2EventSlot" | "td2Signup" | "td2Report" | "forumCategory" | "forumThread" | "forumAttachment" | "forumPost"
+    modelProps: "user" | "guild" | "guildConfig" | "guildDelegate" | "case" | "memberLevel" | "marriage" | "ticket" | "ticketPanel" | "giveaway" | "giveawayEntry" | "rolePanel" | "rolePanelOption" | "td2Profile" | "td2Activity" | "td2ActivityMode" | "td2ModeSlot" | "td2Directive" | "td2Event" | "td2EventSlot" | "td2Signup" | "td2Report" | "forumCategory" | "forumThread" | "forumAttachment" | "forumPost"
     txIsolationLevel: TransactionIsolationLevel
   }
   model: {
@@ -659,6 +661,80 @@ export type TypeMap<ExtArgs extends runtime.Types.Extensions.InternalArgs = runt
         count: {
           args: Prisma.GuildConfigCountArgs<ExtArgs>
           result: runtime.Types.Utils.Optional<Prisma.GuildConfigCountAggregateOutputType> | number
+        }
+      }
+    }
+    GuildDelegate: {
+      payload: Prisma.$GuildDelegatePayload<ExtArgs>
+      fields: Prisma.GuildDelegateFieldRefs
+      operations: {
+        findUnique: {
+          args: Prisma.GuildDelegateFindUniqueArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$GuildDelegatePayload> | null
+        }
+        findUniqueOrThrow: {
+          args: Prisma.GuildDelegateFindUniqueOrThrowArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$GuildDelegatePayload>
+        }
+        findFirst: {
+          args: Prisma.GuildDelegateFindFirstArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$GuildDelegatePayload> | null
+        }
+        findFirstOrThrow: {
+          args: Prisma.GuildDelegateFindFirstOrThrowArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$GuildDelegatePayload>
+        }
+        findMany: {
+          args: Prisma.GuildDelegateFindManyArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$GuildDelegatePayload>[]
+        }
+        create: {
+          args: Prisma.GuildDelegateCreateArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$GuildDelegatePayload>
+        }
+        createMany: {
+          args: Prisma.GuildDelegateCreateManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        createManyAndReturn: {
+          args: Prisma.GuildDelegateCreateManyAndReturnArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$GuildDelegatePayload>[]
+        }
+        delete: {
+          args: Prisma.GuildDelegateDeleteArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$GuildDelegatePayload>
+        }
+        update: {
+          args: Prisma.GuildDelegateUpdateArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$GuildDelegatePayload>
+        }
+        deleteMany: {
+          args: Prisma.GuildDelegateDeleteManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        updateMany: {
+          args: Prisma.GuildDelegateUpdateManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        updateManyAndReturn: {
+          args: Prisma.GuildDelegateUpdateManyAndReturnArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$GuildDelegatePayload>[]
+        }
+        upsert: {
+          args: Prisma.GuildDelegateUpsertArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$GuildDelegatePayload>
+        }
+        aggregate: {
+          args: Prisma.GuildDelegateAggregateArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.AggregateGuildDelegate>
+        }
+        groupBy: {
+          args: Prisma.GuildDelegateGroupByArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.GuildDelegateGroupByOutputType>[]
+        }
+        count: {
+          args: Prisma.GuildDelegateCountArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.GuildDelegateCountAggregateOutputType> | number
         }
       }
     }
@@ -1624,6 +1700,80 @@ export type TypeMap<ExtArgs extends runtime.Types.Extensions.InternalArgs = runt
         }
       }
     }
+    Td2Directive: {
+      payload: Prisma.$Td2DirectivePayload<ExtArgs>
+      fields: Prisma.Td2DirectiveFieldRefs
+      operations: {
+        findUnique: {
+          args: Prisma.Td2DirectiveFindUniqueArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$Td2DirectivePayload> | null
+        }
+        findUniqueOrThrow: {
+          args: Prisma.Td2DirectiveFindUniqueOrThrowArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$Td2DirectivePayload>
+        }
+        findFirst: {
+          args: Prisma.Td2DirectiveFindFirstArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$Td2DirectivePayload> | null
+        }
+        findFirstOrThrow: {
+          args: Prisma.Td2DirectiveFindFirstOrThrowArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$Td2DirectivePayload>
+        }
+        findMany: {
+          args: Prisma.Td2DirectiveFindManyArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$Td2DirectivePayload>[]
+        }
+        create: {
+          args: Prisma.Td2DirectiveCreateArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$Td2DirectivePayload>
+        }
+        createMany: {
+          args: Prisma.Td2DirectiveCreateManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        createManyAndReturn: {
+          args: Prisma.Td2DirectiveCreateManyAndReturnArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$Td2DirectivePayload>[]
+        }
+        delete: {
+          args: Prisma.Td2DirectiveDeleteArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$Td2DirectivePayload>
+        }
+        update: {
+          args: Prisma.Td2DirectiveUpdateArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$Td2DirectivePayload>
+        }
+        deleteMany: {
+          args: Prisma.Td2DirectiveDeleteManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        updateMany: {
+          args: Prisma.Td2DirectiveUpdateManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        updateManyAndReturn: {
+          args: Prisma.Td2DirectiveUpdateManyAndReturnArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$Td2DirectivePayload>[]
+        }
+        upsert: {
+          args: Prisma.Td2DirectiveUpsertArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$Td2DirectivePayload>
+        }
+        aggregate: {
+          args: Prisma.Td2DirectiveAggregateArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.AggregateTd2Directive>
+        }
+        groupBy: {
+          args: Prisma.Td2DirectiveGroupByArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.Td2DirectiveGroupByOutputType>[]
+        }
+        count: {
+          args: Prisma.Td2DirectiveCountArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.Td2DirectiveCountAggregateOutputType> | number
+        }
+      }
+    }
     Td2Event: {
       payload: Prisma.$Td2EventPayload<ExtArgs>
       fields: Prisma.Td2EventFieldRefs
@@ -2298,10 +2448,25 @@ export const GuildConfigScalarFieldEnum = {
   td2ReportChannelId: 'td2ReportChannelId',
   td2ReportViewerRoleIds: 'td2ReportViewerRoleIds',
   td2ReportFeedChannelId: 'td2ReportFeedChannelId',
+  td2PublicListing: 'td2PublicListing',
   updatedAt: 'updatedAt'
 } as const
 
 export type GuildConfigScalarFieldEnum = (typeof GuildConfigScalarFieldEnum)[keyof typeof GuildConfigScalarFieldEnum]
+
+
+export const GuildDelegateScalarFieldEnum = {
+  guildId: 'guildId',
+  userId: 'userId',
+  username: 'username',
+  avatar: 'avatar',
+  modules: 'modules',
+  grantedById: 'grantedById',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt'
+} as const
+
+export type GuildDelegateScalarFieldEnum = (typeof GuildDelegateScalarFieldEnum)[keyof typeof GuildDelegateScalarFieldEnum]
 
 
 export const CaseScalarFieldEnum = {
@@ -2476,10 +2641,23 @@ export const Td2ModeSlotScalarFieldEnum = {
 export type Td2ModeSlotScalarFieldEnum = (typeof Td2ModeSlotScalarFieldEnum)[keyof typeof Td2ModeSlotScalarFieldEnum]
 
 
+export const Td2DirectiveScalarFieldEnum = {
+  id: 'id',
+  name: 'name',
+  description: 'description',
+  active: 'active'
+} as const
+
+export type Td2DirectiveScalarFieldEnum = (typeof Td2DirectiveScalarFieldEnum)[keyof typeof Td2DirectiveScalarFieldEnum]
+
+
 export const Td2EventScalarFieldEnum = {
   id: 'id',
   guildId: 'guildId',
   modeId: 'modeId',
+  missionName: 'missionName',
+  difficulty: 'difficulty',
+  directives: 'directives',
   scheduledAt: 'scheduledAt',
   channelId: 'channelId',
   messageId: 'messageId',
@@ -2676,6 +2854,20 @@ export type BooleanFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel,
 
 
 /**
+ * Reference to a field of type 'DashboardModule[]'
+ */
+export type ListEnumDashboardModuleFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'DashboardModule[]'>
+    
+
+
+/**
+ * Reference to a field of type 'DashboardModule'
+ */
+export type EnumDashboardModuleFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'DashboardModule'>
+    
+
+
+/**
  * Reference to a field of type 'CaseType'
  */
 export type EnumCaseTypeFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'CaseType'>
@@ -2756,6 +2948,20 @@ export type EnumTd2RoleFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaMo
  * Reference to a field of type 'Td2Role[]'
  */
 export type ListEnumTd2RoleFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'Td2Role[]'>
+    
+
+
+/**
+ * Reference to a field of type 'Td2Difficulty'
+ */
+export type EnumTd2DifficultyFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'Td2Difficulty'>
+    
+
+
+/**
+ * Reference to a field of type 'Td2Difficulty[]'
+ */
+export type ListEnumTd2DifficultyFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'Td2Difficulty[]'>
     
 
 
@@ -2954,6 +3160,7 @@ export type GlobalOmitConfig = {
   user?: Prisma.UserOmit
   guild?: Prisma.GuildOmit
   guildConfig?: Prisma.GuildConfigOmit
+  guildDelegate?: Prisma.GuildDelegateOmit
   case?: Prisma.CaseOmit
   memberLevel?: Prisma.MemberLevelOmit
   marriage?: Prisma.MarriageOmit
@@ -2967,6 +3174,7 @@ export type GlobalOmitConfig = {
   td2Activity?: Prisma.Td2ActivityOmit
   td2ActivityMode?: Prisma.Td2ActivityModeOmit
   td2ModeSlot?: Prisma.Td2ModeSlotOmit
+  td2Directive?: Prisma.Td2DirectiveOmit
   td2Event?: Prisma.Td2EventOmit
   td2EventSlot?: Prisma.Td2EventSlotOmit
   td2Signup?: Prisma.Td2SignupOmit

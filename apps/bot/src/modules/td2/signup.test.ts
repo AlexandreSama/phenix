@@ -155,3 +155,35 @@ describe('Se désinscrire', () => {
     expect(interaction.update).not.toHaveBeenCalled();
   });
 });
+
+describe('réponses d’une mission', () => {
+  it('ne parlent pas de rôle : une mission n’a que des joueurs', () => {
+    expect(SIGNUP_REPLIES.joined('PLAYER')).toBe("C'est noté : tu es dans l'équipe.");
+    expect(SIGNUP_REPLIES.reserve('PLAYER', 1)).toBe(
+      "L'équipe est complète : tu es en réserve (1ʳᵉ). Tu passeras dans l’équipe dès qu’une place se libère.",
+    );
+    expect(SIGNUP_REPLIES.already('PLAYER')).toBe(
+      "Tu es déjà dans l'équipe. « Se désinscrire » pour libérer ta place.",
+    );
+    expect(SIGNUP_REPLIES.alreadyReserve('PLAYER', 2)).toBe('Tu es déjà en réserve (2ᵉ).');
+    // Les autres gardent leur rôle
+    expect(SIGNUP_REPLIES.reserve('HEAL', 1)).toContain('Heal est complet');
+  });
+
+  it('le bouton « Rejoindre » inscrit dans la place « joueur »', async () => {
+    database.joinTd2Event.mockResolvedValue({
+      status: 'joined',
+      role: 'PLAYER',
+      signupStatus: 'CONFIRMED',
+      previousRole: null,
+      promoted: [],
+    });
+    database.findTd2Event.mockResolvedValue(raidEvent({ signups: [signup(PLAYER, 'PLAYER')] }));
+    const { click, said, interaction } = setup();
+
+    await click(joinTd2Button, '12:PLAYER');
+
+    expect(database.joinTd2Event).toHaveBeenCalledWith({}, 12, PLAYER, 'PLAYER');
+    expect(said(interaction.followUp)).toBe(SIGNUP_REPLIES.joined('PLAYER'));
+  });
+});

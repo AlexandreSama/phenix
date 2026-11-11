@@ -1,9 +1,9 @@
 import type { PrismaClient } from '@phenix/database';
-import type { Logger } from '../logger.js';
-import type { GuildConfigCache } from './guild-config-cache.js';
-import type { ObjectStorage } from '@phenix/storage';
 import type { GiveawayScheduler, Td2Scheduler } from '@phenix/jobs';
+import type { ObjectStorage } from '@phenix/storage';
+import type { Logger } from '../logger.js';
 import type { Td2StatsProvider } from '../modules/td2/stats/index.js';
+import type { GuildConfigCache } from './guild-config-cache.js';
 
 /** Ce que le bot fournit à chaque commande. Les tests en passent de faux. */
 export interface BotContext {

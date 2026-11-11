@@ -11,6 +11,8 @@ const guilds = (count: number): ManageableGuild[] =>
     name: `Serveur ${index + 1}`,
     iconUrl: null,
     botPresent: index % 2 === 0,
+    access: 'admin',
+    modules: ['GENERAL', 'LEVELING', 'ROLES', 'TICKETS', 'GIVEAWAYS', 'TD2'],
   }));
 
 /** Les réponses successives de GET /api/guilds. */
@@ -54,7 +56,14 @@ describe('GuildPickerPage', () => {
   });
 
   it('recharge la liste au retour sur l’onglet : le serveur invité change de groupe', async () => {
-    const absent = { id: '100', name: 'Les Agents', iconUrl: null, botPresent: false };
+    const absent: ManageableGuild = {
+      id: '100',
+      name: 'Les Agents',
+      iconUrl: null,
+      botPresent: false,
+      access: 'admin',
+      modules: ['GENERAL', 'TD2'],
+    };
     respond(json([absent]), json([{ ...absent, botPresent: true }]));
     renderWithProviders(<GuildPickerPage />);
     expect(

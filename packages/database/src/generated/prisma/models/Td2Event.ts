@@ -40,6 +40,8 @@ export type Td2EventMinAggregateOutputType = {
   id: number | null
   guildId: string | null
   modeId: number | null
+  missionName: string | null
+  difficulty: $Enums.Td2Difficulty | null
   scheduledAt: Date | null
   channelId: string | null
   messageId: string | null
@@ -52,6 +54,8 @@ export type Td2EventMaxAggregateOutputType = {
   id: number | null
   guildId: string | null
   modeId: number | null
+  missionName: string | null
+  difficulty: $Enums.Td2Difficulty | null
   scheduledAt: Date | null
   channelId: string | null
   messageId: string | null
@@ -64,6 +68,9 @@ export type Td2EventCountAggregateOutputType = {
   id: number
   guildId: number
   modeId: number
+  missionName: number
+  difficulty: number
+  directives: number
   scheduledAt: number
   channelId: number
   messageId: number
@@ -88,6 +95,8 @@ export type Td2EventMinAggregateInputType = {
   id?: true
   guildId?: true
   modeId?: true
+  missionName?: true
+  difficulty?: true
   scheduledAt?: true
   channelId?: true
   messageId?: true
@@ -100,6 +109,8 @@ export type Td2EventMaxAggregateInputType = {
   id?: true
   guildId?: true
   modeId?: true
+  missionName?: true
+  difficulty?: true
   scheduledAt?: true
   channelId?: true
   messageId?: true
@@ -112,6 +123,9 @@ export type Td2EventCountAggregateInputType = {
   id?: true
   guildId?: true
   modeId?: true
+  missionName?: true
+  difficulty?: true
+  directives?: true
   scheduledAt?: true
   channelId?: true
   messageId?: true
@@ -210,7 +224,10 @@ export type Td2EventGroupByArgs<ExtArgs extends runtime.Types.Extensions.Interna
 export type Td2EventGroupByOutputType = {
   id: number
   guildId: string
-  modeId: number
+  modeId: number | null
+  missionName: string | null
+  difficulty: $Enums.Td2Difficulty | null
+  directives: string[]
   scheduledAt: Date
   channelId: string
   messageId: string | null
@@ -245,7 +262,10 @@ export type Td2EventWhereInput = {
   NOT?: Prisma.Td2EventWhereInput | Prisma.Td2EventWhereInput[]
   id?: Prisma.IntFilter<"Td2Event"> | number
   guildId?: Prisma.StringFilter<"Td2Event"> | string
-  modeId?: Prisma.IntFilter<"Td2Event"> | number
+  modeId?: Prisma.IntNullableFilter<"Td2Event"> | number | null
+  missionName?: Prisma.StringNullableFilter<"Td2Event"> | string | null
+  difficulty?: Prisma.EnumTd2DifficultyNullableFilter<"Td2Event"> | $Enums.Td2Difficulty | null
+  directives?: Prisma.StringNullableListFilter<"Td2Event">
   scheduledAt?: Prisma.DateTimeFilter<"Td2Event"> | Date | string
   channelId?: Prisma.StringFilter<"Td2Event"> | string
   messageId?: Prisma.StringNullableFilter<"Td2Event"> | string | null
@@ -253,7 +273,7 @@ export type Td2EventWhereInput = {
   cancelledAt?: Prisma.DateTimeNullableFilter<"Td2Event"> | Date | string | null
   createdAt?: Prisma.DateTimeFilter<"Td2Event"> | Date | string
   guild?: Prisma.XOR<Prisma.GuildScalarRelationFilter, Prisma.GuildWhereInput>
-  mode?: Prisma.XOR<Prisma.Td2ActivityModeScalarRelationFilter, Prisma.Td2ActivityModeWhereInput>
+  mode?: Prisma.XOR<Prisma.Td2ActivityModeNullableScalarRelationFilter, Prisma.Td2ActivityModeWhereInput> | null
   slots?: Prisma.Td2EventSlotListRelationFilter
   signups?: Prisma.Td2SignupListRelationFilter
 }
@@ -261,7 +281,10 @@ export type Td2EventWhereInput = {
 export type Td2EventOrderByWithRelationInput = {
   id?: Prisma.SortOrder
   guildId?: Prisma.SortOrder
-  modeId?: Prisma.SortOrder
+  modeId?: Prisma.SortOrderInput | Prisma.SortOrder
+  missionName?: Prisma.SortOrderInput | Prisma.SortOrder
+  difficulty?: Prisma.SortOrderInput | Prisma.SortOrder
+  directives?: Prisma.SortOrder
   scheduledAt?: Prisma.SortOrder
   channelId?: Prisma.SortOrder
   messageId?: Prisma.SortOrderInput | Prisma.SortOrder
@@ -281,14 +304,17 @@ export type Td2EventWhereUniqueInput = Prisma.AtLeast<{
   OR?: Prisma.Td2EventWhereInput[]
   NOT?: Prisma.Td2EventWhereInput | Prisma.Td2EventWhereInput[]
   guildId?: Prisma.StringFilter<"Td2Event"> | string
-  modeId?: Prisma.IntFilter<"Td2Event"> | number
+  modeId?: Prisma.IntNullableFilter<"Td2Event"> | number | null
+  missionName?: Prisma.StringNullableFilter<"Td2Event"> | string | null
+  difficulty?: Prisma.EnumTd2DifficultyNullableFilter<"Td2Event"> | $Enums.Td2Difficulty | null
+  directives?: Prisma.StringNullableListFilter<"Td2Event">
   scheduledAt?: Prisma.DateTimeFilter<"Td2Event"> | Date | string
   channelId?: Prisma.StringFilter<"Td2Event"> | string
   organizerId?: Prisma.StringFilter<"Td2Event"> | string
   cancelledAt?: Prisma.DateTimeNullableFilter<"Td2Event"> | Date | string | null
   createdAt?: Prisma.DateTimeFilter<"Td2Event"> | Date | string
   guild?: Prisma.XOR<Prisma.GuildScalarRelationFilter, Prisma.GuildWhereInput>
-  mode?: Prisma.XOR<Prisma.Td2ActivityModeScalarRelationFilter, Prisma.Td2ActivityModeWhereInput>
+  mode?: Prisma.XOR<Prisma.Td2ActivityModeNullableScalarRelationFilter, Prisma.Td2ActivityModeWhereInput> | null
   slots?: Prisma.Td2EventSlotListRelationFilter
   signups?: Prisma.Td2SignupListRelationFilter
 }, "id" | "messageId">
@@ -296,7 +322,10 @@ export type Td2EventWhereUniqueInput = Prisma.AtLeast<{
 export type Td2EventOrderByWithAggregationInput = {
   id?: Prisma.SortOrder
   guildId?: Prisma.SortOrder
-  modeId?: Prisma.SortOrder
+  modeId?: Prisma.SortOrderInput | Prisma.SortOrder
+  missionName?: Prisma.SortOrderInput | Prisma.SortOrder
+  difficulty?: Prisma.SortOrderInput | Prisma.SortOrder
+  directives?: Prisma.SortOrder
   scheduledAt?: Prisma.SortOrder
   channelId?: Prisma.SortOrder
   messageId?: Prisma.SortOrderInput | Prisma.SortOrder
@@ -316,7 +345,10 @@ export type Td2EventScalarWhereWithAggregatesInput = {
   NOT?: Prisma.Td2EventScalarWhereWithAggregatesInput | Prisma.Td2EventScalarWhereWithAggregatesInput[]
   id?: Prisma.IntWithAggregatesFilter<"Td2Event"> | number
   guildId?: Prisma.StringWithAggregatesFilter<"Td2Event"> | string
-  modeId?: Prisma.IntWithAggregatesFilter<"Td2Event"> | number
+  modeId?: Prisma.IntNullableWithAggregatesFilter<"Td2Event"> | number | null
+  missionName?: Prisma.StringNullableWithAggregatesFilter<"Td2Event"> | string | null
+  difficulty?: Prisma.EnumTd2DifficultyNullableWithAggregatesFilter<"Td2Event"> | $Enums.Td2Difficulty | null
+  directives?: Prisma.StringNullableListFilter<"Td2Event">
   scheduledAt?: Prisma.DateTimeWithAggregatesFilter<"Td2Event"> | Date | string
   channelId?: Prisma.StringWithAggregatesFilter<"Td2Event"> | string
   messageId?: Prisma.StringNullableWithAggregatesFilter<"Td2Event"> | string | null
@@ -326,6 +358,9 @@ export type Td2EventScalarWhereWithAggregatesInput = {
 }
 
 export type Td2EventCreateInput = {
+  missionName?: string | null
+  difficulty?: $Enums.Td2Difficulty | null
+  directives?: Prisma.Td2EventCreatedirectivesInput | string[]
   scheduledAt: Date | string
   channelId: string
   messageId?: string | null
@@ -333,7 +368,7 @@ export type Td2EventCreateInput = {
   cancelledAt?: Date | string | null
   createdAt?: Date | string
   guild: Prisma.GuildCreateNestedOneWithoutTd2EventsInput
-  mode: Prisma.Td2ActivityModeCreateNestedOneWithoutEventsInput
+  mode?: Prisma.Td2ActivityModeCreateNestedOneWithoutEventsInput
   slots?: Prisma.Td2EventSlotCreateNestedManyWithoutEventInput
   signups?: Prisma.Td2SignupCreateNestedManyWithoutEventInput
 }
@@ -341,7 +376,10 @@ export type Td2EventCreateInput = {
 export type Td2EventUncheckedCreateInput = {
   id?: number
   guildId: string
-  modeId: number
+  modeId?: number | null
+  missionName?: string | null
+  difficulty?: $Enums.Td2Difficulty | null
+  directives?: Prisma.Td2EventCreatedirectivesInput | string[]
   scheduledAt: Date | string
   channelId: string
   messageId?: string | null
@@ -353,6 +391,9 @@ export type Td2EventUncheckedCreateInput = {
 }
 
 export type Td2EventUpdateInput = {
+  missionName?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  difficulty?: Prisma.NullableEnumTd2DifficultyFieldUpdateOperationsInput | $Enums.Td2Difficulty | null
+  directives?: Prisma.Td2EventUpdatedirectivesInput | string[]
   scheduledAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   channelId?: Prisma.StringFieldUpdateOperationsInput | string
   messageId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -360,7 +401,7 @@ export type Td2EventUpdateInput = {
   cancelledAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   guild?: Prisma.GuildUpdateOneRequiredWithoutTd2EventsNestedInput
-  mode?: Prisma.Td2ActivityModeUpdateOneRequiredWithoutEventsNestedInput
+  mode?: Prisma.Td2ActivityModeUpdateOneWithoutEventsNestedInput
   slots?: Prisma.Td2EventSlotUpdateManyWithoutEventNestedInput
   signups?: Prisma.Td2SignupUpdateManyWithoutEventNestedInput
 }
@@ -368,7 +409,10 @@ export type Td2EventUpdateInput = {
 export type Td2EventUncheckedUpdateInput = {
   id?: Prisma.IntFieldUpdateOperationsInput | number
   guildId?: Prisma.StringFieldUpdateOperationsInput | string
-  modeId?: Prisma.IntFieldUpdateOperationsInput | number
+  modeId?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  missionName?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  difficulty?: Prisma.NullableEnumTd2DifficultyFieldUpdateOperationsInput | $Enums.Td2Difficulty | null
+  directives?: Prisma.Td2EventUpdatedirectivesInput | string[]
   scheduledAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   channelId?: Prisma.StringFieldUpdateOperationsInput | string
   messageId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -382,7 +426,10 @@ export type Td2EventUncheckedUpdateInput = {
 export type Td2EventCreateManyInput = {
   id?: number
   guildId: string
-  modeId: number
+  modeId?: number | null
+  missionName?: string | null
+  difficulty?: $Enums.Td2Difficulty | null
+  directives?: Prisma.Td2EventCreatedirectivesInput | string[]
   scheduledAt: Date | string
   channelId: string
   messageId?: string | null
@@ -392,6 +439,9 @@ export type Td2EventCreateManyInput = {
 }
 
 export type Td2EventUpdateManyMutationInput = {
+  missionName?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  difficulty?: Prisma.NullableEnumTd2DifficultyFieldUpdateOperationsInput | $Enums.Td2Difficulty | null
+  directives?: Prisma.Td2EventUpdatedirectivesInput | string[]
   scheduledAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   channelId?: Prisma.StringFieldUpdateOperationsInput | string
   messageId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -403,7 +453,10 @@ export type Td2EventUpdateManyMutationInput = {
 export type Td2EventUncheckedUpdateManyInput = {
   id?: Prisma.IntFieldUpdateOperationsInput | number
   guildId?: Prisma.StringFieldUpdateOperationsInput | string
-  modeId?: Prisma.IntFieldUpdateOperationsInput | number
+  modeId?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  missionName?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  difficulty?: Prisma.NullableEnumTd2DifficultyFieldUpdateOperationsInput | $Enums.Td2Difficulty | null
+  directives?: Prisma.Td2EventUpdatedirectivesInput | string[]
   scheduledAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   channelId?: Prisma.StringFieldUpdateOperationsInput | string
   messageId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -426,6 +479,9 @@ export type Td2EventCountOrderByAggregateInput = {
   id?: Prisma.SortOrder
   guildId?: Prisma.SortOrder
   modeId?: Prisma.SortOrder
+  missionName?: Prisma.SortOrder
+  difficulty?: Prisma.SortOrder
+  directives?: Prisma.SortOrder
   scheduledAt?: Prisma.SortOrder
   channelId?: Prisma.SortOrder
   messageId?: Prisma.SortOrder
@@ -443,6 +499,8 @@ export type Td2EventMaxOrderByAggregateInput = {
   id?: Prisma.SortOrder
   guildId?: Prisma.SortOrder
   modeId?: Prisma.SortOrder
+  missionName?: Prisma.SortOrder
+  difficulty?: Prisma.SortOrder
   scheduledAt?: Prisma.SortOrder
   channelId?: Prisma.SortOrder
   messageId?: Prisma.SortOrder
@@ -455,6 +513,8 @@ export type Td2EventMinOrderByAggregateInput = {
   id?: Prisma.SortOrder
   guildId?: Prisma.SortOrder
   modeId?: Prisma.SortOrder
+  missionName?: Prisma.SortOrder
+  difficulty?: Prisma.SortOrder
   scheduledAt?: Prisma.SortOrder
   channelId?: Prisma.SortOrder
   messageId?: Prisma.SortOrder
@@ -557,6 +617,19 @@ export type Td2EventUncheckedUpdateManyWithoutModeNestedInput = {
   deleteMany?: Prisma.Td2EventScalarWhereInput | Prisma.Td2EventScalarWhereInput[]
 }
 
+export type Td2EventCreatedirectivesInput = {
+  set: string[]
+}
+
+export type NullableEnumTd2DifficultyFieldUpdateOperationsInput = {
+  set?: $Enums.Td2Difficulty | null
+}
+
+export type Td2EventUpdatedirectivesInput = {
+  set?: string[]
+  push?: string | string[]
+}
+
 export type Td2EventCreateNestedOneWithoutSlotsInput = {
   create?: Prisma.XOR<Prisma.Td2EventCreateWithoutSlotsInput, Prisma.Td2EventUncheckedCreateWithoutSlotsInput>
   connectOrCreate?: Prisma.Td2EventCreateOrConnectWithoutSlotsInput
@@ -586,20 +659,26 @@ export type Td2EventUpdateOneRequiredWithoutSignupsNestedInput = {
 }
 
 export type Td2EventCreateWithoutGuildInput = {
+  missionName?: string | null
+  difficulty?: $Enums.Td2Difficulty | null
+  directives?: Prisma.Td2EventCreatedirectivesInput | string[]
   scheduledAt: Date | string
   channelId: string
   messageId?: string | null
   organizerId: string
   cancelledAt?: Date | string | null
   createdAt?: Date | string
-  mode: Prisma.Td2ActivityModeCreateNestedOneWithoutEventsInput
+  mode?: Prisma.Td2ActivityModeCreateNestedOneWithoutEventsInput
   slots?: Prisma.Td2EventSlotCreateNestedManyWithoutEventInput
   signups?: Prisma.Td2SignupCreateNestedManyWithoutEventInput
 }
 
 export type Td2EventUncheckedCreateWithoutGuildInput = {
   id?: number
-  modeId: number
+  modeId?: number | null
+  missionName?: string | null
+  difficulty?: $Enums.Td2Difficulty | null
+  directives?: Prisma.Td2EventCreatedirectivesInput | string[]
   scheduledAt: Date | string
   channelId: string
   messageId?: string | null
@@ -642,7 +721,10 @@ export type Td2EventScalarWhereInput = {
   NOT?: Prisma.Td2EventScalarWhereInput | Prisma.Td2EventScalarWhereInput[]
   id?: Prisma.IntFilter<"Td2Event"> | number
   guildId?: Prisma.StringFilter<"Td2Event"> | string
-  modeId?: Prisma.IntFilter<"Td2Event"> | number
+  modeId?: Prisma.IntNullableFilter<"Td2Event"> | number | null
+  missionName?: Prisma.StringNullableFilter<"Td2Event"> | string | null
+  difficulty?: Prisma.EnumTd2DifficultyNullableFilter<"Td2Event"> | $Enums.Td2Difficulty | null
+  directives?: Prisma.StringNullableListFilter<"Td2Event">
   scheduledAt?: Prisma.DateTimeFilter<"Td2Event"> | Date | string
   channelId?: Prisma.StringFilter<"Td2Event"> | string
   messageId?: Prisma.StringNullableFilter<"Td2Event"> | string | null
@@ -652,6 +734,9 @@ export type Td2EventScalarWhereInput = {
 }
 
 export type Td2EventCreateWithoutModeInput = {
+  missionName?: string | null
+  difficulty?: $Enums.Td2Difficulty | null
+  directives?: Prisma.Td2EventCreatedirectivesInput | string[]
   scheduledAt: Date | string
   channelId: string
   messageId?: string | null
@@ -666,6 +751,9 @@ export type Td2EventCreateWithoutModeInput = {
 export type Td2EventUncheckedCreateWithoutModeInput = {
   id?: number
   guildId: string
+  missionName?: string | null
+  difficulty?: $Enums.Td2Difficulty | null
+  directives?: Prisma.Td2EventCreatedirectivesInput | string[]
   scheduledAt: Date | string
   channelId: string
   messageId?: string | null
@@ -703,6 +791,9 @@ export type Td2EventUpdateManyWithWhereWithoutModeInput = {
 }
 
 export type Td2EventCreateWithoutSlotsInput = {
+  missionName?: string | null
+  difficulty?: $Enums.Td2Difficulty | null
+  directives?: Prisma.Td2EventCreatedirectivesInput | string[]
   scheduledAt: Date | string
   channelId: string
   messageId?: string | null
@@ -710,14 +801,17 @@ export type Td2EventCreateWithoutSlotsInput = {
   cancelledAt?: Date | string | null
   createdAt?: Date | string
   guild: Prisma.GuildCreateNestedOneWithoutTd2EventsInput
-  mode: Prisma.Td2ActivityModeCreateNestedOneWithoutEventsInput
+  mode?: Prisma.Td2ActivityModeCreateNestedOneWithoutEventsInput
   signups?: Prisma.Td2SignupCreateNestedManyWithoutEventInput
 }
 
 export type Td2EventUncheckedCreateWithoutSlotsInput = {
   id?: number
   guildId: string
-  modeId: number
+  modeId?: number | null
+  missionName?: string | null
+  difficulty?: $Enums.Td2Difficulty | null
+  directives?: Prisma.Td2EventCreatedirectivesInput | string[]
   scheduledAt: Date | string
   channelId: string
   messageId?: string | null
@@ -744,6 +838,9 @@ export type Td2EventUpdateToOneWithWhereWithoutSlotsInput = {
 }
 
 export type Td2EventUpdateWithoutSlotsInput = {
+  missionName?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  difficulty?: Prisma.NullableEnumTd2DifficultyFieldUpdateOperationsInput | $Enums.Td2Difficulty | null
+  directives?: Prisma.Td2EventUpdatedirectivesInput | string[]
   scheduledAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   channelId?: Prisma.StringFieldUpdateOperationsInput | string
   messageId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -751,14 +848,17 @@ export type Td2EventUpdateWithoutSlotsInput = {
   cancelledAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   guild?: Prisma.GuildUpdateOneRequiredWithoutTd2EventsNestedInput
-  mode?: Prisma.Td2ActivityModeUpdateOneRequiredWithoutEventsNestedInput
+  mode?: Prisma.Td2ActivityModeUpdateOneWithoutEventsNestedInput
   signups?: Prisma.Td2SignupUpdateManyWithoutEventNestedInput
 }
 
 export type Td2EventUncheckedUpdateWithoutSlotsInput = {
   id?: Prisma.IntFieldUpdateOperationsInput | number
   guildId?: Prisma.StringFieldUpdateOperationsInput | string
-  modeId?: Prisma.IntFieldUpdateOperationsInput | number
+  modeId?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  missionName?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  difficulty?: Prisma.NullableEnumTd2DifficultyFieldUpdateOperationsInput | $Enums.Td2Difficulty | null
+  directives?: Prisma.Td2EventUpdatedirectivesInput | string[]
   scheduledAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   channelId?: Prisma.StringFieldUpdateOperationsInput | string
   messageId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -769,6 +869,9 @@ export type Td2EventUncheckedUpdateWithoutSlotsInput = {
 }
 
 export type Td2EventCreateWithoutSignupsInput = {
+  missionName?: string | null
+  difficulty?: $Enums.Td2Difficulty | null
+  directives?: Prisma.Td2EventCreatedirectivesInput | string[]
   scheduledAt: Date | string
   channelId: string
   messageId?: string | null
@@ -776,14 +879,17 @@ export type Td2EventCreateWithoutSignupsInput = {
   cancelledAt?: Date | string | null
   createdAt?: Date | string
   guild: Prisma.GuildCreateNestedOneWithoutTd2EventsInput
-  mode: Prisma.Td2ActivityModeCreateNestedOneWithoutEventsInput
+  mode?: Prisma.Td2ActivityModeCreateNestedOneWithoutEventsInput
   slots?: Prisma.Td2EventSlotCreateNestedManyWithoutEventInput
 }
 
 export type Td2EventUncheckedCreateWithoutSignupsInput = {
   id?: number
   guildId: string
-  modeId: number
+  modeId?: number | null
+  missionName?: string | null
+  difficulty?: $Enums.Td2Difficulty | null
+  directives?: Prisma.Td2EventCreatedirectivesInput | string[]
   scheduledAt: Date | string
   channelId: string
   messageId?: string | null
@@ -810,6 +916,9 @@ export type Td2EventUpdateToOneWithWhereWithoutSignupsInput = {
 }
 
 export type Td2EventUpdateWithoutSignupsInput = {
+  missionName?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  difficulty?: Prisma.NullableEnumTd2DifficultyFieldUpdateOperationsInput | $Enums.Td2Difficulty | null
+  directives?: Prisma.Td2EventUpdatedirectivesInput | string[]
   scheduledAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   channelId?: Prisma.StringFieldUpdateOperationsInput | string
   messageId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -817,14 +926,17 @@ export type Td2EventUpdateWithoutSignupsInput = {
   cancelledAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   guild?: Prisma.GuildUpdateOneRequiredWithoutTd2EventsNestedInput
-  mode?: Prisma.Td2ActivityModeUpdateOneRequiredWithoutEventsNestedInput
+  mode?: Prisma.Td2ActivityModeUpdateOneWithoutEventsNestedInput
   slots?: Prisma.Td2EventSlotUpdateManyWithoutEventNestedInput
 }
 
 export type Td2EventUncheckedUpdateWithoutSignupsInput = {
   id?: Prisma.IntFieldUpdateOperationsInput | number
   guildId?: Prisma.StringFieldUpdateOperationsInput | string
-  modeId?: Prisma.IntFieldUpdateOperationsInput | number
+  modeId?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  missionName?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  difficulty?: Prisma.NullableEnumTd2DifficultyFieldUpdateOperationsInput | $Enums.Td2Difficulty | null
+  directives?: Prisma.Td2EventUpdatedirectivesInput | string[]
   scheduledAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   channelId?: Prisma.StringFieldUpdateOperationsInput | string
   messageId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -836,7 +948,10 @@ export type Td2EventUncheckedUpdateWithoutSignupsInput = {
 
 export type Td2EventCreateManyGuildInput = {
   id?: number
-  modeId: number
+  modeId?: number | null
+  missionName?: string | null
+  difficulty?: $Enums.Td2Difficulty | null
+  directives?: Prisma.Td2EventCreatedirectivesInput | string[]
   scheduledAt: Date | string
   channelId: string
   messageId?: string | null
@@ -846,20 +961,26 @@ export type Td2EventCreateManyGuildInput = {
 }
 
 export type Td2EventUpdateWithoutGuildInput = {
+  missionName?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  difficulty?: Prisma.NullableEnumTd2DifficultyFieldUpdateOperationsInput | $Enums.Td2Difficulty | null
+  directives?: Prisma.Td2EventUpdatedirectivesInput | string[]
   scheduledAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   channelId?: Prisma.StringFieldUpdateOperationsInput | string
   messageId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   organizerId?: Prisma.StringFieldUpdateOperationsInput | string
   cancelledAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
-  mode?: Prisma.Td2ActivityModeUpdateOneRequiredWithoutEventsNestedInput
+  mode?: Prisma.Td2ActivityModeUpdateOneWithoutEventsNestedInput
   slots?: Prisma.Td2EventSlotUpdateManyWithoutEventNestedInput
   signups?: Prisma.Td2SignupUpdateManyWithoutEventNestedInput
 }
 
 export type Td2EventUncheckedUpdateWithoutGuildInput = {
   id?: Prisma.IntFieldUpdateOperationsInput | number
-  modeId?: Prisma.IntFieldUpdateOperationsInput | number
+  modeId?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  missionName?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  difficulty?: Prisma.NullableEnumTd2DifficultyFieldUpdateOperationsInput | $Enums.Td2Difficulty | null
+  directives?: Prisma.Td2EventUpdatedirectivesInput | string[]
   scheduledAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   channelId?: Prisma.StringFieldUpdateOperationsInput | string
   messageId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -872,7 +993,10 @@ export type Td2EventUncheckedUpdateWithoutGuildInput = {
 
 export type Td2EventUncheckedUpdateManyWithoutGuildInput = {
   id?: Prisma.IntFieldUpdateOperationsInput | number
-  modeId?: Prisma.IntFieldUpdateOperationsInput | number
+  modeId?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  missionName?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  difficulty?: Prisma.NullableEnumTd2DifficultyFieldUpdateOperationsInput | $Enums.Td2Difficulty | null
+  directives?: Prisma.Td2EventUpdatedirectivesInput | string[]
   scheduledAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   channelId?: Prisma.StringFieldUpdateOperationsInput | string
   messageId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -884,6 +1008,9 @@ export type Td2EventUncheckedUpdateManyWithoutGuildInput = {
 export type Td2EventCreateManyModeInput = {
   id?: number
   guildId: string
+  missionName?: string | null
+  difficulty?: $Enums.Td2Difficulty | null
+  directives?: Prisma.Td2EventCreatedirectivesInput | string[]
   scheduledAt: Date | string
   channelId: string
   messageId?: string | null
@@ -893,6 +1020,9 @@ export type Td2EventCreateManyModeInput = {
 }
 
 export type Td2EventUpdateWithoutModeInput = {
+  missionName?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  difficulty?: Prisma.NullableEnumTd2DifficultyFieldUpdateOperationsInput | $Enums.Td2Difficulty | null
+  directives?: Prisma.Td2EventUpdatedirectivesInput | string[]
   scheduledAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   channelId?: Prisma.StringFieldUpdateOperationsInput | string
   messageId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -907,6 +1037,9 @@ export type Td2EventUpdateWithoutModeInput = {
 export type Td2EventUncheckedUpdateWithoutModeInput = {
   id?: Prisma.IntFieldUpdateOperationsInput | number
   guildId?: Prisma.StringFieldUpdateOperationsInput | string
+  missionName?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  difficulty?: Prisma.NullableEnumTd2DifficultyFieldUpdateOperationsInput | $Enums.Td2Difficulty | null
+  directives?: Prisma.Td2EventUpdatedirectivesInput | string[]
   scheduledAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   channelId?: Prisma.StringFieldUpdateOperationsInput | string
   messageId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -920,6 +1053,9 @@ export type Td2EventUncheckedUpdateWithoutModeInput = {
 export type Td2EventUncheckedUpdateManyWithoutModeInput = {
   id?: Prisma.IntFieldUpdateOperationsInput | number
   guildId?: Prisma.StringFieldUpdateOperationsInput | string
+  missionName?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  difficulty?: Prisma.NullableEnumTd2DifficultyFieldUpdateOperationsInput | $Enums.Td2Difficulty | null
+  directives?: Prisma.Td2EventUpdatedirectivesInput | string[]
   scheduledAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   channelId?: Prisma.StringFieldUpdateOperationsInput | string
   messageId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -972,6 +1108,9 @@ export type Td2EventSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs
   id?: boolean
   guildId?: boolean
   modeId?: boolean
+  missionName?: boolean
+  difficulty?: boolean
+  directives?: boolean
   scheduledAt?: boolean
   channelId?: boolean
   messageId?: boolean
@@ -979,7 +1118,7 @@ export type Td2EventSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs
   cancelledAt?: boolean
   createdAt?: boolean
   guild?: boolean | Prisma.GuildDefaultArgs<ExtArgs>
-  mode?: boolean | Prisma.Td2ActivityModeDefaultArgs<ExtArgs>
+  mode?: boolean | Prisma.Td2Event$modeArgs<ExtArgs>
   slots?: boolean | Prisma.Td2Event$slotsArgs<ExtArgs>
   signups?: boolean | Prisma.Td2Event$signupsArgs<ExtArgs>
   _count?: boolean | Prisma.Td2EventCountOutputTypeDefaultArgs<ExtArgs>
@@ -989,6 +1128,9 @@ export type Td2EventSelectCreateManyAndReturn<ExtArgs extends runtime.Types.Exte
   id?: boolean
   guildId?: boolean
   modeId?: boolean
+  missionName?: boolean
+  difficulty?: boolean
+  directives?: boolean
   scheduledAt?: boolean
   channelId?: boolean
   messageId?: boolean
@@ -996,13 +1138,16 @@ export type Td2EventSelectCreateManyAndReturn<ExtArgs extends runtime.Types.Exte
   cancelledAt?: boolean
   createdAt?: boolean
   guild?: boolean | Prisma.GuildDefaultArgs<ExtArgs>
-  mode?: boolean | Prisma.Td2ActivityModeDefaultArgs<ExtArgs>
+  mode?: boolean | Prisma.Td2Event$modeArgs<ExtArgs>
 }, ExtArgs["result"]["td2Event"]>
 
 export type Td2EventSelectUpdateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetSelect<{
   id?: boolean
   guildId?: boolean
   modeId?: boolean
+  missionName?: boolean
+  difficulty?: boolean
+  directives?: boolean
   scheduledAt?: boolean
   channelId?: boolean
   messageId?: boolean
@@ -1010,13 +1155,16 @@ export type Td2EventSelectUpdateManyAndReturn<ExtArgs extends runtime.Types.Exte
   cancelledAt?: boolean
   createdAt?: boolean
   guild?: boolean | Prisma.GuildDefaultArgs<ExtArgs>
-  mode?: boolean | Prisma.Td2ActivityModeDefaultArgs<ExtArgs>
+  mode?: boolean | Prisma.Td2Event$modeArgs<ExtArgs>
 }, ExtArgs["result"]["td2Event"]>
 
 export type Td2EventSelectScalar = {
   id?: boolean
   guildId?: boolean
   modeId?: boolean
+  missionName?: boolean
+  difficulty?: boolean
+  directives?: boolean
   scheduledAt?: boolean
   channelId?: boolean
   messageId?: boolean
@@ -1025,35 +1173,38 @@ export type Td2EventSelectScalar = {
   createdAt?: boolean
 }
 
-export type Td2EventOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "guildId" | "modeId" | "scheduledAt" | "channelId" | "messageId" | "organizerId" | "cancelledAt" | "createdAt", ExtArgs["result"]["td2Event"]>
+export type Td2EventOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "guildId" | "modeId" | "missionName" | "difficulty" | "directives" | "scheduledAt" | "channelId" | "messageId" | "organizerId" | "cancelledAt" | "createdAt", ExtArgs["result"]["td2Event"]>
 export type Td2EventInclude<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   guild?: boolean | Prisma.GuildDefaultArgs<ExtArgs>
-  mode?: boolean | Prisma.Td2ActivityModeDefaultArgs<ExtArgs>
+  mode?: boolean | Prisma.Td2Event$modeArgs<ExtArgs>
   slots?: boolean | Prisma.Td2Event$slotsArgs<ExtArgs>
   signups?: boolean | Prisma.Td2Event$signupsArgs<ExtArgs>
   _count?: boolean | Prisma.Td2EventCountOutputTypeDefaultArgs<ExtArgs>
 }
 export type Td2EventIncludeCreateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   guild?: boolean | Prisma.GuildDefaultArgs<ExtArgs>
-  mode?: boolean | Prisma.Td2ActivityModeDefaultArgs<ExtArgs>
+  mode?: boolean | Prisma.Td2Event$modeArgs<ExtArgs>
 }
 export type Td2EventIncludeUpdateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   guild?: boolean | Prisma.GuildDefaultArgs<ExtArgs>
-  mode?: boolean | Prisma.Td2ActivityModeDefaultArgs<ExtArgs>
+  mode?: boolean | Prisma.Td2Event$modeArgs<ExtArgs>
 }
 
 export type $Td2EventPayload<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   name: "Td2Event"
   objects: {
     guild: Prisma.$GuildPayload<ExtArgs>
-    mode: Prisma.$Td2ActivityModePayload<ExtArgs>
+    mode: Prisma.$Td2ActivityModePayload<ExtArgs> | null
     slots: Prisma.$Td2EventSlotPayload<ExtArgs>[]
     signups: Prisma.$Td2SignupPayload<ExtArgs>[]
   }
   scalars: runtime.Types.Extensions.GetPayloadResult<{
     id: number
     guildId: string
-    modeId: number
+    modeId: number | null
+    missionName: string | null
+    difficulty: $Enums.Td2Difficulty | null
+    directives: string[]
     scheduledAt: Date
     channelId: string
     messageId: string | null
@@ -1455,7 +1606,7 @@ readonly fields: Td2EventFieldRefs;
 export interface Prisma__Td2EventClient<T, Null = never, ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs, GlobalOmitOptions = {}> extends Prisma.PrismaPromise<T> {
   readonly [Symbol.toStringTag]: "PrismaPromise"
   guild<T extends Prisma.GuildDefaultArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.GuildDefaultArgs<ExtArgs>>): Prisma.Prisma__GuildClient<runtime.Types.Result.GetResult<Prisma.$GuildPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | Null, Null, ExtArgs, GlobalOmitOptions>
-  mode<T extends Prisma.Td2ActivityModeDefaultArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.Td2ActivityModeDefaultArgs<ExtArgs>>): Prisma.Prisma__Td2ActivityModeClient<runtime.Types.Result.GetResult<Prisma.$Td2ActivityModePayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | Null, Null, ExtArgs, GlobalOmitOptions>
+  mode<T extends Prisma.Td2Event$modeArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.Td2Event$modeArgs<ExtArgs>>): Prisma.Prisma__Td2ActivityModeClient<runtime.Types.Result.GetResult<Prisma.$Td2ActivityModePayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
   slots<T extends Prisma.Td2Event$slotsArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.Td2Event$slotsArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$Td2EventSlotPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
   signups<T extends Prisma.Td2Event$signupsArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.Td2Event$signupsArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$Td2SignupPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
   /**
@@ -1490,6 +1641,9 @@ export interface Td2EventFieldRefs {
   readonly id: Prisma.FieldRef<"Td2Event", 'Int'>
   readonly guildId: Prisma.FieldRef<"Td2Event", 'String'>
   readonly modeId: Prisma.FieldRef<"Td2Event", 'Int'>
+  readonly missionName: Prisma.FieldRef<"Td2Event", 'String'>
+  readonly difficulty: Prisma.FieldRef<"Td2Event", 'Td2Difficulty'>
+  readonly directives: Prisma.FieldRef<"Td2Event", 'String[]'>
   readonly scheduledAt: Prisma.FieldRef<"Td2Event", 'DateTime'>
   readonly channelId: Prisma.FieldRef<"Td2Event", 'String'>
   readonly messageId: Prisma.FieldRef<"Td2Event", 'String'>
@@ -1894,6 +2048,25 @@ export type Td2EventDeleteManyArgs<ExtArgs extends runtime.Types.Extensions.Inte
    * Limit how many Td2Events to delete.
    */
   limit?: number
+}
+
+/**
+ * Td2Event.mode
+ */
+export type Td2Event$modeArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  /**
+   * Select specific fields to fetch from the Td2ActivityMode
+   */
+  select?: Prisma.Td2ActivityModeSelect<ExtArgs> | null
+  /**
+   * Omit specific fields from the Td2ActivityMode
+   */
+  omit?: Prisma.Td2ActivityModeOmit<ExtArgs> | null
+  /**
+   * Choose, which related nodes to fetch as well
+   */
+  include?: Prisma.Td2ActivityModeInclude<ExtArgs> | null
+  where?: Prisma.Td2ActivityModeWhereInput
 }
 
 /**

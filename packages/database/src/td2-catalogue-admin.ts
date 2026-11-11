@@ -2,10 +2,13 @@ import type { PrismaClient, Td2ActivityKind, Td2Role } from './generated/prisma/
 
 type Db = Pick<PrismaClient, 'td2Activity' | 'td2ActivityMode' | 'td2Event' | '$transaction'>;
 
-const ROLES: Td2Role[] = ['DPS', 'HEAL', 'TANK', 'HEAL_TANK'];
+/** Les rôles d'une escouade de raid ou d'incursion. « Joueur » n'existe que pour les missions. */
+export type Td2SquadRole = Exclude<Td2Role, 'PLAYER'>;
+
+const ROLES: Td2SquadRole[] = ['DPS', 'HEAL', 'TANK', 'HEAL_TANK'];
 
 /** Une composition complète : un nombre de places par rôle, zéro compris. */
-export type Td2Composition = Record<Td2Role, number>;
+export type Td2Composition = Record<Td2SquadRole, number>;
 
 /** Le catalogue entier, activités désactivées comprises, avec l'usage de chaque mode. */
 export async function listTd2Catalogue(db: Pick<PrismaClient, 'td2Activity'>) {

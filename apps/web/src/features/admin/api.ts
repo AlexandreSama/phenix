@@ -2,6 +2,9 @@ import type {
   Td2ActivityInput,
   Td2ActivityPatch,
   Td2CatalogueActivity,
+  Td2Directive,
+  Td2DirectiveInput,
+  Td2DirectivePatch,
   Td2ModeInput,
   Td2ReportAdminPage,
   Td2ReportStatusKey,
@@ -54,6 +57,41 @@ export const useUpdateMode = () =>
 
 export const useDeleteMode = () =>
   useCatalogueWrite((modeId: number) => send(`/admin/td2/modes/${modeId}`, 'DELETE'));
+
+// ---------- Directives des missions ----------
+
+export const directivesQuery = queryOptions({
+  queryKey: ['admin', 'td2', 'directives'],
+  queryFn: () => api<Td2Directive[]>('/admin/td2/directives'),
+});
+
+/** Comme le catalogue : chaque écriture renvoie la liste entière, rangée dans le cache. */
+function useDirectiveWrite<T>(request: (input: T) => Promise<Td2Directive[]>) {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: request,
+    onSuccess: (directives) => queryClient.setQueryData(directivesQuery.queryKey, directives),
+  });
+}
+
+const sendDirectives = (path: string, method: string, body?: unknown) =>
+  api<Td2Directive[]>(path, {
+    method,
+    ...(body !== undefined && { body: JSON.stringify(body) }),
+  });
+
+export const useCreateDirective = () =>
+  useDirectiveWrite((input: Td2DirectiveInput) =>
+    sendDirectives('/admin/td2/directives', 'POST', input),
+  );
+
+export const useUpdateDirective = () =>
+  useDirectiveWrite(({ id, patch }: { id: number; patch: Td2DirectivePatch }) =>
+    sendDirectives(`/admin/td2/directives/${id}`, 'PATCH', patch),
+  );
+
+export const useDeleteDirective = () =>
+  useDirectiveWrite((id: number) => sendDirectives(`/admin/td2/directives/${id}`, 'DELETE'));
 
 export interface ReportFilters {
   status?: Td2ReportStatusKey;

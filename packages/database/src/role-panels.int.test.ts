@@ -1,12 +1,12 @@
 import { afterAll, describe, expect, inject, it } from 'vitest';
 import { createPrismaClient } from './client.js';
+import { publicationStatus } from './publication.js';
 import {
   findRolePanel,
   markRolePanelFailed,
   markRolePanelPublished,
   saveRolePanel,
 } from './role-panels.js';
-import { publicationStatus } from './publication.js';
 import { newGuildId } from '../test/ids.js';
 
 const prisma = createPrismaClient(inject('databaseUrl'));

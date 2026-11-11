@@ -9,6 +9,7 @@ afterAll(async () => {
   await prisma.$disconnect();
 });
 
+/** Un serveur neuf par test : les tests partagent la même base, et peuvent être relancés. */
 async function newGuild(): Promise<string> {
   const id = newGuildId();
   await prisma.guild.create({ data: { id, name: 'Serveur de test' } });

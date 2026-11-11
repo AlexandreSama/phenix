@@ -1,27 +1,32 @@
 import { findTd2Event, joinTd2Event, leaveTd2Event, type Td2Role } from '@phenix/database';
-import { TD2_ROLE_LABELS } from '@phenix/shared';
+import { TD2_SIGNUP_ROLE_LABELS } from '@phenix/shared';
 import { MessageFlags, type ButtonInteraction } from 'discord.js';
 import type { ComponentHandler } from '../../core/command.js';
 import type { BotContext } from '../../core/context.js';
 import { isTd2Role, promotionMessage, reservePosition, td2EventMessage } from './messages.js';
 import { sendTd2Notice } from './sync.js';
 
-const label = (role: Td2Role) => TD2_ROLE_LABELS[role];
+const label = (role: Td2Role) => TD2_SIGNUP_ROLE_LABELS[role];
 const rank = (position: number) => (position === 1 ? '1ʳᵉ' : `${position}ᵉ`);
 
+// Une mission n'a qu'une sorte de place (« joueur ») : ses réponses ne parlent pas de rôle
 export const SIGNUP_REPLIES = {
   missing: "Cette sortie n'existe plus.",
   closed: 'Les inscriptions sont fermées : la sortie a commencé ou a été annulée.',
   noSlot: "Ce rôle n'existe pas pour cette sortie.",
-  joined: (role: Td2Role) => `C'est noté : tu joues ${label(role)}.`,
+  joined: (role: Td2Role) =>
+    role === 'PLAYER'
+      ? "C'est noté : tu es dans l'équipe."
+      : `C'est noté : tu joues ${label(role)}.`,
   reserve: (role: Td2Role, position: number) =>
-    `${label(role)} est complet : tu es en réserve (${rank(position)}). ` +
-    'Tu passeras dans l’équipe dès qu’une place se libère.',
+    `${role === 'PLAYER' ? "L'équipe est complète" : `${label(role)} est complet`} : ` +
+    `tu es en réserve (${rank(position)}). Tu passeras dans l’équipe dès qu’une place se libère.`,
   switched: (from: Td2Role, role: Td2Role) => `Tu passes de ${label(from)} à ${label(role)}.`,
   already: (role: Td2Role) =>
-    `Tu es déjà inscrit en ${label(role)}. « Se désinscrire » pour libérer ta place.`,
+    `Tu es déjà ${role === 'PLAYER' ? "dans l'équipe" : `inscrit en ${label(role)}`}. ` +
+    '« Se désinscrire » pour libérer ta place.',
   alreadyReserve: (role: Td2Role, position: number) =>
-    `Tu es déjà en réserve en ${label(role)} (${rank(position)}).`,
+    `Tu es déjà en réserve${role === 'PLAYER' ? '' : ` en ${label(role)}`} (${rank(position)}).`,
   left: 'Tu es désinscrit.',
   notSigned: "Tu n'es pas inscrit à cette sortie.",
 } as const;

@@ -1,18 +1,21 @@
-import type { ManageableGuild } from '@phenix/shared';
+import { DASHBOARD_MODULE_LABELS, type ManageableGuild } from '@phenix/shared';
 import { Link } from '@tanstack/react-router';
 import { GuildIcon } from '../../../components/guild-icon';
 import { Icon } from '../../../components/icon';
 import { buttonClass } from '../../../components/ui/button';
+import { firstTab } from '../guild-tabs';
 
 /**
- * Un serveur de la liste. Bot présent : toute la carte mène à ses réglages.
- * Bot absent : la carte reste en retrait, seul le bouton d'invitation agit.
+ * Un serveur de la liste. Bot présent : toute la carte mène à ses réglages (pour un accès
+ * délégué, au premier onglet ouvert). Bot absent : la carte reste en retrait, seul le bouton
+ * d'invitation agit.
  */
 export function GuildCard({ guild }: { guild: ManageableGuild }) {
+  const delegated = guild.access === 'delegate';
   if (guild.botPresent) {
     return (
       <Link
-        to="/dashboard/$guildId"
+        to={firstTab(guild)}
         params={{ guildId: guild.id }}
         aria-label={`Configurer ${guild.name}`}
         className="group flex items-center gap-4 rounded-2xl border border-white/8 bg-surface p-4 transition hover:border-flame/40 hover:bg-surface-raised focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-gold"
@@ -20,10 +23,19 @@ export function GuildCard({ guild }: { guild: ManageableGuild }) {
         <GuildIcon name={guild.name} iconUrl={guild.iconUrl} />
         <span className="flex min-w-0 flex-1 flex-col gap-0.5">
           <span className="truncate font-semibold text-white">{guild.name}</span>
-          <span className="flex items-center gap-1.5 text-sm text-stone-400">
-            <span aria-hidden="true" className="size-1.5 rounded-full bg-gold" />
-            Bot présent
-          </span>
+          {delegated ? (
+            <span className="flex min-w-0 items-center gap-1.5 text-sm text-stone-400">
+              <Icon name="lock" className="size-3.5 shrink-0 text-gold" />
+              <span className="truncate">
+                {guild.modules.map((module) => DASHBOARD_MODULE_LABELS[module]).join(', ')}
+              </span>
+            </span>
+          ) : (
+            <span className="flex items-center gap-1.5 text-sm text-stone-400">
+              <span aria-hidden="true" className="size-1.5 rounded-full bg-gold" />
+              Bot présent
+            </span>
+          )}
         </span>
         <span className="flex items-center gap-1.5 text-sm font-semibold text-flame">
           {/* Sur téléphone, la flèche suffit : le nom du serveur garde la place */}

@@ -1,5 +1,5 @@
-import { z } from 'zod';
 import { storageEnvSchema } from '@phenix/storage';
+import { z } from 'zod';
 import { TRACKER_GG_URL } from './modules/td2/stats/tracker-gg.js';
 
 const snowflake = z.string().regex(/^\d{17,20}$/, 'ID Discord invalide');
@@ -8,6 +8,7 @@ const snowflake = z.string().regex(/^\d{17,20}$/, 'ID Discord invalide');
 const optional = <T extends z.ZodType>(schema: T) =>
   z.preprocess((value) => (value === '' ? undefined : value), schema.optional());
 
+/** Les variables du bot, plus celles du stockage S3 (transcripts et preuves). */
 const envSchema = storageEnvSchema.extend({
   NODE_ENV: z.enum(['development', 'production', 'test']).default('development'),
   LOG_LEVEL: z.enum(['fatal', 'error', 'warn', 'info', 'debug', 'trace']).default('info'),

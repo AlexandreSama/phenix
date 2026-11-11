@@ -1,4 +1,4 @@
-import type { Td2EventDetails, Td2Role, Td2ReportDetails } from '@phenix/database';
+import type { Td2EventDetails, Td2ReportDetails, Td2Role } from '@phenix/database';
 
 // Données de test partagées par les tests du module TD2 (pas de vi.mock ici)
 
@@ -36,6 +36,9 @@ export function raidEvent(overrides: Partial<Td2EventDetails> = {}): Td2EventDet
     id: 12,
     guildId: GUILD,
     modeId: 3,
+    missionName: null,
+    difficulty: null,
+    directives: [],
     scheduledAt: new Date('2026-11-14T20:00:00Z'),
     channelId: CHANNEL,
     messageId: '900000000000000001',
@@ -67,6 +70,18 @@ export function incursionEvent(overrides: Partial<Td2EventDetails> = {}): Td2Eve
       { eventId: 12, role: 'DPS', count: 3 },
       { eventId: 12, role: 'HEAL_TANK', count: 1 },
     ],
+    ...overrides,
+  });
+}
+
+/** Une mission « Capitole » en Héroïque, quatre places sans rôle, sans directive. */
+export function missionEvent(overrides: Partial<Td2EventDetails> = {}): Td2EventDetails {
+  return raidEvent({
+    modeId: null,
+    mode: null,
+    missionName: 'Capitole',
+    difficulty: 'HEROIC',
+    slots: [{ eventId: 12, role: 'PLAYER', count: 4 }],
     ...overrides,
   });
 }

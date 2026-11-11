@@ -16,10 +16,10 @@ import {
 import type { BotContext } from '../../../core/context.js';
 import { describePublishError } from '../../../core/publish.js';
 import { refuse } from '../../moderation/common.js';
+import { playerOptions, readPlayer } from '../player-options.js';
 import { canViewReports } from './access.js';
 import { checkEvidence, storeEvidence, type StoredEvidence } from './evidence.js';
 import { playerReportsMessage, reportStaffMessage } from './messages.js';
-import { playerOptions, readPlayer } from '../player-options.js';
 
 /** Au-delà, un membre attend : de quoi décourager une rafale de faux signalements. */
 export const REPORTS_PER_HOUR = 5;

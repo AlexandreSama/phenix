@@ -1,7 +1,7 @@
-import { time, TimestampStyles, type ColorResolvable, type EmbedBuilder } from 'discord.js';
-import { baseEmbed, COLORS } from '../../core/embeds.js';
 import type { Case, CaseType } from '@phenix/database';
 import { BRAND, CASE_TYPE_LABELS } from '@phenix/shared';
+import { time, TimestampStyles, type ColorResolvable, type EmbedBuilder } from 'discord.js';
+import { baseEmbed, COLORS } from '../../core/embeds.js';
 
 export const NO_REASON = 'Aucune raison fournie';
 

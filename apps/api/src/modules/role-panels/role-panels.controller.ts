@@ -18,7 +18,7 @@ import {
   type RolePanelSummary,
 } from '@phenix/shared';
 import { AuthGuard } from '../../common/guards/auth.guard.js';
-import { GuildAdminGuard } from '../../common/guards/guild-admin.guard.js';
+import { GuildAccessGuard, GuildModule } from '../../common/guards/guild-access.guard.js';
 import { RolePanelsService } from './role-panels.service.js';
 
 /** Un ID de panel illisible répond 404, comme un panel qui n'existe pas. */
@@ -27,7 +27,8 @@ const PanelId = new ParseIntPipe({
 });
 
 @Controller('guilds/:guildId/role-panels')
-@UseGuards(AuthGuard, GuildAdminGuard)
+@UseGuards(AuthGuard, GuildAccessGuard)
+@GuildModule('ROLES')
 export class RolePanelsController {
   constructor(private readonly panels: RolePanelsService) {}
 

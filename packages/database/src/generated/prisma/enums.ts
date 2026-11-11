@@ -18,6 +18,18 @@ export const UserRole = {
 export type UserRole = (typeof UserRole)[keyof typeof UserRole]
 
 
+export const DashboardModule = {
+  GENERAL: 'GENERAL',
+  LEVELING: 'LEVELING',
+  ROLES: 'ROLES',
+  TICKETS: 'TICKETS',
+  GIVEAWAYS: 'GIVEAWAYS',
+  TD2: 'TD2'
+} as const
+
+export type DashboardModule = (typeof DashboardModule)[keyof typeof DashboardModule]
+
+
 export const CaseType = {
   WARN: 'WARN',
   MUTE: 'MUTE',
@@ -67,10 +79,22 @@ export const Td2Role = {
   DPS: 'DPS',
   HEAL: 'HEAL',
   TANK: 'TANK',
-  HEAL_TANK: 'HEAL_TANK'
+  HEAL_TANK: 'HEAL_TANK',
+  PLAYER: 'PLAYER'
 } as const
 
 export type Td2Role = (typeof Td2Role)[keyof typeof Td2Role]
+
+
+export const Td2Difficulty = {
+  NORMAL: 'NORMAL',
+  HARD: 'HARD',
+  CHALLENGING: 'CHALLENGING',
+  HEROIC: 'HEROIC',
+  LEGENDARY: 'LEGENDARY'
+} as const
+
+export type Td2Difficulty = (typeof Td2Difficulty)[keyof typeof Td2Difficulty]
 
 
 export const Td2SignupStatus = {

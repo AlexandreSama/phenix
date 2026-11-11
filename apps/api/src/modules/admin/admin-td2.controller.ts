@@ -18,11 +18,16 @@ import {
 import {
   td2ActivityInputSchema,
   td2ActivityPatchSchema,
+  td2DirectiveInputSchema,
+  td2DirectivePatchSchema,
   td2ModeInputSchema,
   td2ReportQuerySchema,
   type Td2ActivityInput,
   type Td2ActivityPatch,
   type Td2CatalogueActivity,
+  type Td2Directive,
+  type Td2DirectiveInput,
+  type Td2DirectivePatch,
   type Td2ModeInput,
   type Td2ReportAdminPage,
   type Td2ReportQuery,
@@ -89,6 +94,31 @@ export class AdminTd2Controller {
   @Delete('modes/:id')
   deleteMode(@Param('id', Id) modeId: number): Promise<Td2CatalogueActivity[]> {
     return this.admin.deleteMode(modeId);
+  }
+
+  @Get('directives')
+  directives(): Promise<Td2Directive[]> {
+    return this.admin.directives();
+  }
+
+  @Post('directives')
+  createDirective(
+    @Body({ schema: td2DirectiveInputSchema }) input: Td2DirectiveInput,
+  ): Promise<Td2Directive[]> {
+    return this.admin.createDirective(input);
+  }
+
+  @Patch('directives/:id')
+  updateDirective(
+    @Param('id', Id) id: number,
+    @Body({ schema: td2DirectivePatchSchema }) patch: Td2DirectivePatch,
+  ): Promise<Td2Directive[]> {
+    return this.admin.updateDirective(id, patch);
+  }
+
+  @Delete('directives/:id')
+  deleteDirective(@Param('id', Id) id: number): Promise<Td2Directive[]> {
+    return this.admin.deleteDirective(id);
   }
 
   @Get('reports')

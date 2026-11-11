@@ -1,6 +1,7 @@
-import { TD2_KIND_LABELS, type GuildChannelSummary, type Td2EventSummary } from '@phenix/shared';
+import type { GuildChannelSummary, Td2EventSummary } from '@phenix/shared';
 import { Badge } from '../../../components/ui/badge';
 import { EmptyState } from '../../../components/ui/empty-state';
+import { eventName, fillPercent } from '../../../lib/td2-events';
 
 const weekday = new Intl.DateTimeFormat('fr-FR', { weekday: 'short' });
 const dayMonth = new Intl.DateTimeFormat('fr-FR', { day: 'numeric', month: 'short' });
@@ -13,12 +14,6 @@ const fullDate = new Intl.DateTimeFormat('fr-FR', {
 });
 const time = new Intl.DateTimeFormat('fr-FR', { hour: '2-digit', minute: '2-digit' });
 
-/** « Raid Dark Hours · Normal », « Incursion Paradis Perdu » : comme sur Discord. */
-export function eventName(event: Pick<Td2EventSummary, 'kind' | 'activity' | 'mode'>): string {
-  const mode = event.kind === 'RAID' ? ` · ${event.mode}` : '';
-  return `${TD2_KIND_LABELS[event.kind]} ${event.activity}${mode}`;
-}
-
 interface Props {
   events: Td2EventSummary[];
   channels: GuildChannelSummary[];
@@ -30,8 +25,9 @@ export function Td2EventList({ events, channels }: Props) {
     return (
       <div className="p-5 sm:p-6">
         <EmptyState icon="crosshair" title="Aucune sortie prévue">
-          Lance <code className="font-mono text-stone-200">/td2 raid</code> ou{' '}
-          <code className="font-mono text-stone-200">/td2 incursion</code> sur Discord : la sortie
+          Lance <code className="font-mono text-stone-200">/td2 raid</code>,{' '}
+          <code className="font-mono text-stone-200">/td2 incursion</code> ou{' '}
+          <code className="font-mono text-stone-200">/td2 mission</code> sur Discord : la sortie
           apparaîtra ici, avec son remplissage.
         </EmptyState>
       </div>
@@ -43,9 +39,6 @@ export function Td2EventList({ events, channels }: Props) {
         const channel = channels.find((entry) => entry.id === event.channelId);
         const date = new Date(event.scheduledAt);
         const full = event.confirmed >= event.capacity;
-        const percent = Math.round(
-          (Math.min(event.confirmed, event.capacity) / event.capacity) * 100,
-        );
         return (
           <li
             key={event.id}
@@ -73,6 +66,9 @@ export function Td2EventList({ events, channels }: Props) {
                 <span aria-hidden="true">{time.format(date)} · </span>#
                 {channel?.name ?? 'salon supprimé'}
               </p>
+              {event.directives.length > 0 && (
+                <p className="text-[13px] text-gold">Directives : {event.directives.join(' · ')}</p>
+              )}
             </div>
             <div className="flex w-full flex-col gap-1.5 sm:w-52">
               <p className={`text-sm tabular-nums ${full ? 'text-gold' : 'text-stone-300'}`}>
@@ -82,7 +78,7 @@ export function Td2EventList({ events, channels }: Props) {
               <span aria-hidden="true" className="h-1.5 overflow-hidden rounded-full bg-white/8">
                 <span
                   className={`block h-full rounded-full ${full ? 'bg-gold' : 'bg-flame'}`}
-                  style={{ width: `${percent}%` }}
+                  style={{ width: `${fillPercent(event)}%` }}
                 />
               </span>
             </div>

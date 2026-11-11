@@ -1,4 +1,23 @@
 import {
+  createTd2Event,
+  createTd2Mission,
+  deleteTd2Event,
+  listTd2Activities,
+  listTd2Directives,
+  markTd2EventPublished,
+  type Td2ActivityKind,
+  type Td2Difficulty,
+  type Td2EventDetails,
+} from '@phenix/database';
+import {
+  parseEventDate,
+  TD2_DIFFICULTY_LABELS,
+  TD2_KIND_LABELS,
+  TD2_MISSION_LIMITS,
+  TD2_SIGNUP_ROLE_LABELS,
+  type Td2DifficultyKey,
+} from '@phenix/shared';
+import {
   InteractionContextType,
   MessageFlags,
   PermissionFlagsBits,
@@ -6,6 +25,7 @@ import {
   time,
   TimestampStyles,
   type ChatInputCommandInteraction,
+  type SendableChannels,
   type SlashCommandStringOption,
   type SlashCommandSubcommandBuilder,
 } from 'discord.js';
@@ -13,7 +33,7 @@ import type { SlashCommand } from '../../../core/command.js';
 import type { BotContext } from '../../../core/context.js';
 import { describePublishError } from '../../../core/publish.js';
 import { refuse } from '../../moderation/common.js';
-import { ROLE_ORDER, td2EventMessage } from '../messages.js';
+import { directivesMenu, ROLE_ORDER, td2EventMessage } from '../messages.js';
 import {
   lookupPlayer,
   lookupSubcommand,
@@ -29,14 +49,6 @@ import {
   unlinkAccount,
   unlinkSubcommand,
 } from '../stats/command.js';
-import {
-  listTd2Activities,
-  createTd2Event,
-  deleteTd2Event,
-  markTd2EventPublished,
-} from '@phenix/database';
-import type { Td2ActivityKind } from '@phenix/database';
-import { TD2_KIND_LABELS, TD2_ROLE_LABELS, parseEventDate } from '@phenix/shared';
 
 type Activity = Awaited<ReturnType<typeof listTd2Activities>>[number];
 type Mode = Activity['modes'][number];
@@ -58,6 +70,13 @@ export const TD2_COMMAND_REPLIES = {
     `Je ne peux pas poster dans <#${channelId}> : il me faut « Voir le salon », ` +
     '« Envoyer des messages » et « Intégrer des liens ».',
   postFailed: (reason: string) => `La sortie n'a pas pu être postée : ${reason}.`,
+  unknownDifficulty: 'Difficulté inconnue : choisis dans la liste proposée.',
+  posted: (event: Pick<Td2EventDetails, 'id' | 'channelId' | 'scheduledAt'>) =>
+    `Sortie #${event.id} postée dans <#${event.channelId}> : ` +
+    `${time(event.scheduledAt, TimestampStyles.LongDateTime)} ` +
+    `(${time(event.scheduledAt, TimestampStyles.RelativeTime)}).`,
+  pickDirectives:
+    'Ajoute des directives pour corser la mission (modifiables ensuite avec « Gérer ») :',
 } as const;
 
 const normalize = (text: string) =>
@@ -66,7 +85,7 @@ const normalize = (text: string) =>
 /** « 6 DPS · 1 Heal · 1 Tank », dans l'ordre des boutons. */
 export function compositionText(mode: Pick<Mode, 'slots'>): string {
   return ROLE_ORDER.flatMap((role) => mode.slots.filter((slot) => slot.role === role))
-    .map((slot) => `${slot.count} ${TD2_ROLE_LABELS[slot.role]}`)
+    .map((slot) => `${slot.count} ${TD2_SIGNUP_ROLE_LABELS[slot.role]}`)
     .join(' · ');
 }
 
@@ -99,6 +118,62 @@ const dateOption = (option: SlashCommandStringOption) =>
     .setRequired(true)
     .setMaxLength(60);
 
+type Settings = Awaited<ReturnType<BotContext['configs']['get']>>;
+
+/** La date tapée, lue dans le fuseau du serveur. null : refusée (le membre a sa réponse). */
+async function readDate(
+  interaction: ChatInputCommandInteraction<'cached'>,
+  settings: Settings,
+): Promise<Date | null> {
+  const parsed = parseEventDate(interaction.options.getString('date', true), {
+    now: new Date(),
+    timeZone: settings?.timezone ?? DEFAULT_TIMEZONE,
+  });
+  if (parsed.ok) return parsed.date;
+  await refuse(interaction, parsed.error);
+  return null;
+}
+
+/** Le salon des sorties choisi sur le site, sinon celui de la commande. null : le bot n'y écrit pas. */
+async function eventChannel(
+  interaction: ChatInputCommandInteraction<'cached'>,
+  settings: Settings,
+): Promise<SendableChannels | null> {
+  const channelId = settings?.td2ChannelId ?? interaction.channelId;
+  const channel =
+    interaction.guild.channels.cache.get(channelId) ??
+    (await interaction.guild.channels.fetch(channelId).catch(() => null));
+  const me = interaction.guild.members.me;
+  if (channel?.isSendable() && me && channel.permissionsFor(me).has(POST_PERMISSIONS)) {
+    return channel;
+  }
+  await refuse(interaction, TD2_COMMAND_REPLIES.notWritable(channelId));
+  return null;
+}
+
+/**
+ * Poste le message de la sortie et planifie son rappel et sa fermeture.
+ * false : message impossible, la sortie est retirée (personne ne pourrait s'y inscrire).
+ */
+async function publish(
+  interaction: ChatInputCommandInteraction<'cached'>,
+  context: BotContext,
+  channel: SendableChannels,
+  event: Td2EventDetails,
+): Promise<boolean> {
+  try {
+    const message = await channel.send(td2EventMessage(event));
+    await markTd2EventPublished(context.db, event.id, message.id);
+  } catch (err) {
+    await deleteTd2Event(context.db, event.id);
+    await refuse(interaction, TD2_COMMAND_REPLIES.postFailed(describePublishError(err)));
+    return false;
+  }
+  await context.td2.schedule(event.id, event.scheduledAt);
+  context.logger.info({ guildId: interaction.guildId, eventId: event.id }, 'Sortie TD2 créée');
+  return true;
+}
+
 async function create(
   kind: Td2ActivityKind,
   interaction: ChatInputCommandInteraction<'cached'>,
@@ -117,50 +192,97 @@ async function create(
       : pick(activity.modes, interaction.options.getString('mode'));
   if (!mode) return refuse(interaction, TD2_COMMAND_REPLIES.unknownMode);
 
-  const parsed = parseEventDate(interaction.options.getString('date', true), {
-    now: new Date(),
-    timeZone: settings?.timezone ?? DEFAULT_TIMEZONE,
-  });
-  if (!parsed.ok) return refuse(interaction, parsed.error);
-
-  // Le salon des sorties choisi sur le site, sinon celui de la commande
-  const channelId = settings?.td2ChannelId ?? interaction.channelId;
-  const channel =
-    interaction.guild.channels.cache.get(channelId) ??
-    (await interaction.guild.channels.fetch(channelId).catch(() => null));
-  const me = interaction.guild.members.me;
-  if (!channel?.isSendable() || !me || !channel.permissionsFor(me).has(POST_PERMISSIONS)) {
-    return refuse(interaction, TD2_COMMAND_REPLIES.notWritable(channelId));
-  }
+  const scheduledAt = await readDate(interaction, settings);
+  if (!scheduledAt) return;
+  const channel = await eventChannel(interaction, settings);
+  if (!channel) return;
 
   const event = await createTd2Event(db, {
     guildId: interaction.guildId,
     modeId: mode.id,
-    scheduledAt: parsed.date,
+    scheduledAt,
     channelId: channel.id,
     organizerId: interaction.user.id,
   });
   if (!event) return refuse(interaction, TD2_COMMAND_REPLIES.unknownMode);
-
-  try {
-    const message = await channel.send(td2EventMessage(event));
-    await markTd2EventPublished(db, event.id, message.id);
-  } catch (err) {
-    // Sans message, personne ne pourrait s'inscrire : la sortie n'a pas de raison d'exister
-    await deleteTd2Event(db, event.id);
-    return refuse(interaction, TD2_COMMAND_REPLIES.postFailed(describePublishError(err)));
-  }
-  await context.td2.schedule(event.id, event.scheduledAt);
-  context.logger.info({ guildId: interaction.guildId, eventId: event.id }, 'Sortie TD2 créée');
+  if (!(await publish(interaction, context, channel, event))) return;
 
   await interaction.reply({
-    content:
-      `Sortie #${event.id} postée dans <#${channel.id}> : ` +
-      `${time(event.scheduledAt, TimestampStyles.LongDateTime)} ` +
-      `(${time(event.scheduledAt, TimestampStyles.RelativeTime)}).`,
+    content: TD2_COMMAND_REPLIES.posted(event),
     flags: MessageFlags.Ephemeral,
   });
 }
+
+const isDifficulty = (value: string): value is Td2DifficultyKey => value in TD2_DIFFICULTY_LABELS;
+
+/** /td2 mission : un nom libre, une difficulté, des places sans rôle, puis les directives. */
+async function createMission(
+  interaction: ChatInputCommandInteraction<'cached'>,
+  context: BotContext,
+) {
+  const { db } = context;
+  const settings = await context.configs.get(interaction.guildId);
+
+  const difficulty = interaction.options.getString('difficulté', true);
+  if (!isDifficulty(difficulty)) {
+    return refuse(interaction, TD2_COMMAND_REPLIES.unknownDifficulty);
+  }
+  const scheduledAt = await readDate(interaction, settings);
+  if (!scheduledAt) return;
+  const channel = await eventChannel(interaction, settings);
+  if (!channel) return;
+
+  const event = await createTd2Mission(db, {
+    guildId: interaction.guildId,
+    missionName: interaction.options.getString('nom', true).trim(),
+    difficulty: difficulty satisfies Td2Difficulty,
+    players: interaction.options.getInteger('joueurs') ?? TD2_MISSION_LIMITS.maxPlayers,
+    scheduledAt,
+    channelId: channel.id,
+    organizerId: interaction.user.id,
+  });
+  if (!(await publish(interaction, context, channel, event))) return;
+
+  // Les directives se choisissent juste après, dans un menu à choix multiples
+  const menu = directivesMenu(event, await listTd2Directives(db, { activeOnly: true }));
+  await interaction.reply({
+    content: [
+      TD2_COMMAND_REPLIES.posted(event),
+      ...(menu ? [TD2_COMMAND_REPLIES.pickDirectives] : []),
+    ].join('\n'),
+    components: menu ? [menu] : [],
+    flags: MessageFlags.Ephemeral,
+  });
+}
+
+const missionSubcommand = (sub: SlashCommandSubcommandBuilder) =>
+  sub
+    .setName('mission')
+    .setDescription('Organise une mission : son nom, sa difficulté et la date')
+    .addStringOption((option) =>
+      option
+        .setName('nom')
+        .setDescription('« Capitole », « Farm exotiques au Pentagone »…')
+        .setRequired(true)
+        .setMaxLength(TD2_MISSION_LIMITS.nameMax),
+    )
+    .addStringOption((option) =>
+      option
+        .setName('difficulté')
+        .setDescription('Comme dans le jeu')
+        .setRequired(true)
+        .addChoices(
+          Object.entries(TD2_DIFFICULTY_LABELS).map(([value, name]) => ({ name, value })),
+        ),
+    )
+    .addStringOption(dateOption)
+    .addIntegerOption((option) =>
+      option
+        .setName('joueurs')
+        .setDescription(`Nombre de places, ${TD2_MISSION_LIMITS.maxPlayers} par défaut`)
+        .setMinValue(1)
+        .setMaxValue(TD2_MISSION_LIMITS.maxPlayers),
+    );
 
 const subcommand =
   (kind: Td2ActivityKind) =>
@@ -191,10 +313,11 @@ export const td2: SlashCommand = {
   category: 'td2',
   data: new SlashCommandBuilder()
     .setName('td2')
-    .setDescription('The Division 2 : raids, incursions, signalements et stats')
+    .setDescription('The Division 2 : raids, incursions, missions, signalements et stats')
     .setContexts(InteractionContextType.Guild)
     .addSubcommand(subcommand('RAID'))
     .addSubcommand(subcommand('INCURSION'))
+    .addSubcommand(missionSubcommand)
     .addSubcommand(reportSubcommand)
     .addSubcommand(lookupSubcommand)
     .addSubcommand(statsSubcommand)
@@ -214,6 +337,8 @@ export const td2: SlashCommand = {
         return linkAccount(interaction, context);
       case 'délier':
         return unlinkAccount(interaction, context);
+      case 'mission':
+        return createMission(interaction, context);
       default:
         return create(kindOf(interaction.options.getSubcommand()), interaction, context);
     }

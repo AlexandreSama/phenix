@@ -26,16 +26,6 @@ describe('handleBotEvent', () => {
     expect(d.configs.invalidate).toHaveBeenCalledWith('42');
   });
 
-  it('ignore un message mal formé sans planter', () => {
-    const d = deps();
-
-    handleBotEvent('pas du json', d);
-    handleBotEvent(JSON.stringify({ type: 'inconnu' }), d);
-
-    expect(d.configs.invalidate).not.toHaveBeenCalled();
-    expect(d.logger.warn).toHaveBeenCalledTimes(2);
-  });
-
   it('publie ou retire un panel de rôles à la demande du site', () => {
     const d = deps();
 
@@ -77,5 +67,15 @@ describe('handleBotEvent', () => {
       guildId: '1',
       messageId: '3',
     });
+  });
+
+  it('ignore un message mal formé sans planter', () => {
+    const d = deps();
+
+    handleBotEvent('pas du json', d);
+    handleBotEvent(JSON.stringify({ type: 'inconnu' }), d);
+
+    expect(d.configs.invalidate).not.toHaveBeenCalled();
+    expect(d.logger.warn).toHaveBeenCalledTimes(2);
   });
 });

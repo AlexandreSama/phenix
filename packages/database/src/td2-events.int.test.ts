@@ -1,6 +1,6 @@
 import { afterAll, beforeAll, describe, expect, inject, it } from 'vitest';
 import { createPrismaClient } from './client.js';
-import { seedTd2Catalogue, TD2_CATALOGUE } from './td2-catalogue.js';
+import { seedTd2Catalogue } from './td2-catalogue.js';
 import {
   cancelTd2Event,
   createTd2Event,
@@ -54,13 +54,14 @@ const join = (eventId: number, userId: string, role: 'DPS' | 'HEAL' | 'TANK' | '
 
 describe('catalogue et création', () => {
   it('propose les activités par type, et copie la composition du mode dans la sortie', async () => {
-    // Le catalogue est partagé : d'autres fichiers de test y ajoutent leurs activités
-    const seeded = TD2_CATALOGUE.map(({ name }) => name);
-    const raids = (await listTd2Activities(prisma, 'RAID')).filter(({ name }) =>
-      seeded.includes(name),
+    const raids = await listTd2Activities(prisma, 'RAID');
+    // arrayContaining : les tests de l'administration ajoutent des activités en parallèle
+    expect(raids.map((activity) => activity.name)).toEqual(
+      expect.arrayContaining(['Dark Hours', 'Iron Horse']),
     );
-    expect(raids.map((activity) => activity.name)).toEqual(['Dark Hours', 'Iron Horse']);
-    expect(raids[0]?.modes.map((mode) => mode.name)).toEqual(['Normal', 'Semi-Speed']);
+    expect(
+      raids.find((activity) => activity.name === 'Dark Hours')?.modes.map((mode) => mode.name),
+    ).toEqual(['Normal', 'Semi-Speed']);
 
     const event = await newEvent();
     expect(Object.fromEntries(event.slots.map((slot) => [slot.role, slot.count]))).toEqual({
@@ -68,7 +69,7 @@ describe('catalogue et création', () => {
       HEAL: 1,
       TANK: 1,
     });
-    expect(event.mode.activity.name).toBe('Dark Hours');
+    expect(event.mode?.activity.name).toBe('Dark Hours');
   });
 
   it('refuse un mode inconnu', async () => {
@@ -207,6 +208,8 @@ describe('vie de la sortie', () => {
       kind: 'RAID',
       activity: 'Dark Hours',
       mode: 'Normal',
+      difficulty: null,
+      directives: [],
       confirmed: 1,
       capacity: 8,
       reserve: 1,

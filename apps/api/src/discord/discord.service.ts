@@ -4,25 +4,28 @@ import {
   ServiceUnavailableException,
   UnauthorizedException,
 } from '@nestjs/common';
-import { REST } from '@discordjs/rest';
+import { DiscordAPIError, makeURLSearchParams, REST } from '@discordjs/rest';
 import {
   Routes,
   type RESTGetAPICurrentUserGuildsResult,
   type RESTGetAPICurrentUserResult,
   type RESTGetAPIGuildChannelsResult,
-  type RESTGetAPIGuildRolesResult,
-  type RESTPostOAuth2AccessTokenResult,
   type RESTGetAPIGuildMemberResult,
+  type RESTGetAPIGuildMembersSearchResult,
+  type RESTGetAPIGuildRolesResult,
+  type RESTPostAPIChannelInviteJSONBody,
+  type RESTPostAPIChannelInviteResult,
+  type RESTPostOAuth2AccessTokenResult,
 } from 'discord-api-types/v10';
+import { BOT_INVITE_PERMISSIONS } from '@phenix/shared';
 import { ENV } from '../core/tokens.js';
 import type { Env } from '../env.js';
-import { BOT_INVITE_PERMISSIONS } from '@phenix/shared';
 
 const DISCORD_API = 'https://discord.com/api/v10';
 
 /**
- * Tout ce que l'API demande à Discord : la connexion OAuth2 avec le token de l'utilisateur,
- * et la lecture des salons et rôles d'un serveur avec le token du bot.
+ * Tout ce que l'API demande à Discord : la connexion OAuth2 avec le token de l'utilisateur ;
+ * avec le token du bot, la lecture des salons, rôles et membres d'un serveur, et ses invitations.
  */
 @Injectable()
 export class DiscordService {
@@ -96,6 +99,59 @@ export class DiscordService {
     return (await this.rest.get(Routes.guildRoles(guildId))) as RESTGetAPIGuildRolesResult;
   }
 
+  /** Le bot lui-même sur ce serveur : ses rôles disent jusqu'où il peut distribuer des rôles. */
+  async getBotMember(guildId: string): Promise<RESTGetAPIGuildMemberResult> {
+    return (await this.rest.get(
+      Routes.guildMember(guildId, this.env.DISCORD_CLIENT_ID),
+    )) as RESTGetAPIGuildMemberResult;
+  }
+
+  /**
+   * Les membres dont le pseudo ou le surnom commence par `query`. Cette recherche ne demande
+   * pas l'intent privilégié « Server Members », contrairement à la liste complète.
+   */
+  async searchGuildMembers(
+    guildId: string,
+    query: string,
+    limit = 10,
+  ): Promise<RESTGetAPIGuildMembersSearchResult> {
+    return (await this.rest.get(Routes.guildMembersSearch(guildId), {
+      query: makeURLSearchParams({ query, limit }),
+    })) as RESTGetAPIGuildMembersSearchResult;
+  }
+
+  /** Un membre du serveur ; null s'il n'y est pas (ou plus). */
+  async getGuildMember(
+    guildId: string,
+    userId: string,
+  ): Promise<RESTGetAPIGuildMemberResult | null> {
+    try {
+      return (await this.rest.get(
+        Routes.guildMember(guildId, userId),
+      )) as RESTGetAPIGuildMemberResult;
+    } catch (err) {
+      if (err instanceof DiscordAPIError && err.status === 404) return null;
+      throw err;
+    }
+  }
+
+  /**
+   * Une invitation vers ce salon, valable `maxAgeSeconds`. `unique: false` : Discord rend
+   * l'invitation déjà créée avec les mêmes réglages plutôt que d'en empiler une nouvelle.
+   */
+  async createInvite(channelId: string, maxAgeSeconds: number): Promise<string> {
+    const body: RESTPostAPIChannelInviteJSONBody = {
+      max_age: maxAgeSeconds,
+      max_uses: 0,
+      unique: false,
+    };
+    const invite = (await this.rest.post(Routes.channelInvites(channelId), {
+      body,
+      reason: 'Page publique des sorties TD2',
+    })) as RESTPostAPIChannelInviteResult;
+    return invite.code;
+  }
+
   /** Requête au nom de l'utilisateur connecté (token OAuth2). */
   private async asUser<T>(accessToken: string, route: string): Promise<T> {
     const response = await fetch(`${DISCORD_API}${route}`, {
@@ -109,12 +165,5 @@ export class DiscordService {
     }
     if (!response.ok) throw new ServiceUnavailableException('Discord ne répond pas');
     return (await response.json()) as T;
-  }
-
-  /** Le bot lui-même sur ce serveur : ses rôles disent jusqu'où il peut distribuer des rôles. */
-  async getBotMember(guildId: string): Promise<RESTGetAPIGuildMemberResult> {
-    return (await this.rest.get(
-      Routes.guildMember(guildId, this.env.DISCORD_CLIENT_ID),
-    )) as RESTGetAPIGuildMemberResult;
   }
 }

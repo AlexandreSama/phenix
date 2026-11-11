@@ -5,11 +5,12 @@ import {
   type GeneralConfigPatch,
 } from '@phenix/shared';
 import { AuthGuard } from '../../common/guards/auth.guard.js';
-import { GuildAdminGuard } from '../../common/guards/guild-admin.guard.js';
+import { GuildAccessGuard, GuildModule } from '../../common/guards/guild-access.guard.js';
 import { GuildConfigService } from './guild-config.service.js';
 
 @Controller('guilds/:guildId/config')
-@UseGuards(AuthGuard, GuildAdminGuard)
+@UseGuards(AuthGuard, GuildAccessGuard)
+@GuildModule('GENERAL')
 export class GuildConfigController {
   constructor(private readonly config: GuildConfigService) {}
 

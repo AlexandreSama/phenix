@@ -21,7 +21,7 @@ import {
 } from '@phenix/shared';
 import type { Response } from 'express';
 import { AuthGuard } from '../../common/guards/auth.guard.js';
-import { GuildAdminGuard } from '../../common/guards/guild-admin.guard.js';
+import { GuildAccessGuard, GuildModule } from '../../common/guards/guild-access.guard.js';
 import { TicketsService } from './tickets.service.js';
 
 const TicketId = new ParseIntPipe({
@@ -43,7 +43,8 @@ export const TRANSCRIPT_HEADERS = {
 } as const;
 
 @Controller('guilds/:guildId/tickets')
-@UseGuards(AuthGuard, GuildAdminGuard)
+@UseGuards(AuthGuard, GuildAccessGuard)
+@GuildModule('TICKETS')
 export class TicketsController {
   constructor(private readonly tickets: TicketsService) {}
 

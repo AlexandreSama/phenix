@@ -1,5 +1,6 @@
+import { TD2_DIRECTIVE_LIMITS } from '@phenix/shared';
 import { describe, expect, it } from 'vitest';
-import { TD2_CATALOGUE } from './td2-catalogue.js';
+import { TD2_CATALOGUE, TD2_DIRECTIVES } from './td2-catalogue.js';
 
 const players = (composition: Record<string, number | undefined>): number =>
   Object.values(composition).reduce<number>((sum, count) => sum + (count ?? 0), 0);
@@ -22,4 +23,13 @@ describe('TD2_CATALOGUE', () => {
       }
     },
   );
+});
+
+describe('TD2_DIRECTIVES', () => {
+  it('chaque description tient dans un choix du menu Discord (100 caractères)', () => {
+    for (const directive of TD2_DIRECTIVES) {
+      expect(directive.description.length).toBeLessThanOrEqual(TD2_DIRECTIVE_LIMITS.descriptionMax);
+      expect(directive.name.length).toBeLessThanOrEqual(TD2_DIRECTIVE_LIMITS.nameMax);
+    }
+  });
 });

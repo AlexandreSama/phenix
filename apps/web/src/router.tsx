@@ -1,3 +1,4 @@
+import type { DashboardModuleKey } from '@phenix/shared';
 import type { QueryClient } from '@tanstack/react-query';
 import {
   createRootRouteWithContext,
@@ -10,11 +11,12 @@ import { z } from 'zod';
 import { AdminLayout } from './features/admin/admin-layout';
 import { CataloguePage } from './features/admin/catalogue/catalogue-page';
 import { ForumAdminPage } from './features/admin/forum/forum-admin-page';
-import { ReportsPage } from './features/admin/report/report-page';
+import { ReportsPage } from './features/admin/reports/reports-page';
 import { currentUserQuery } from './features/auth/api';
 import { GeneralSettingsPage } from './features/dashboard/general/general-settings-page';
 import { GiveawayCreatePage } from './features/dashboard/giveaways/giveaway-create-page';
 import { GiveawaysPage } from './features/dashboard/giveaways/giveaways-page';
+import { AccessPage } from './features/dashboard/access/access-page';
 import { GuildLayout } from './features/dashboard/guild-layout';
 import { GuildPickerPage } from './features/dashboard/guild-picker/guild-picker-page';
 import { LevelingSettingsPage } from './features/dashboard/leveling/leveling-settings-page';
@@ -30,6 +32,7 @@ import { NewThreadPage } from './features/forum/new-thread-page';
 import { ThreadPage } from './features/forum/thread-page';
 import { HomePage } from './features/home/home-page';
 import { LeaderboardPage } from './features/leaderboard/leaderboard-page';
+import { SortiesPage } from './features/sorties/sorties-page';
 import { queryClient } from './lib/query';
 import { NotFound, RootLayout } from './root-layout';
 
@@ -72,15 +75,18 @@ const guildRoute = createRoute({
   component: GuildLayout,
 });
 
+// Chaque onglet déclare son module : GuildLayout n'affiche la page qu'à qui l'a reçu
 const guildGeneralRoute = createRoute({
   getParentRoute: () => guildRoute,
   path: '/',
+  staticData: { module: 'GENERAL' },
   component: GeneralSettingsPage,
 });
 
 const guildLevelingRoute = createRoute({
   getParentRoute: () => guildRoute,
   path: 'niveaux',
+  staticData: { module: 'LEVELING' },
   component: LevelingSettingsPage,
 });
 
@@ -88,6 +94,7 @@ const guildLevelingRoute = createRoute({
 const guildRolesRoute = createRoute({
   getParentRoute: () => guildRoute,
   path: 'roles',
+  staticData: { module: 'ROLES' },
 });
 
 const rolePanelsRoute = createRoute({
@@ -107,6 +114,7 @@ const rolePanelEditorRoute = createRoute({
 const guildTicketsRoute = createRoute({
   getParentRoute: () => guildRoute,
   path: 'tickets',
+  staticData: { module: 'TICKETS' },
 });
 
 /** Un filtre ou une page invalide dans l'URL revient à la valeur par défaut. */
@@ -137,6 +145,7 @@ const transcriptRoute = createRoute({
 const guildGiveawaysRoute = createRoute({
   getParentRoute: () => guildRoute,
   path: 'giveaways',
+  staticData: { module: 'GIVEAWAYS' },
 });
 
 const giveawaysRoute = createRoute({
@@ -159,7 +168,16 @@ const giveawayCreateRoute = createRoute({
 const td2Route = createRoute({
   getParentRoute: () => guildRoute,
   path: 'td2',
+  staticData: { module: 'TD2' },
   component: Td2Page,
+});
+
+/** Onglet « Accès » : les administrateurs y ouvrent des onglets à des membres. */
+const accessRoute = createRoute({
+  getParentRoute: () => guildRoute,
+  path: 'acces',
+  staticData: { module: 'ADMIN' },
+  component: AccessPage,
 });
 
 /**
@@ -256,8 +274,27 @@ const leaderboardRoute = createRoute({
   component: LeaderboardPage,
 });
 
+/**
+ * Les sorties TD2 de tous les serveurs qui se montrent : publique, aucune connexion demandée.
+ * Les filtres vivent dans l'URL, pour partager « les missions avec des places libres ».
+ */
+const sortiesRoute = createRoute({
+  getParentRoute: () => rootRoute,
+  path: 'sorties',
+  validateSearch: z.object({
+    type: z.enum(['raid', 'incursion', 'mission']).optional().catch(undefined),
+    places: z.literal('libres').optional().catch(undefined),
+    // Posé par l'API quand l'invitation d'un serveur n'a pas pu être donnée
+    invitation: z.literal('indisponible').optional().catch(undefined),
+  }),
+  // Comme l'accueil : la page pose sa largeur, alignée sur l'en-tête
+  staticData: { fullWidth: true },
+  component: SortiesPage,
+});
+
 export const routeTree = rootRoute.addChildren([
   homeRoute,
+  sortiesRoute,
   leaderboardRoute,
   adminRoute.addChildren([adminCatalogueRoute, adminReportsRoute, adminForumRoute]),
   forumRoute.addChildren([
@@ -277,6 +314,7 @@ export const routeTree = rootRoute.addChildren([
       guildTicketsRoute.addChildren([ticketsRoute, ticketSettingsRoute, transcriptRoute]),
       guildGiveawaysRoute.addChildren([giveawaysRoute, giveawayCreateRoute]),
       td2Route,
+      accessRoute,
     ]),
   ]),
 ]);
@@ -296,5 +334,7 @@ declare module '@tanstack/react-router' {
   interface StaticDataRouteOption {
     /** La page gère sa largeur (pas de colonne centrée autour d'elle) */
     fullWidth?: boolean;
+    /** L'onglet d'un serveur qu'elle sert ; 'ADMIN' : réservée à ses administrateurs */
+    module?: DashboardModuleKey | 'ADMIN';
   }
 }

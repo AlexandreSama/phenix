@@ -1,8 +1,8 @@
 import { MessageFlags, type Interaction } from 'discord.js';
 import { describe, expect, it, vi } from 'vitest';
 import type { ComponentHandler, SlashCommand } from './command.js';
-import { createInteractionHandler, ERROR_MESSAGE } from './interaction-router.js';
 import type { BotContext } from './context.js';
+import { createInteractionHandler, ERROR_MESSAGE } from './interaction-router.js';
 
 const logger = { error: vi.fn(), warn: vi.fn() };
 const context = { db: {}, logger } as unknown as BotContext;

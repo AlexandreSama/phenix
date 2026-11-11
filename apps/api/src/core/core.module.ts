@@ -7,13 +7,13 @@ import {
 } from '@nestjs/common';
 import { createPrismaClient, PrismaClient } from '@phenix/database';
 import { Redis } from 'ioredis';
-import type { Env } from '../env.js';
-import { ENV } from './tokens.js';
 import { DiscordService } from '../discord/discord.service.js';
-import { SessionService } from '../modules/auth/session.service.js';
+import type { Env } from '../env.js';
 import { BotEventsService } from './bot-events.service.js';
 import { CacheService } from './cache.service.js';
 import { RateLimitService } from './rate-limit.service.js';
+import { SessionService } from '../modules/auth/session.service.js';
+import { ENV } from './tokens.js';
 
 /** Ferme proprement la base et Valkey quand l'API s'arrête. */
 @Injectable()
@@ -28,7 +28,7 @@ class ConnectionsShutdown implements OnApplicationShutdown {
   }
 }
 
-/** Services partagés par toute l'API : config, base, Valkey, Discord, sessions. */
+/** Services partagés par toute l'API : config, base, Valkey (cache, limites de débit), Discord, sessions. */
 @Global()
 @Module({})
 export class CoreModule {
@@ -42,9 +42,9 @@ export class CoreModule {
         BotEventsService,
         CacheService,
         DiscordService,
+        RateLimitService,
         SessionService,
         ConnectionsShutdown,
-        RateLimitService,
       ],
       exports: [
         ENV,
@@ -53,8 +53,8 @@ export class CoreModule {
         BotEventsService,
         CacheService,
         DiscordService,
-        SessionService,
         RateLimitService,
+        SessionService,
       ],
     };
   }

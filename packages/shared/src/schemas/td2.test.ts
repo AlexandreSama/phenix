@@ -1,6 +1,8 @@
 import { describe, expect, it } from 'vitest';
 import {
   td2ActivityPatchSchema,
+  td2DirectiveInputSchema,
+  td2DirectivePatchSchema,
   td2ModeInputSchema,
   td2ReportQuerySchema,
   td2SettingsSchema,
@@ -10,6 +12,7 @@ const CHANNEL = '100000000000000001';
 
 const settings = {
   channelId: CHANNEL,
+  publicListing: false,
   reportChannelId: null,
   reportViewerRoleIds: [],
   reportFeedChannelId: null,
@@ -23,6 +26,19 @@ describe('td2SettingsSchema', () => {
       td2SettingsSchema.safeParse({ ...settings, reportChannelId: 'salon' }).error?.issues[0]
         ?.message,
     ).toBe('ID Discord invalide');
+  });
+
+  it('la page publique demande un salon des sorties, où mène l’invitation', () => {
+    expect(td2SettingsSchema.safeParse({ ...settings, publicListing: true }).success).toBe(true);
+    const missing = td2SettingsSchema.safeParse({
+      ...settings,
+      channelId: null,
+      publicListing: true,
+    });
+    expect(missing.error?.issues[0]).toMatchObject({
+      path: ['publicListing'],
+      message: 'Choisis d’abord le salon des sorties : l’invitation y mène',
+    });
   });
 
   it('limite les rôles qui consultent les signalements à 25', () => {
@@ -75,5 +91,21 @@ describe('td2ReportQuerySchema', () => {
       cursor: 42,
     });
     expect(td2ReportQuerySchema.safeParse({ status: 'ARCHIVED' }).success).toBe(false);
+  });
+});
+
+describe('directives', () => {
+  it('rogne le nom, et une description vide devient null', () => {
+    expect(
+      td2DirectiveInputSchema.parse({ name: '  Sans régénération ', description: '   ' }),
+    ).toEqual({ name: 'Sans régénération', description: null });
+    expect(
+      td2DirectiveInputSchema.safeParse({ name: '', description: null }).error?.issues[0]?.message,
+    ).toBe('Donne un nom');
+  });
+
+  it('une modification porte au moins sur un champ', () => {
+    expect(td2DirectivePatchSchema.safeParse({ active: false }).success).toBe(true);
+    expect(td2DirectivePatchSchema.safeParse({}).error?.issues[0]?.message).toBe('Rien à modifier');
   });
 });

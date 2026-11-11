@@ -1,11 +1,12 @@
 import type { ChatInputCommandInteraction, EmbedBuilder } from 'discord.js';
 import { describe, expect, it, vi } from 'vitest';
-import { createActionCommand } from './actions.js';
 import type { BotContext } from '../../../core/context.js';
+import { createActionCommand } from './actions.js';
 
-const user = (id: string) => ({ id, toString: () => `<@${id}>` });
 /** Les commandes Fun n'utilisent ni la base ni les logs. */
 const context = {} as BotContext;
+
+const user = (id: string) => ({ id, toString: () => `<@${id}>` });
 
 function fakeInteraction(authorId: string, targetId: string) {
   const interaction = {

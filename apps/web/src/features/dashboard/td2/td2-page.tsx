@@ -30,7 +30,7 @@ export function Td2Page() {
     <div className="flex flex-col gap-8">
       <PageHeader
         title="The Division 2"
-        description="Raids et incursions organisés sur Discord avec /td2, et signalements de joueurs partagés entre les serveurs du bot."
+        description="Raids, incursions et missions organisés sur Discord avec /td2, et signalements de joueurs partagés entre les serveurs du bot."
       />
 
       <Panel

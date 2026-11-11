@@ -1,7 +1,7 @@
 import type { MessageComponentInteraction } from 'discord.js';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
-import { rolePanelButton } from './toggle.js';
 import type { BotContext } from '../../core/context.js';
+import { rolePanelButton } from './toggle.js';
 
 const database = vi.hoisted(() => ({ findRolePanel: vi.fn() }));
 vi.mock('@phenix/database', () => database);

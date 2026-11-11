@@ -1,25 +1,31 @@
 import type {
+  DashboardModuleKey,
   GeneralConfig,
   GeneralConfigPatch,
-  GuildChannelSummary,
-  GuildRoleSummary,
-  ManageableGuild,
   GiveawayInput,
   GiveawayPage,
   GiveawaySummary,
-} from '@phenix/shared';
-import { keepPreviousData, queryOptions, useMutation, useQueryClient } from '@tanstack/react-query';
-import { api } from '../../lib/api';
-import type { LevelingConfig, LevelingConfigPatch } from '@phenix/shared';
-import type { RolePanelDetail, RolePanelInput, RolePanelSummary } from '@phenix/shared';
-import type {
   GuildCategorySummary,
+  GuildChannelSummary,
+  GuildDelegate,
+  GuildMemberResult,
+  GuildRoleSummary,
+  LevelingConfig,
+  LevelingConfigPatch,
+  ManageableGuild,
+  RolePanelDetail,
+  RolePanelInput,
+  RolePanelSummary,
+  Td2EventSummary,
+  Td2Settings,
+  Td2SettingsInput,
   TicketPage,
   TicketSettings,
   TicketSettingsInput,
   TicketSettingsResponse,
 } from '@phenix/shared';
-import type { Td2EventSummary, Td2Settings, Td2SettingsInput } from '@phenix/shared';
+import { keepPreviousData, queryOptions, useMutation, useQueryClient } from '@tanstack/react-query';
+import { api } from '../../lib/api';
 
 export const guildsQuery = queryOptions({
   queryKey: ['guilds'],
@@ -237,3 +243,43 @@ export const td2EventsQuery = (guildId: string) =>
     queryFn: () => api<Td2EventSummary[]>(`/guilds/${guildId}/td2/events`),
     refetchInterval: 30_000,
   });
+
+// ---------- Accès délégués (onglet Accès, administrateurs seulement) ----------
+
+export const delegatesQuery = (guildId: string) =>
+  queryOptions({
+    queryKey: ['guilds', guildId, 'delegates'],
+    queryFn: () => api<GuildDelegate[]>(`/guilds/${guildId}/delegates`),
+  });
+
+/** Les membres dont le pseudo commence par `search` ; rien avant deux lettres. */
+export const memberSearchQuery = (guildId: string, search: string) =>
+  queryOptions({
+    queryKey: ['guilds', guildId, 'members', search.toLowerCase()],
+    queryFn: () =>
+      api<GuildMemberResult[]>(`/guilds/${guildId}/members?q=${encodeURIComponent(search)}`),
+    enabled: search.length >= 2,
+    // Les résultats précédents restent affichés pendant la frappe suivante
+    placeholderData: keepPreviousData,
+  });
+
+export function useSaveDelegate(guildId: string) {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: ({ userId, modules }: { userId: string; modules: DashboardModuleKey[] }) =>
+      api<GuildDelegate>(`/guilds/${guildId}/delegates/${userId}`, {
+        method: 'PUT',
+        body: JSON.stringify({ modules }),
+      }),
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: delegatesQuery(guildId).queryKey }),
+  });
+}
+
+export function useRemoveDelegate(guildId: string) {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (userId: string) =>
+      api<void>(`/guilds/${guildId}/delegates/${userId}`, { method: 'DELETE' }),
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: delegatesQuery(guildId).queryKey }),
+  });
+}

@@ -78,6 +78,16 @@ const TD2_POINTS: { icon: IconName; title: string; text: ReactNode }[] = [
     text: "DPS, Heal ou Tank selon la composition de l'activité. Un rôle complet\u00a0? La réserve prend le relais toute seule.",
   },
   {
+    icon: 'crosshair',
+    title: 'Missions à la carte.',
+    text: (
+      <>
+        {command('/td2 mission')}&nbsp;: tu la nommes, choisis la difficulté et les directives qui
+        la corsent.
+      </>
+    ),
+  },
+  {
     icon: 'bell',
     title: "Rappel un quart d'heure avant.",
     text: "Les inscrits sont prévenus, personne n'arrive en retard.",
@@ -100,6 +110,7 @@ const TD2_ACTIVITIES = [
   { name: 'Iron Horse', kind: 'Raid · 8 joueurs', modes: ['Normal', 'Semi-Speed'] },
   { name: 'Paradis Perdu', kind: 'Incursion · 4 joueurs', modes: ['Standard'] },
   { name: 'Broken Rain', kind: 'Incursion · 4 joueurs', modes: ['Standard'] },
+  { name: 'Missions', kind: '1 à 4 joueurs · nom libre', modes: ['Difficulté', 'Directives'] },
 ];
 
 function Eyebrow({ children, tone = 'flame' }: { children: ReactNode; tone?: 'flame' | 'gold' }) {
@@ -265,7 +276,7 @@ function Td2Section() {
 
         <div className="rounded-2xl border border-white/10 bg-surface-raised p-2">
           <h3 className="px-4 pt-4 pb-3 font-display text-lg font-semibold text-white">
-            Raids et incursions
+            Raids, incursions et missions
           </h3>
           <ul className="flex flex-col gap-1">
             {TD2_ACTIVITIES.map((activity) => (
@@ -294,6 +305,13 @@ function Td2Section() {
             Raid Normal&nbsp;: 6 DPS, 1 Heal, 1 Tank. Semi-Speed&nbsp;: 5 DPS, 1 Heal, 2 Tank.
             Incursion&nbsp;: 3 DPS et 1 Heal ou Tank.
           </p>
+          <Link
+            to="/sorties"
+            className="mx-2 mb-2 flex items-center justify-between gap-3 rounded-xl border border-gold/25 bg-gold/8 px-4 py-3.5 text-sm font-semibold text-gold transition hover:border-gold/50"
+          >
+            Voir les sorties en cours sur le réseau
+            <Icon name="arrowRight" className="size-4" />
+          </Link>
         </div>
       </div>
     </section>
@@ -399,6 +417,9 @@ function HomeFooter() {
             <a href="#td2" className="py-2.5 text-stone-300 hover:text-white">
               The Division 2
             </a>
+            <Link to="/sorties" className="py-2.5 text-stone-300 hover:text-white">
+              Sorties en cours
+            </Link>
             <Link to="/dashboard" className="py-2.5 text-stone-300 hover:text-white">
               Tableau de bord
             </Link>

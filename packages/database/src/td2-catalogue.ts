@@ -24,6 +24,35 @@ export const TD2_CATALOGUE: {
 ];
 
 /**
+ * Les directives du jeu : des contraintes que l'organisateur ajoute à une mission pour la
+ * corser (+25 % d'XP chacune en jeu). Les noms français sont les nôtres : le propriétaire
+ * du bot les renomme depuis l'administration du site, sans toucher au code.
+ */
+export const TD2_DIRECTIVES: { name: string; description: string }[] = [
+  {
+    name: 'Munitions comptées',
+    description: 'Moins de munitions en réserve, chargeur entamé perdu, aucune munition au sol.',
+  },
+  {
+    name: 'Compétences alternées',
+    description: 'Quand une compétence est active, l’autre se met en recharge.',
+  },
+  {
+    name: 'Brouillard de guerre',
+    description: 'Plus de menaces ni d’indicateurs sur la mini-carte.',
+  },
+  {
+    name: 'Sans régénération',
+    description: 'La santé ne se régénère plus pendant les combats : seuls les soins la rendent.',
+  },
+  {
+    name: 'Munitions spéciales',
+    description:
+      'Les ennemis tirent des munitions à effet (feu, saignement, choc…) selon leur faction.',
+  },
+];
+
+/**
  * Remplit le catalogue TD2. Relançable sans risque, même deux fois en même temps
  * (deux fichiers de test en parallèle) : rien n'est dupliqué.
  *
@@ -55,5 +84,11 @@ export async function seedTd2Catalogue(prisma: PrismaClient): Promise<void> {
         await prisma.td2ModeSlot.update({ where: { modeId_role: slot }, data: { count } });
       }
     }
+  }
+
+  // Les directives, une seule fois : renommées ou supprimées depuis le site, elles ne
+  // reviennent pas au déploiement suivant
+  if ((await prisma.td2Directive.count()) === 0) {
+    await prisma.td2Directive.createMany({ data: TD2_DIRECTIVES, skipDuplicates: true });
   }
 }
