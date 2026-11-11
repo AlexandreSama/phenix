@@ -1,5 +1,4 @@
 import { Link, Outlet } from '@tanstack/react-router';
-import { UserMenu } from './features/auth/user-menu';
 
 export function RootLayout() {
   return (

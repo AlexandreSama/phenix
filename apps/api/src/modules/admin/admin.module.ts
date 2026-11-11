@@ -1,6 +1,5 @@
 import { Module } from '@nestjs/common';
 import { createEvidenceStorage } from '@phenix/storage';
-import { OwnerGuard } from '../../common/guards/owner.guard.js';
 import { ENV, EVIDENCE } from '../../core/tokens.js';
 import type { Env } from '../../env.js';
 import { AdminTd2Controller } from './admin-td2.controller.js';
