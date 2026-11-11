@@ -1,4 +1,4 @@
-import type { CurrentUser } from '@projet/shared';
+import type { CurrentUser } from '@phenix/shared';
 import { fireEvent, screen, within } from '@testing-library/react';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { renderWithProviders } from '../../test-utils';

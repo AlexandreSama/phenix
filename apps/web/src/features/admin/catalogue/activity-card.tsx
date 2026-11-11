@@ -1,4 +1,4 @@
-import type { Td2CatalogueActivity } from '@projet/shared';
+import type { Td2CatalogueActivity } from '@phenix/shared';
 import { useEffect, useState } from 'react';
 import { Icon } from '../../../components/icon';
 import { Badge } from '../../../components/ui/badge';
