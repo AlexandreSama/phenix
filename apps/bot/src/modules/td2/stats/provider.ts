@@ -31,6 +31,8 @@ export interface Td2Career {
   /** Le pseudo exact, avec ses majuscules, tel que le service le connaît */
   handle: string;
   avatarUrl: string | null;
+  /** La page du profil chez le service, pour le titre cliquable ; null si le service n'en a pas */
+  profileUrl: string | null;
   /** Une stat que le service ne donne pas est absente : l'embed saute sa ligne */
   stats: Partial<Record<Td2StatKey, Td2Stat>>;
 }

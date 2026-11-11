@@ -25,6 +25,7 @@ const OK: Td2CareerResult = {
     platform: 'PSN',
     handle: 'Agent47',
     avatarUrl: null,
+    profileUrl: null,
     stats: { level: { kind: 'number', value: 40 } },
   },
 };
