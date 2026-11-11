@@ -264,15 +264,14 @@ const routeTree = rootRoute.addChildren([
   ]),
   dashboardRoute.addChildren([
     guildPickerRoute,
-    guildRoute.addChildren([guildGeneralRoute, guildLevelingRoute]),
-  ]),
-  guildRoute.addChildren([
-    guildGeneralRoute,
-    guildLevelingRoute,
-    guildRolesRoute.addChildren([rolePanelsRoute, rolePanelEditorRoute]),
-    guildTicketsRoute.addChildren([ticketsRoute, ticketSettingsRoute, transcriptRoute]),
-    guildGiveawaysRoute.addChildren([giveawaysRoute, giveawayCreateRoute]),
-    td2Route,
+    guildRoute.addChildren([
+      guildGeneralRoute,
+      guildLevelingRoute,
+      guildRolesRoute.addChildren([rolePanelsRoute, rolePanelEditorRoute]),
+      guildTicketsRoute.addChildren([ticketsRoute, ticketSettingsRoute, transcriptRoute]),
+      guildGiveawaysRoute.addChildren([giveawaysRoute, giveawayCreateRoute]),
+      td2Route,
+        ])
   ]),
 ]);
 
