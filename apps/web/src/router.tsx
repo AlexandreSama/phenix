@@ -27,6 +27,11 @@ import { Td2Page } from './features/dashboard/td2/td2-page';
 import { AdminLayout } from './features/admin/admin-layout';
 import { CataloguePage } from './features/admin/catalogue/catalogue-page';
 import { ReportsPage } from './features/admin/report/report-page';
+import { ForumAdminPage } from './features/admin/forum/forum-admin-page';
+import { ForumHomePage } from './features/forum/forum-home-page';
+import { CategoryPage } from './features/forum/category-page';
+import { NewThreadPage } from './features/forum/new-thread-page';
+import { ThreadPage } from './features/forum/thread-page';
 
 const rootRoute = createRootRouteWithContext<{ queryClient: QueryClient }>()({
   component: RootLayout,
@@ -194,10 +199,69 @@ const adminReportsRoute = createRoute({
   component: ReportsPage,
 });
 
+const adminForumRoute = createRoute({
+  getParentRoute: () => adminRoute,
+  path: 'forum',
+  component: ForumAdminPage,
+});
+
+/** Le forum : lecture publique. Seule l'écriture d'un nouveau sujet demande une connexion. */
+const forumRoute = createRoute({
+  getParentRoute: () => rootRoute,
+  path: 'forum',
+});
+
+const forumHomeRoute = createRoute({
+  getParentRoute: () => forumRoute,
+  path: '/',
+  component: ForumHomePage,
+});
+
+/** Une catégorie : sans composant, la route affiche sa page enfant (liste, sujet ou formulaire). */
+const forumCategoryLayoutRoute = createRoute({
+  getParentRoute: () => forumRoute,
+  path: '$slug',
+});
+
+const pageSearchSchema = z.object({ page: z.number().int().min(1).optional().catch(undefined) });
+
+const forumCategoryRoute = createRoute({
+  getParentRoute: () => forumCategoryLayoutRoute,
+  path: '/',
+  validateSearch: pageSearchSchema,
+  component: CategoryPage,
+});
+
+/** Chemin fixe : il passe avant $threadId. */
+const forumNewThreadRoute = createRoute({
+  getParentRoute: () => forumCategoryLayoutRoute,
+  path: 'nouveau',
+  beforeLoad: async ({ context }) => {
+    const user = await context.queryClient.ensureQueryData(currentUserQuery);
+    if (!user) throw redirect({ to: '/', search: { connexion: 'requise' } });
+  },
+  component: NewThreadPage,
+});
+
+const forumThreadRoute = createRoute({
+  getParentRoute: () => forumCategoryLayoutRoute,
+  path: '$threadId',
+  validateSearch: pageSearchSchema,
+  component: ThreadPage,
+});
+
 const routeTree = rootRoute.addChildren([
   homeRoute,
   leaderboardRoute,
-  adminRoute.addChildren([adminCatalogueRoute, adminReportsRoute]),
+  adminRoute.addChildren([adminCatalogueRoute, adminReportsRoute, adminForumRoute]),
+  forumRoute.addChildren([
+    forumHomeRoute,
+    forumCategoryLayoutRoute.addChildren([
+      forumCategoryRoute,
+      forumNewThreadRoute,
+      forumThreadRoute,
+    ]),
+  ]),
   dashboardRoute.addChildren([
     guildPickerRoute,
     guildRoute.addChildren([guildGeneralRoute, guildLevelingRoute]),

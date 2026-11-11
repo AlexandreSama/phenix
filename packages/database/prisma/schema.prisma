@@ -392,7 +392,10 @@ model ForumThread {
   locked     Boolean       @default(false)
   posts      ForumPost[]
   createdAt  DateTime      @default(now())
-  updatedAt  DateTime      @updatedAt
+  updatedAt  DateTime      @updatedAt // dernière activité : une réponse le fait avancer
+
+  // La liste d'une catégorie : épinglés d'abord, puis du plus récent au plus ancien
+  @@index([categoryId, pinned, updatedAt])
 }
 
 // image du forum, ré-encodée en WebP et rangée dans le bucket media
@@ -421,4 +424,7 @@ model ForumPost {
   attachments ForumAttachment[]
   editedAt    DateTime?
   createdAt   DateTime          @default(now())
+
+  // Les messages d'un sujet, dans l'ordre
+  @@index([threadId, createdAt])
 }

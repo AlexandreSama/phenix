@@ -69,3 +69,24 @@ export const TD2_EVIDENCE_LIMITS = {
   maxBytes: 8 * 1024 * 1024,
   contentTypes: ['image/png', 'image/jpeg', 'image/webp', 'image/gif'],
 } as const;
+
+/** Les rôles sur le forum du site. Les propriétaires du bot ont tous les droits, quel que soit le leur. */
+export const FORUM_ROLE_LABELS = {
+  MEMBER: 'Membre',
+  MODERATOR: 'Modérateur',
+  ADMIN: 'Administrateur',
+} as const;
+
+export type ForumRoleKey = keyof typeof FORUM_ROLE_LABELS;
+
+/** Les limites du forum, communes au site (qui prévient) et à l'API (qui refuse). */
+export const FORUM_LIMITS = {
+  titleMax: 120,
+  contentMax: 10_000,
+  /** Poids maximal d'une image envoyée, avant ré-encodage */
+  imageMaxBytes: 8 * 1024 * 1024,
+  /** Au-delà, l'image est réduite, proportions gardées */
+  imageMaxSide: 2048,
+  threadsPerPage: 20,
+  postsPerPage: 20,
+} as const;

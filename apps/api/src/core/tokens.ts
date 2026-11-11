@@ -12,3 +12,6 @@ export const GIVEAWAYS = Symbol('GIVEAWAYS');
 
 /** Jeton d'injection du bucket des preuves des signalements TD2 (Garage). */
 export const EVIDENCE = Symbol('EVIDENCE');
+
+/** Jeton d'injection du bucket des images du forum (Garage). */
+export const MEDIA = Symbol('MEDIA');

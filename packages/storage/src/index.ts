@@ -19,6 +19,8 @@ export const storageEnvSchema = z.object({
   S3_TRANSCRIPTS_BUCKET: z.string().min(1).default('transcripts'),
   /** Preuves des signalements TD2 (phase 7.2) : des captures, jamais publiques */
   S3_EVIDENCE_BUCKET: z.string().min(1).default('evidence'),
+  /** Images du forum (phase 8) : ré-encodées par l'API, publiques comme le forum */
+  S3_MEDIA_BUCKET: z.string().min(1).default('media'),
 });
 
 export type StorageEnv = z.infer<typeof storageEnvSchema>;
@@ -100,4 +102,9 @@ export function createTranscriptStorage(env: StorageEnv): ObjectStorage {
 /** Le stockage des preuves des signalements TD2 : le bot y écrit, l'API les sert aux propriétaires. */
 export function createEvidenceStorage(env: StorageEnv): ObjectStorage {
   return createObjectStorage(env.S3_EVIDENCE_BUCKET, createS3Client(env));
+}
+
+/** Les images du forum : l'API les ré-encode, les range et les sert à tout le monde. */
+export function createMediaStorage(env: StorageEnv): ObjectStorage {
+  return createObjectStorage(env.S3_MEDIA_BUCKET, createS3Client(env));
 }

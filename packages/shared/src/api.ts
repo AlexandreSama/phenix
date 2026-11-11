@@ -2,6 +2,7 @@
 import type { RolePanelInput, RolePanelMode } from './schemas/role-panel.js';
 import type { TicketSettingsInput } from './schemas/tickets.js';
 import type {
+  ForumRoleKey,
   Td2KindKey,
   Td2PlatformKey,
   Td2ReportReasonKey,
@@ -41,6 +42,8 @@ export interface CurrentUser {
   avatarUrl: string;
   /** Listé dans BOT_OWNER_IDS : voit la page d'administration */
   isOwner: boolean;
+  /** Son rôle sur le forum (phase 8) */
+  forumRole: ForumRoleKey;
 }
 
 /** Un serveur que l'utilisateur a le droit de gérer (« Gérer le serveur » ou propriétaire). */
@@ -219,4 +222,101 @@ export interface Td2ReportAdminPage {
   reports: Td2ReportAdminSummary[];
   /** À passer en `cursor` pour la page suivante ; null = fin de la liste */
   nextCursor: number | null;
+}
+
+// ---------- Forum (phase 8) ----------
+
+/** L'auteur d'un sujet ou d'un message, tel que le forum l'affiche. */
+export interface ForumAuthor {
+  id: string;
+  username: string;
+  avatarUrl: string;
+  role: ForumRoleKey;
+}
+
+export interface ForumCategorySummary {
+  id: number;
+  slug: string;
+  name: string;
+  description: string | null;
+  position: number;
+  threadCount: number;
+  /** Le dernier message posté dans la catégorie ; null si elle est vide */
+  lastActivityAt: string | null;
+}
+
+export interface ForumThreadSummary {
+  id: number;
+  title: string;
+  pinned: boolean;
+  locked: boolean;
+  author: ForumAuthor;
+  /** Les messages après le premier */
+  replyCount: number;
+  createdAt: string;
+  lastActivityAt: string;
+}
+
+/** Une page de la liste des sujets d'une catégorie. */
+export interface ForumCategoryPage {
+  category: Pick<ForumCategorySummary, 'id' | 'slug' | 'name' | 'description'>;
+  threads: ForumThreadSummary[];
+  page: number;
+  pageCount: number;
+  /** Connecté : peut ouvrir un sujet */
+  canPost: boolean;
+}
+
+export interface ForumPostView {
+  id: number;
+  author: ForumAuthor;
+  /** Le Markdown d'origine, pour le formulaire de modification */
+  content: string;
+  /** Le HTML rendu et assaini par l'API : le site l'affiche tel quel */
+  html: string;
+  createdAt: string;
+  editedAt: string | null;
+  canEdit: boolean;
+  canDelete: boolean;
+}
+
+/** Une page d'un sujet. */
+export interface ForumThreadView {
+  id: number;
+  title: string;
+  pinned: boolean;
+  locked: boolean;
+  category: { slug: string; name: string };
+  posts: ForumPostView[];
+  page: number;
+  pageCount: number;
+  canReply: boolean;
+  canModerate: boolean;
+}
+
+/** Ce que renvoie la création d'un sujet ou d'une réponse : où aller la voir. */
+export interface ForumPostCreated {
+  threadId: number;
+  postId: number;
+  page: number;
+}
+
+/** Une image envoyée, ré-encodée et prête à être insérée dans un message. */
+export interface ForumImage {
+  id: string;
+  url: string;
+  width: number;
+  height: number;
+}
+
+export interface ForumMarkdownPreview {
+  html: string;
+}
+
+/** Un membre du site, vu par l'administration du forum. */
+export interface ForumMember {
+  id: string;
+  username: string;
+  avatarUrl: string;
+  role: ForumRoleKey;
 }

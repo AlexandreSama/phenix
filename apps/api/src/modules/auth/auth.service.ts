@@ -50,6 +50,7 @@ export class AuthService {
           username: user.username,
           avatarUrl: avatarUrl(user.id, user.avatar),
           isOwner: this.env.BOT_OWNER_IDS.includes(user.id),
+          forumRole: user.role,
         }
       : null;
   }

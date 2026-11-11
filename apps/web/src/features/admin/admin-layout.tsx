@@ -1,7 +1,13 @@
 import { Link, Outlet } from '@tanstack/react-router';
 import type { ReactNode } from 'react';
 
-function Tab({ to, children }: { to: '/admin' | '/admin/signalements'; children: ReactNode }) {
+function Tab({
+  to,
+  children,
+}: {
+  to: '/admin' | '/admin/signalements' | '/admin/forum';
+  children: ReactNode;
+}) {
   return (
     <Link
       to={to}
@@ -27,6 +33,7 @@ export function AdminLayout() {
       <nav aria-label="Administration" className="flex overflow-x-auto border-b border-brown">
         <Tab to="/admin">Catalogue TD2</Tab>
         <Tab to="/admin/signalements">Signalements</Tab>
+        <Tab to="/admin/forum">Forum</Tab>
       </nav>
       <Outlet />
     </section>
