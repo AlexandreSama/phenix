@@ -1,6 +1,6 @@
 import { useQueries } from '@tanstack/react-query';
 import { useParams } from '@tanstack/react-router';
-import { Card } from '../../../components/ui/card';
+import { PageHeader, Panel } from '../../../components/ui/panel';
 import {
   channelsQuery,
   rolesQuery,
@@ -8,6 +8,7 @@ import {
   td2SettingsQuery,
   useSaveTd2Settings,
 } from '../api';
+import { firstFailure, LoadError, PageSkeleton } from '../query-state';
 import { Td2EventList } from './td2-event-list';
 import { Td2SettingsForm } from './td2-settings-form';
 
@@ -22,29 +23,54 @@ export function Td2Page() {
     ],
   });
   const save = useSaveTd2Settings(guildId);
-  const error = settings.error ?? channels.error ?? roles.error;
+  const { error, retry } = firstFailure([settings, channels, roles]);
+  const upcoming = events.data?.length ?? 0;
 
   return (
-    <section className="flex flex-col gap-6">
-      <Card>
-        <h2 className="mb-4 text-lg font-semibold text-white">Réglages</h2>
-        {error && <p role="alert">{error.message}</p>}
-        {!error && (!settings.data || !channels.data || !roles.data) && <p>Chargement…</p>}
-        {settings.data && channels.data && roles.data && (
-          <Td2SettingsForm
-            settings={settings.data}
-            channels={channels.data}
-            roles={roles.data}
-            onSubmit={(input) => save.mutateAsync(input)}
-          />
+    <div className="flex flex-col gap-8">
+      <PageHeader
+        title="The Division 2"
+        description="Raids et incursions organisés sur Discord avec /td2, et signalements de joueurs partagés entre les serveurs du bot."
+      />
+
+      <Panel
+        icon="crosshair"
+        title="Sorties à venir"
+        description="On s'inscrit sur Discord ; ici, tu suis le remplissage. La liste se met à jour toute seule."
+        aside={
+          upcoming > 0 && (
+            <span className="text-sm text-stone-400 tabular-nums">
+              {upcoming} {upcoming > 1 ? 'sorties' : 'sortie'}
+            </span>
+          )
+        }
+        flush
+      >
+        {events.error && (
+          <div className="p-5 sm:p-6">
+            <LoadError error={events.error} onRetry={() => void events.refetch()} />
+          </div>
         )}
-      </Card>
-      <Card>
-        <h2 className="mb-2 text-lg font-semibold text-white">Sorties à venir</h2>
-        {events.error && <p role="alert">{events.error.message}</p>}
-        {!events.error && !events.data && <p>Chargement…</p>}
+        {!events.error && !events.data && (
+          <p role="status" className="p-6 text-sm text-stone-400">
+            Chargement des sorties…
+          </p>
+        )}
         {events.data && <Td2EventList events={events.data} channels={channels.data ?? []} />}
-      </Card>
-    </section>
+      </Panel>
+
+      {error && <LoadError error={error} onRetry={retry} />}
+      {!error && (!settings.data || !channels.data || !roles.data) && (
+        <PageSkeleton label="Chargement des réglages…" panels={2} />
+      )}
+      {settings.data && channels.data && roles.data && (
+        <Td2SettingsForm
+          settings={settings.data}
+          channels={channels.data}
+          roles={roles.data}
+          onSubmit={(input) => save.mutateAsync(input)}
+        />
+      )}
+    </div>
   );
 }

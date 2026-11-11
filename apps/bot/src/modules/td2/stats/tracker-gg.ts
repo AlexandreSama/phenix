@@ -20,7 +20,7 @@ export const PLATFORM_SLUGS: Record<Td2PlatformKey, string> = {
 
 /**
  * Nos statistiques → les clés de l'API. Relevées dans des projets publics qui lisent cette
- * API ; à confirmer sur une vraie réponse avec `pnpm --filter @projet/bot td2:record`.
+ * API ; à confirmer sur une vraie réponse avec `pnpm --filter @phenix/bot td2:record`.
  */
 export const TRACKER_STAT_KEYS: Record<Td2StatKey, string> = {
   level: 'highestPlayerLevel',

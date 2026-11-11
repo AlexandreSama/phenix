@@ -7,8 +7,10 @@ import type {
   TicketSettingsInput,
 } from '@phenix/shared';
 import { useForm, useWatch } from 'react-hook-form';
-import { Button } from '../../../components/ui/button';
 import { Field, inputClass } from '../../../components/ui/field';
+import { FormActions } from '../../../components/ui/form-actions';
+import { Panel } from '../../../components/ui/panel';
+import { ChannelOptions, RoleChecklist } from '../form-parts';
 import { ticketFormSchema, toFormValues, type TicketFormInput } from './form-values';
 import { TicketPanelPreview } from './ticket-panel-preview';
 
@@ -18,20 +20,6 @@ interface Props {
   channels: GuildChannelSummary[];
   roles: GuildRoleSummary[];
   onSubmit: (input: TicketSettingsInput) => Promise<unknown>;
-}
-
-function ChannelOptions({ channels, empty }: { channels: GuildChannelSummary[]; empty: string }) {
-  return (
-    <>
-      <option value="">{empty}</option>
-      {channels.map((channel) => (
-        <option key={channel.id} value={channel.id}>
-          #{channel.name}
-          {channel.parentName ? ` (${channel.parentName})` : ''}
-        </option>
-      ))}
-    </>
-  );
 }
 
 /** Les réglages des tickets et leur panel, avec l'aperçu. Il reçoit ses données et ne sait rien de l'API. */
@@ -48,6 +36,8 @@ export function TicketSettingsForm({ settings, categories, channels, roles, onSu
     defaultValues: toFormValues(settings),
   });
   const panel = useWatch({ control, name: 'panel' });
+  // Premier réglage : tout est à envoyer, même sans modification
+  const firstSetup = settings === null;
 
   const save = async (input: TicketSettingsInput) => {
     try {
@@ -64,65 +54,63 @@ export function TicketSettingsForm({ settings, categories, channels, roles, onSu
     <form
       onSubmit={handleSubmit(save)}
       noValidate
-      className="grid gap-8 lg:grid-cols-[minmax(0,1fr)_320px]"
+      className="grid gap-6 xl:grid-cols-[minmax(0,1fr)_320px]"
     >
-      <div className="flex flex-col gap-6">
-        <Field
-          id="categoryId"
-          label="Catégorie des tickets"
-          hint="Chaque ticket y devient un salon privé. Le bot doit pouvoir y gérer les salons."
-          error={errors.categoryId?.message}
+      <div className="flex min-w-0 flex-col gap-6">
+        <Panel
+          icon="lock"
+          title="Salons privés"
+          description="Chaque ticket devient un salon visible du membre et de l’équipe seulement."
         >
-          <select id="categoryId" className={inputClass} {...register('categoryId')}>
-            <option value="">Choisis une catégorie</option>
-            {categories.map((category) => (
-              <option key={category.id} value={category.id}>
-                {category.name}
-              </option>
-            ))}
-          </select>
-        </Field>
+          <Field
+            id="categoryId"
+            label="Catégorie des tickets"
+            hint="Les salons des tickets y sont créés. Le bot doit pouvoir y gérer les salons."
+            error={errors.categoryId?.message}
+          >
+            <select id="categoryId" className={inputClass} {...register('categoryId')}>
+              <option value="">Choisis une catégorie</option>
+              {categories.map((category) => (
+                <option key={category.id} value={category.id}>
+                  {category.name}
+                </option>
+              ))}
+            </select>
+          </Field>
 
-        <fieldset className="flex flex-col gap-2">
-          <legend className="text-sm font-semibold text-stone-100">Équipe des tickets</legend>
-          <p className="text-xs text-stone-400">
-            Ces rôles voient tous les tickets, y répondent et peuvent les fermer.
-          </p>
-          <div className="grid gap-2 sm:grid-cols-2">
-            {roles.map((role) => (
-              <label key={role.id} className="flex items-center gap-2 text-sm">
-                <input
-                  type="checkbox"
-                  value={role.id}
-                  className="accent-flame"
-                  {...register('staffRoleIds')}
-                />
-                <span style={{ color: role.color ?? undefined }}>{role.name}</span>
-              </label>
-            ))}
-          </div>
-          {errors.staffRoleIds && (
-            <p role="alert" className="text-xs text-flame">
-              {errors.staffRoleIds.message}
-            </p>
-          )}
-        </fieldset>
+          <Field
+            id="logChannelId"
+            label="Salon de logs des tickets"
+            hint="Facultatif. Un résumé y est posté à chaque fermeture, avec le lien du transcript."
+            error={errors.logChannelId?.message}
+          >
+            <select id="logChannelId" className={inputClass} {...register('logChannelId')}>
+              <ChannelOptions channels={channels} empty="Aucun" />
+            </select>
+          </Field>
+        </Panel>
 
-        <Field
-          id="logChannelId"
-          label="Salon de logs des tickets"
-          hint="Facultatif. Un résumé y est posté à chaque fermeture, avec le lien du transcript."
-          error={errors.logChannelId?.message}
+        <Panel
+          icon="users"
+          title="Équipe"
+          description="Ces rôles voient tous les tickets, y répondent et peuvent les fermer."
         >
-          <select id="logChannelId" className={inputClass} {...register('logChannelId')}>
-            <ChannelOptions channels={channels} empty="Aucun" />
-          </select>
-        </Field>
+          <fieldset className="flex flex-col gap-3">
+            <legend className="sr-only">Équipe des tickets</legend>
+            <RoleChecklist roles={roles} registration={register('staffRoleIds')} />
+            {errors.staffRoleIds && (
+              <p role="alert" className="text-[13px] text-flame">
+                {errors.staffRoleIds.message}
+              </p>
+            )}
+          </fieldset>
+        </Panel>
 
-        <fieldset className="flex flex-col gap-4 rounded-lg border border-brown p-4">
-          <legend className="px-1 text-sm font-semibold text-stone-100">
-            Panel « Ouvrir un ticket »
-          </legend>
+        <Panel
+          icon="ticket"
+          title="Panel « Ouvrir un ticket »"
+          description="Le message que le bot publie, avec le bouton qui ouvre un ticket."
+        >
           <Field
             id="panelChannelId"
             label="Salon du panel"
@@ -159,21 +147,25 @@ export function TicketSettingsForm({ settings, categories, channels, roles, onSu
               {...register('panel.buttonLabel')}
             />
           </Field>
-        </fieldset>
+        </Panel>
 
-        <div>
-          <Button type="submit" disabled={isSubmitting || (settings !== null && !isDirty)}>
-            {isSubmitting ? 'Enregistrement…' : 'Enregistrer et publier'}
-          </Button>
-        </div>
-        {errors.root?.server && (
-          <p role="alert" className="text-sm text-flame">
-            {errors.root.server.message}
-          </p>
-        )}
+        <FormActions
+          submitLabel="Enregistrer et publier"
+          submittingLabel="Enregistrement…"
+          isSubmitting={isSubmitting}
+          canSubmit={firstSetup || isDirty}
+          dirty={!firstSetup && isDirty}
+          onReset={() => reset()}
+          error={errors.root?.server?.message}
+          idle={
+            firstSetup
+              ? 'Le bot publie le panel dès l’enregistrement.'
+              : 'Chaque enregistrement met le panel à jour sur Discord.'
+          }
+        />
       </div>
 
-      <div className="lg:sticky lg:top-6 lg:self-start">
+      <div className="xl:sticky xl:top-6 xl:self-start">
         <TicketPanelPreview
           title={panel.title}
           description={typeof panel.description === 'string' ? panel.description : ''}

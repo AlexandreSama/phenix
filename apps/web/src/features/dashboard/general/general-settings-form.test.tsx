@@ -59,6 +59,21 @@ describe('GeneralSettingsForm', () => {
     );
   });
 
+  it('signale les modifications en attente et sait les annuler', () => {
+    setup();
+
+    const select = screen.getByLabelText<HTMLSelectElement>('Salon de logs de modération');
+    fireEvent.change(select, { target: { value: '400000000000000001' } });
+    expect(screen.getByText('Modifications non enregistrées')).toBeTruthy();
+
+    fireEvent.click(screen.getByRole('button', { name: 'Annuler les modifications' }));
+    expect(select.value).toBe('');
+    expect(screen.queryByText('Modifications non enregistrées')).toBeNull();
+    expect(
+      (screen.getByRole('button', { name: 'Enregistrer' }) as HTMLButtonElement).disabled,
+    ).toBe(true);
+  });
+
   it('désactive « Enregistrer » tant que rien n’a changé', () => {
     setup();
     expect(

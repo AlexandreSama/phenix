@@ -1,8 +1,10 @@
 import { zodResolver } from '@hookform/resolvers/zod';
 import type { GeneralConfig, GuildChannelSummary, GuildRoleSummary } from '@phenix/shared';
 import { useForm } from 'react-hook-form';
-import { Button } from '../../../components/ui/button';
 import { Field, inputClass } from '../../../components/ui/field';
+import { FormActions } from '../../../components/ui/form-actions';
+import { Panel } from '../../../components/ui/panel';
+import { ChannelOptions, RoleChecklist } from '../form-parts';
 import { generalFormSchema, TIMEZONES, toFormValues, type GeneralFormInput } from './form-values';
 
 interface Props {
@@ -10,20 +12,6 @@ interface Props {
   channels: GuildChannelSummary[];
   roles: GuildRoleSummary[];
   onSubmit: (config: GeneralConfig) => Promise<unknown>;
-}
-
-function ChannelOptions({ channels }: { channels: GuildChannelSummary[] }) {
-  return (
-    <>
-      <option value="">Aucun</option>
-      {channels.map((channel) => (
-        <option key={channel.id} value={channel.id}>
-          #{channel.name}
-          {channel.parentName ? ` (${channel.parentName})` : ''}
-        </option>
-      ))}
-    </>
-  );
 }
 
 /** Le formulaire seul : il reçoit ses données et ne sait rien de l'API, donc il se teste facilement. */
@@ -56,78 +44,82 @@ export function GeneralSettingsForm({ config, channels, roles, onSubmit }: Props
 
   return (
     <form onSubmit={handleSubmit(save)} className="flex flex-col gap-6" noValidate>
-      <Field
-        id="modLogChannelId"
-        label="Salon de logs de modération"
-        hint="Chaque sanction y est publiée. Pris en compte par le bot immédiatement."
-        error={errors.modLogChannelId?.message}
+      <Panel
+        icon="hash"
+        title="Salons du bot"
+        description="Là où le bot écrit de lui-même, sans qu'on lui demande."
       >
-        <select id="modLogChannelId" className={inputClass} {...register('modLogChannelId')}>
-          <ChannelOptions channels={channels} />
-        </select>
-      </Field>
+        <Field
+          id="modLogChannelId"
+          label="Salon de logs de modération"
+          hint="Chaque sanction y est publiée. Pris en compte par le bot immédiatement."
+          error={errors.modLogChannelId?.message}
+        >
+          <select id="modLogChannelId" className={inputClass} {...register('modLogChannelId')}>
+            <ChannelOptions channels={channels} empty="Aucun" />
+          </select>
+        </Field>
 
-      <Field
-        id="announceChannelId"
-        label="Salon d'annonces"
-        hint="Reçoit les annonces /broadcast du bot (phase 6). Sans salon, aucune annonce."
-        error={errors.announceChannelId?.message}
+        <Field
+          id="announceChannelId"
+          label="Salon d'annonces"
+          hint="Reçoit les annonces /broadcast du bot. Sans salon, aucune annonce."
+          error={errors.announceChannelId?.message}
+        >
+          <select id="announceChannelId" className={inputClass} {...register('announceChannelId')}>
+            <ChannelOptions channels={channels} empty="Aucun" />
+          </select>
+        </Field>
+      </Panel>
+
+      <Panel
+        icon="shield"
+        title="Rôles staff"
+        description="Voient les signalements The Division 2 et les tickets."
       >
-        <select id="announceChannelId" className={inputClass} {...register('announceChannelId')}>
-          <ChannelOptions channels={channels} />
-        </select>
-      </Field>
+        <fieldset className="flex flex-col gap-3">
+          <legend className="sr-only">Rôles staff</legend>
+          <RoleChecklist roles={roles} registration={register('staffRoleIds')} />
+          {errors.staffRoleIds && (
+            <p role="alert" className="text-[13px] text-flame">
+              {errors.staffRoleIds.message}
+            </p>
+          )}
+        </fieldset>
+      </Panel>
 
-      <fieldset className="flex flex-col gap-2">
-        <legend className="text-sm font-semibold">Rôles staff</legend>
-        <p className="text-xs text-stone-400">
-          Voient les signalements The Division 2 et les tickets (phases 6 et 7).
-        </p>
-        <div className="grid gap-2 sm:grid-cols-2">
-          {roles.map((role) => (
-            <label key={role.id} className="flex items-center gap-2 text-sm">
-              <input type="checkbox" value={role.id} {...register('staffRoleIds')} />
-              <span style={{ color: role.color ?? undefined }}>{role.name}</span>
-            </label>
-          ))}
-        </div>
-        {errors.staffRoleIds && (
-          <p role="alert" className="text-xs text-flame">
-            {errors.staffRoleIds.message}
-          </p>
-        )}
-      </fieldset>
-
-      <Field
-        id="timezone"
-        label="Fuseau horaire"
-        hint="Sert aux horaires des raids et incursions (phase 7)."
-        error={errors.timezone?.message}
+      <Panel
+        icon="clock"
+        title="Horaires"
+        description="L'heure à laquelle le bot affiche et planifie tout ce qui est daté."
       >
-        <select id="timezone" className={inputClass} {...register('timezone')}>
-          {timezones.map((zone) => (
-            <option key={zone} value={zone}>
-              {zone}
-            </option>
-          ))}
-        </select>
-      </Field>
+        <Field
+          id="timezone"
+          label="Fuseau horaire"
+          hint="Sert aux horaires des raids et incursions."
+          error={errors.timezone?.message}
+        >
+          <select id="timezone" className={inputClass} {...register('timezone')}>
+            {timezones.map((zone) => (
+              <option key={zone} value={zone}>
+                {zone}
+              </option>
+            ))}
+          </select>
+        </Field>
+      </Panel>
 
-      <div className="flex items-center gap-4">
-        <Button type="submit" disabled={isSubmitting || !isDirty}>
-          {isSubmitting ? 'Enregistrement…' : 'Enregistrer'}
-        </Button>
-        {isSubmitSuccessful && !isDirty && (
-          <p role="status" className="text-sm text-gold">
-            Enregistré. Le bot applique déjà le changement.
-          </p>
-        )}
-      </div>
-      {errors.root?.server && (
-        <p role="alert" className="text-sm text-flame">
-          {errors.root.server.message}
-        </p>
-      )}
+      <FormActions
+        submitLabel="Enregistrer"
+        submittingLabel="Enregistrement…"
+        isSubmitting={isSubmitting}
+        canSubmit={isDirty}
+        dirty={isDirty}
+        onReset={() => reset()}
+        success={isSubmitSuccessful && 'Enregistré. Le bot applique déjà le changement.'}
+        error={errors.root?.server?.message}
+        idle="Les changements s'appliquent sans redémarrer le bot."
+      />
     </form>
   );
 }

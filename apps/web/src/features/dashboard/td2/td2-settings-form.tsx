@@ -8,8 +8,10 @@ import {
 } from '@phenix/shared';
 import { useForm } from 'react-hook-form';
 import { z } from 'zod';
-import { Button } from '../../../components/ui/button';
 import { Field, inputClass } from '../../../components/ui/field';
+import { FormActions } from '../../../components/ui/form-actions';
+import { Panel } from '../../../components/ui/panel';
+import { ChannelOptions, RoleChecklist } from '../form-parts';
 
 /** Un <select> laissé sur l'option vide envoie '' ; l'API attend null. */
 const emptyToNull = <T extends z.ZodType>(schema: T) =>
@@ -41,19 +43,11 @@ interface Props {
   onSubmit: (input: Td2SettingsInput) => Promise<unknown>;
 }
 
-function ChannelOptions({ channels, empty }: { channels: GuildChannelSummary[]; empty: string }) {
-  return (
-    <>
-      <option value="">{empty}</option>
-      {channels.map((channel) => (
-        <option key={channel.id} value={channel.id}>
-          #{channel.name}
-          {channel.parentName ? ` (${channel.parentName})` : ''}
-        </option>
-      ))}
-    </>
-  );
-}
+const command = (name: string) => (
+  <code className="rounded bg-white/6 px-1 py-0.5 font-mono text-[0.9em] text-stone-200">
+    {name}
+  </code>
+);
 
 export function Td2SettingsForm({ settings, channels, roles, onSubmit }: Props) {
   const {
@@ -80,24 +74,33 @@ export function Td2SettingsForm({ settings, channels, roles, onSubmit }: Props) 
 
   return (
     <form onSubmit={handleSubmit(save)} noValidate className="flex flex-col gap-6">
-      <Field
-        id="td2ChannelId"
-        label="Salon des sorties"
-        hint="Où le bot poste les raids et incursions créés avec /td2. Les horaires suivent le fuseau de l’onglet Général."
-        error={errors.channelId?.message}
+      <Panel
+        icon="hash"
+        title="Sorties"
+        description={<>Où le bot poste les raids et incursions créés avec {command('/td2')}.</>}
       >
-        <select id="td2ChannelId" className={inputClass} {...register('channelId')}>
-          <ChannelOptions channels={channels} empty="Là où la commande est lancée" />
-        </select>
-      </Field>
+        <Field
+          id="td2ChannelId"
+          label="Salon des sorties"
+          hint="Les horaires suivent le fuseau de l’onglet Général."
+          error={errors.channelId?.message}
+        >
+          <select id="td2ChannelId" className={inputClass} {...register('channelId')}>
+            <ChannelOptions channels={channels} empty="Là où la commande est lancée" />
+          </select>
+        </Field>
+      </Panel>
 
-      <fieldset className="flex flex-col gap-4 border-t border-brown pt-4">
-        <legend className="text-base font-semibold text-white">Signalements</legend>
-        <p className="text-sm text-stone-400">
-          Un membre signale un joueur avec <code>/td2 signaler</code>. L’équipe l’examine dans son
-          salon ; une fois confirmé, il part dans le fil de chaque serveur du réseau.
-        </p>
-
+      <Panel
+        icon="flag"
+        title="Signalements"
+        description={
+          <>
+            Un membre signale un joueur avec {command('/td2 signaler')}. Le staff l’examine dans son
+            salon ; une fois confirmé, il part dans le fil de chaque serveur du réseau.
+          </>
+        }
+      >
         <Field
           id="td2ReportChannelId"
           label="Salon du staff"
@@ -109,22 +112,15 @@ export function Td2SettingsForm({ settings, channels, roles, onSubmit }: Props) 
           </select>
         </Field>
 
-        <fieldset className="flex flex-col gap-2">
-          <legend className="text-sm font-semibold">Rôles qui consultent</legend>
-          <p className="text-xs text-stone-400">
-            Peuvent lancer <code>/td2 signalements</code>, en plus des rôles staff de l’onglet
+        <fieldset className="flex flex-col gap-3">
+          <legend className="text-sm font-medium text-stone-100">Rôles qui consultent</legend>
+          <p className="-mt-1 text-[13px] leading-relaxed text-stone-400">
+            Peuvent lancer {command('/td2 signalements')}, en plus des rôles staff de l’onglet
             Général. Seul le staff examine.
           </p>
-          <div className="grid gap-2 sm:grid-cols-2">
-            {roles.map((role) => (
-              <label key={role.id} className="flex items-center gap-2 text-sm">
-                <input type="checkbox" value={role.id} {...register('reportViewerRoleIds')} />
-                <span style={{ color: role.color ?? undefined }}>{role.name}</span>
-              </label>
-            ))}
-          </div>
+          <RoleChecklist roles={roles} registration={register('reportViewerRoleIds')} />
           {errors.reportViewerRoleIds && (
-            <p role="alert" className="text-xs text-flame">
+            <p role="alert" className="text-[13px] text-flame">
               {errors.reportViewerRoleIds.message}
             </p>
           )}
@@ -144,23 +140,21 @@ export function Td2SettingsForm({ settings, channels, roles, onSubmit }: Props) 
             <ChannelOptions channels={channels} empty="Aucun fil" />
           </select>
         </Field>
-      </fieldset>
+      </Panel>
 
-      <div className="flex items-center gap-4">
-        <Button type="submit" disabled={isSubmitting || !isDirty}>
-          {isSubmitting ? 'Enregistrement…' : 'Enregistrer'}
-        </Button>
-        {isSubmitSuccessful && !isDirty && (
-          <p role="status" className="text-sm text-gold">
-            Enregistré. Le bot applique les nouveaux réglages tout de suite.
-          </p>
-        )}
-      </div>
-      {errors.root?.server && (
-        <p role="alert" className="text-sm text-flame">
-          {errors.root.server.message}
-        </p>
-      )}
+      <FormActions
+        submitLabel="Enregistrer"
+        submittingLabel="Enregistrement…"
+        isSubmitting={isSubmitting}
+        canSubmit={isDirty}
+        dirty={isDirty}
+        onReset={() => reset()}
+        success={
+          isSubmitSuccessful && 'Enregistré. Le bot applique les nouveaux réglages tout de suite.'
+        }
+        error={errors.root?.server?.message}
+        idle="Les changements s'appliquent sans redémarrer le bot."
+      />
     </form>
   );
 }

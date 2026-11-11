@@ -9,6 +9,38 @@
   --color-ember: #ba4b04;
   --color-brown: #50260b;
   --color-ink: #1d110c;
+
+  /* Les fonds posés sur l'encre : cartes, bandeaux, éléments en relief */
+  --color-band: #221510;
+  --color-surface: #26170f;
+  --color-surface-raised: #2b1b12;
+
+  /* Polices servies par le site lui-même (@fontsource-variable, importées dans main.tsx) */
+  --font-sans: 'Inter Variable', ui-sans-serif, system-ui, sans-serif;
+  --font-display: 'Space Grotesk Variable', 'Inter Variable', ui-sans-serif, sans-serif;
+  --font-mono: 'JetBrains Mono Variable', ui-monospace, monospace;
+}
+
+html {
+  scroll-behavior: smooth;
+  /* Le site est sombre : barres de défilement, calendriers et listes natives aussi */
+  color-scheme: dark;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  html {
+    scroll-behavior: auto;
+  }
+}
+
+/* Les listes déroulantes des formulaires : la même flèche dans tous les navigateurs */
+select.field-control {
+  appearance: none;
+  padding-right: 2.5rem;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23a8a29e' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M6 9l6 6 6-6'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 0.85rem center;
+  background-size: 1rem;
 }
 
 body {

@@ -68,7 +68,7 @@ describe('RolePanelForm', () => {
     change('Titre', 'Tes jeux');
     change('Salon du panel', CHANNEL);
     change('Rôle 1', GAMER);
-    fireEvent.click(screen.getByRole('button', { name: '+ Ajouter un rôle' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Ajouter un rôle' }));
     change('Rôle 2', GAMER);
 
     fireEvent.click(screen.getByRole('button', { name: 'Enregistrer et publier' }));

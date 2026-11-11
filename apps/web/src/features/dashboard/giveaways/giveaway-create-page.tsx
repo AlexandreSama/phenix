@@ -1,42 +1,51 @@
 import { useQueries } from '@tanstack/react-query';
 import { Link, useNavigate, useParams } from '@tanstack/react-router';
-import { Card } from '../../../components/ui/card';
+import { Icon } from '../../../components/icon';
+import { PageHeader } from '../../../components/ui/panel';
 import { channelsQuery, rolesQuery, useCreateGiveaway } from '../api';
+import { firstFailure, LoadError, PageSkeleton } from '../query-state';
 import { GiveawayForm } from './giveaway-form';
 
 export function GiveawayCreatePage() {
   const { guildId } = useParams({ from: '/dashboard/$guildId/giveaways/nouveau' });
   const navigate = useNavigate();
-  const [channels, roles] = useQueries({
+  const queries = useQueries({
     queries: [channelsQuery(guildId), rolesQuery(guildId)],
   });
+  const [channels, roles] = queries;
   const create = useCreateGiveaway(guildId);
-  const error = channels.error ?? roles.error;
+  const { error, retry } = firstFailure(queries);
+  const backToList = () => navigate({ to: '/dashboard/$guildId/giveaways', params: { guildId } });
 
   return (
-    <section className="flex flex-col gap-4">
+    <div className="flex flex-col gap-6">
       <Link
         to="/dashboard/$guildId/giveaways"
         params={{ guildId }}
-        className="text-sm text-stone-400 hover:text-white"
+        className="inline-flex items-center gap-2 self-start text-sm text-stone-400 transition hover:text-white"
       >
-        ← Tous les giveaways
+        <Icon name="arrowLeft" className="size-4" />
+        Tous les giveaways
       </Link>
-      <Card>
-        <h2 className="mb-6 text-lg font-semibold text-white">Nouveau giveaway</h2>
-        {error && <p role="alert">{error.message}</p>}
-        {!error && (!channels.data || !roles.data) && <p>Chargement…</p>}
-        {!error && channels.data && roles.data && (
-          <GiveawayForm
-            channels={channels.data}
-            roles={roles.data}
-            onSubmit={async (input) => {
-              await create.mutateAsync(input);
-              await navigate({ to: '/dashboard/$guildId/giveaways', params: { guildId } });
-            }}
-          />
-        )}
-      </Card>
-    </section>
+      <PageHeader
+        title="Nouveau giveaway"
+        description="Le bot le publie tout de suite dans le salon choisi ; les membres participent d'un clic."
+      />
+      {error && <LoadError error={error} onRetry={retry} />}
+      {!error && (!channels.data || !roles.data) && (
+        <PageSkeleton label="Chargement du formulaire…" panels={2} />
+      )}
+      {!error && channels.data && roles.data && (
+        <GiveawayForm
+          channels={channels.data}
+          roles={roles.data}
+          onCancel={() => void backToList()}
+          onSubmit={async (input) => {
+            await create.mutateAsync(input);
+            await backToList();
+          }}
+        />
+      )}
+    </div>
   );
 }

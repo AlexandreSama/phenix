@@ -1,21 +1,29 @@
 import { useQueries } from '@tanstack/react-query';
 import { useParams } from '@tanstack/react-router';
-import { Card } from '../../../components/ui/card';
+import { PageHeader } from '../../../components/ui/panel';
 import { channelsQuery, configQuery, rolesQuery, useUpdateConfig } from '../api';
+import { firstFailure, LoadError, PageSkeleton } from '../query-state';
 import { GeneralSettingsForm } from './general-settings-form';
 
 export function GeneralSettingsPage() {
   const { guildId } = useParams({ from: '/dashboard/$guildId' });
-  const [config, channels, roles] = useQueries({
+  const queries = useQueries({
     queries: [configQuery(guildId), channelsQuery(guildId), rolesQuery(guildId)],
   });
+  const [config, channels, roles] = queries;
   const update = useUpdateConfig(guildId);
-  const error = config.error ?? channels.error ?? roles.error;
+  const { error, retry } = firstFailure(queries);
 
   return (
-    <Card>
-      {error && <p role="alert">{error.message}</p>}
-      {!error && (!config.data || !channels.data || !roles.data) && <p>Chargement…</p>}
+    <div className="flex flex-col gap-8">
+      <PageHeader
+        title="Général"
+        description="Les réglages de base du bot sur ce serveur : où il écrit, qui fait partie du staff, à quelle heure il vit."
+      />
+      {error && <LoadError error={error} onRetry={retry} />}
+      {!error && (!config.data || !channels.data || !roles.data) && (
+        <PageSkeleton label="Chargement des réglages…" panels={3} />
+      )}
       {config.data && channels.data && roles.data && (
         <GeneralSettingsForm
           config={config.data}
@@ -24,6 +32,6 @@ export function GeneralSettingsPage() {
           onSubmit={(values) => update.mutateAsync(values)}
         />
       )}
-    </Card>
+    </div>
   );
 }
