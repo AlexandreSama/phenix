@@ -85,3 +85,42 @@ test('la modération verrouille le sujet : le membre ne peut plus répondre', as
   ).toBeVisible();
   await expect(member.getByLabel('Ta réponse')).toHaveCount(0);
 });
+
+test('le propriétaire du bot ouvre Métriques, lisible sur téléphone', async ({
+  browser,
+  baseURL,
+}) => {
+  const owner = await pageAs(browser, 'owner', baseURL!);
+  await owner.setViewportSize({ width: 390, height: 844 });
+  await owner.goto('/admin');
+  await owner.getByRole('link', { name: 'Métriques' }).click();
+
+  await expect(owner.getByRole('heading', { name: 'Métriques', level: 2 })).toBeVisible();
+  // L'API publie son battement dès son démarrage : elle est forcément en ligne
+  const api = owner.getByRole('region', { name: 'API' });
+  await expect(api.getByText('En ligne')).toBeVisible();
+  await expect(api.getByText('Version')).toBeVisible();
+  await expect(owner.getByRole('region', { name: 'Bot' })).toBeVisible();
+  // Postgres est lu en direct : une taille, jamais le tiret d'une base muette
+  await expect(owner.getByText('Base Postgres')).toBeVisible();
+  await expect(owner.getByText('La base n’a pas répondu')).toHaveCount(0);
+
+  await owner.getByRole('link', { name: '7 jours' }).click();
+  await expect(owner).toHaveURL(/\/admin\/metriques\?range=7d$/);
+  await expect(owner.getByText('Commandes · 7 jours')).toBeVisible();
+
+  // Pas de défilement horizontal à 390 px
+  const overflow = await owner.evaluate(
+    () => document.documentElement.scrollWidth - document.documentElement.clientWidth,
+  );
+  expect(overflow).toBeLessThanOrEqual(0);
+});
+
+test('un membre ne voit pas Métriques, et l’API la lui refuse', async ({ browser, baseURL }) => {
+  const member = await pageAs(browser, 'member', baseURL!);
+  await member.goto('/admin/metriques');
+  await expect(member.getByRole('heading', { name: 'Page introuvable' })).toBeVisible();
+
+  const response = await member.request.get('/api/admin/metrics/overview');
+  expect(response.status()).toBe(403);
+});

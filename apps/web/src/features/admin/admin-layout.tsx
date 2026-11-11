@@ -12,13 +12,14 @@ import {
 } from '../../components/ui/side-nav';
 
 const TABS: {
-  to: '/admin' | '/admin/signalements' | '/admin/forum';
+  to: '/admin' | '/admin/signalements' | '/admin/forum' | '/admin/metriques';
   label: string;
   icon: IconName;
 }[] = [
   { to: '/admin', label: 'Catalogue TD2', icon: 'crosshair' },
   { to: '/admin/signalements', label: 'Signalements', icon: 'flag' },
   { to: '/admin/forum', label: 'Forum', icon: 'forum' },
+  { to: '/admin/metriques', label: 'Métriques', icon: 'pulse' },
 ];
 
 /** La page des propriétaires du bot : ce qui vaut pour tous les serveurs à la fois. */

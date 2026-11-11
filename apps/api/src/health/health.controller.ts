@@ -1,6 +1,6 @@
 import { Controller, Get, ServiceUnavailableException } from '@nestjs/common';
 import { PrismaClient } from '@phenix/database';
-import { BOT_HEARTBEAT, botHeartbeatSchema, type BotHeartbeat } from '@phenix/shared';
+import { METRICS, serviceHeartbeatSchema } from '@phenix/shared';
 import { Redis } from 'ioredis';
 
 /** Le contenu d'une clé, ou undefined si elle manque ou ne contient pas du JSON. */
@@ -35,12 +35,14 @@ export class HealthController {
    * À part de /api/health, pour qu'un bot en panne ne fasse pas redémarrer l'API.
    */
   @Get('bot')
-  async bot(): Promise<{ status: 'ok' } & BotHeartbeat> {
-    const raw = await this.redis.get(BOT_HEARTBEAT.key).catch(() => null);
-    const heartbeat = botHeartbeatSchema.safeParse(parseJson(raw));
+  async bot(): Promise<{ status: 'ok'; at: string; guilds: number; ping: number }> {
+    const raw = await this.redis.get(METRICS.live.keys.bot).catch(() => null);
+    const heartbeat = serviceHeartbeatSchema.safeParse(parseJson(raw));
     if (!heartbeat.success) {
       throw new ServiceUnavailableException('Le bot ne donne plus signe de vie');
     }
-    return { status: 'ok', ...heartbeat.data };
+    // La même réponse qu'avant la phase 11 : le détail (CPU, RAM) reste sur la page Métriques
+    const { at, guilds = 0, ping = -1 } = heartbeat.data;
+    return { status: 'ok', at, guilds, ping };
   }
 }

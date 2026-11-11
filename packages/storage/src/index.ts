@@ -108,3 +108,4 @@ export function createEvidenceStorage(env: StorageEnv): ObjectStorage {
 export function createMediaStorage(env: StorageEnv): ObjectStorage {
   return createObjectStorage(env.S3_MEDIA_BUCKET, createS3Client(env));
 }
+export * from './garage-admin.js';

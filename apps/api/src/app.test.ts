@@ -31,6 +31,7 @@ const env: Env = {
   S3_EVIDENCE_BUCKET: 'evidence',
   S3_MEDIA_BUCKET: 'media',
   BOT_OWNER_IDS: ['900000000000000001'],
+  APP_VERSION: 'test',
 };
 
 const MANAGED = '300000000000000001';
@@ -64,6 +65,8 @@ const redis = {
   expire: vi.fn(async () => 1),
   ping: vi.fn(async () => 'PONG'),
   quit: vi.fn(async () => 'OK'),
+  // La mémoire de Valkey, pour la page Métriques
+  info: vi.fn(async (_section: string) => '# Memory\r\nused_memory:2097152\r\nmaxmemory:0\r\n'),
 };
 
 const config = {
@@ -305,6 +308,55 @@ const media = {
   })),
   delete: vi.fn(async (_keys: readonly string[]) => {}),
 };
+/** Les réponses des requêtes des métriques, reconnues à un bout de leur SQL. */
+const metricsRows = {
+  totals: { count: 42, errors: 2, guilds: 3 },
+  ranking: [
+    { command: 'td2 mission', count: 30, errors: 1, avgDurationMs: 120 },
+    { command: 'ping', count: 12, errors: 1, avgDurationMs: 15 },
+  ],
+  daily: [{ day: '2026-11-11', count: 42, errors: 2 }],
+  guilds: [
+    {
+      id: MANAGED,
+      name: 'Les Agents',
+      icon: 'abc',
+      count: 40,
+      topCommand: 'td2 mission',
+      lastActiveAt: '2026-11-11T09:00:00.000Z',
+    },
+    {
+      id: '',
+      name: null,
+      icon: null,
+      count: 2,
+      topCommand: 'ping',
+      lastActiveAt: '2026-11-11T08:00:00.000Z',
+    },
+  ],
+  storage: [
+    { name: 'garage.media.bytes', value: 4096, takenAt: '2026-11-11T09:05:00.000Z' },
+    { name: 'garage.media.objects', value: 2, takenAt: '2026-11-11T09:05:00.000Z' },
+    { name: 'postgres.bytes', value: 9000, takenAt: '2026-11-11T09:05:00.000Z' },
+  ],
+  series: [
+    { name: 'bot.cpu', at: '2026-11-11T09:00:00.000Z', value: 3.5 },
+    { name: 'bot.cpu', at: '2026-11-11T09:05:00.000Z', value: 4.5 },
+  ],
+};
+
+function metricsSql(sql: string): unknown[] {
+  if (sql.includes('pg_database_size')) return [{ bytes: 10_485_760 }];
+  if (sql.includes('pg_statio_user_tables')) return [{ name: 'ForumPost', bytes: 4_194_304 }];
+  if (sql.includes('NOT LIKE')) return metricsRows.storage;
+  if (sql.includes('count(DISTINCT')) return [metricsRows.totals];
+  if (sql.includes('DISTINCT ON')) return metricsRows.guilds;
+  if (sql.includes('avgDurationMs')) return metricsRows.ranking;
+  if (sql.includes("'YYYY-MM-DD'")) return metricsRows.daily;
+  if (sql.includes('date_bin')) return metricsRows.series;
+  return [1];
+}
+
 const db = {
   $transaction: vi.fn(async (run: (tx: unknown) => Promise<unknown>) => run(db)),
   giveaway: {
@@ -444,7 +496,9 @@ const db = {
     findMany: vi.fn(async () => [] as object[]),
     updateMany: vi.fn(async () => ({ count: 1 })),
   },
-  $queryRaw: vi.fn(async () => [1]),
+  // Le SQL écrit à la main : celui des métriques, aiguillé sur son texte (testé à part, sur un
+  // vrai Postgres, dans packages/database) ; SELECT 1 pour /api/health
+  $queryRaw: vi.fn(async (strings: TemplateStringsArray) => metricsSql(strings.join('?'))),
   $disconnect: vi.fn(),
 };
 
@@ -1829,6 +1883,144 @@ describe('administration du forum', () => {
   });
 });
 
+describe('métriques', () => {
+  const owner = `sid=${OWNER_SESSION_ID}`;
+  const botBeat = {
+    at: '2026-11-11T09:00:00.000Z',
+    cpu: 3.2,
+    memory: 180_000_000,
+    memoryLimit: 536_870_912,
+    uptime: 7200,
+    version: 'abc123',
+    eventLoopDelayMs: 1.1,
+    guilds: 12,
+    ping: 42,
+  };
+
+  it('refuse les métriques à qui n’est pas propriétaire, et sans session', async () => {
+    for (const path of ['overview', 'commands', 'guilds', 'series?names=bot.cpu']) {
+      const member = await server().get(`/api/admin/metrics/${path}`).set('Cookie', cookie);
+      const anonymous = await server().get(`/api/admin/metrics/${path}`);
+      expect([member.status, anonymous.status]).toEqual([403, 401]);
+    }
+    expect(db.$queryRaw).not.toHaveBeenCalled();
+  });
+
+  it('overview : le bot en ligne, l’API hors ligne sans battement, le stockage et les totaux', async () => {
+    store.set('metrics:live:bot', JSON.stringify(botBeat));
+
+    const response = await server().get('/api/admin/metrics/overview').set('Cookie', owner);
+
+    expect(response.status).toBe(200);
+    expect(response.body).toEqual({
+      services: { bot: { online: true, heartbeat: botBeat }, api: { online: false } },
+      commands: { '24h': metricsRows.totals, '7d': metricsRows.totals, '30d': metricsRows.totals },
+      storage: {
+        takenAt: '2026-11-11T09:05:00.000Z',
+        postgres: { bytes: 10_485_760, tables: [{ name: 'ForumPost', bytes: 4_194_304 }] },
+        valkey: { bytes: 2_097_152, maxBytes: null },
+        garage: [{ name: 'media', bytes: 4096, objects: 2 }],
+      },
+    });
+    expect(redis.info).toHaveBeenCalledWith('memory');
+  });
+
+  it('overview : un battement illisible compte comme hors ligne, Valkey muet ne casse rien', async () => {
+    store.set('metrics:live:bot', JSON.stringify({ ...botBeat, cpu: 'beaucoup' }));
+    store.set('metrics:live:api', 'pas du JSON');
+    redis.info.mockRejectedValueOnce(new Error('Valkey absent'));
+
+    const response = await server().get('/api/admin/metrics/overview').set('Cookie', owner);
+
+    expect(response.body.services).toEqual({ bot: { online: false }, api: { online: false } });
+    expect(response.body.storage.valkey).toEqual({ bytes: null, maxBytes: null });
+  });
+
+  it('garde chaque réponse 30 secondes dans le cache', async () => {
+    const first = await server().get('/api/admin/metrics/overview').set('Cookie', owner);
+    const calls = db.$queryRaw.mock.calls.length;
+    // Le bot passe en ligne entre-temps : le cache sert encore l'ancienne réponse
+    store.set('metrics:live:bot', JSON.stringify(botBeat));
+    const second = await server().get('/api/admin/metrics/overview').set('Cookie', owner);
+
+    expect(second.body).toEqual(first.body);
+    expect(db.$queryRaw.mock.calls.length).toBe(calls);
+    expect(redis.set).toHaveBeenCalledWith('metrics:cache:overview', expect.any(String), 'EX', 30);
+  });
+
+  it('commands : le classement et la courbe par jour de la plage demandée', async () => {
+    const response = await server()
+      .get('/api/admin/metrics/commands?range=7d')
+      .set('Cookie', owner);
+
+    expect(response.body).toEqual({
+      range: '7d',
+      commands: metricsRows.ranking,
+      daily: metricsRows.daily,
+    });
+    expect(store.has('metrics:cache:commands:7d')).toBe(true);
+  });
+
+  it('guilds : les serveurs avec leur icône, 24 h par défaut', async () => {
+    const response = await server().get('/api/admin/metrics/guilds').set('Cookie', owner);
+
+    expect(response.body).toEqual({
+      range: '24h',
+      guilds: [
+        {
+          id: MANAGED,
+          name: 'Les Agents',
+          iconUrl: `https://cdn.discordapp.com/icons/${MANAGED}/abc.png?size=128`,
+          count: 40,
+          topCommand: 'td2 mission',
+          lastActiveAt: '2026-11-11T09:00:00.000Z',
+        },
+        {
+          id: '',
+          name: null,
+          iconUrl: null,
+          count: 2,
+          topCommand: 'ping',
+          lastActiveAt: '2026-11-11T08:00:00.000Z',
+        },
+      ],
+    });
+  });
+
+  it('series : une courbe par nom demandé, vide sans relevé, au pas de la plage', async () => {
+    const response = await server()
+      .get('/api/admin/metrics/series?names=bot.cpu,api.cpu&range=30d')
+      .set('Cookie', owner);
+
+    expect(response.body).toEqual({
+      range: '30d',
+      binMinutes: 240,
+      series: [
+        {
+          name: 'bot.cpu',
+          points: [
+            { at: '2026-11-11T09:00:00.000Z', value: 3.5 },
+            { at: '2026-11-11T09:05:00.000Z', value: 4.5 },
+          ],
+        },
+        { name: 'api.cpu', points: [] },
+      ],
+    });
+  });
+
+  it('refuse une plage ou un relevé inconnu', async () => {
+    const badRange = await server()
+      .get('/api/admin/metrics/commands?range=1y')
+      .set('Cookie', owner);
+    const badName = await server()
+      .get('/api/admin/metrics/series?names=bot.disque')
+      .set('Cookie', owner);
+    const noName = await server().get('/api/admin/metrics/series').set('Cookie', owner);
+
+    expect([badRange.status, badName.status, noName.status]).toEqual([400, 400, 400]);
+  });
+});
+
 describe('santé', () => {
   it('répond ok quand la base et Valkey répondent', async () => {
     const response = await request(app.getHttpServer()).get('/api/health');
@@ -1836,15 +2028,26 @@ describe('santé', () => {
   });
 
   it('le bot : ok tant que son battement de cœur est là, 503 sinon', async () => {
-    const heartbeat = { at: '2026-11-11T09:00:00.000Z', guilds: 12, ping: 42 };
-    store.set('bot:heartbeat', JSON.stringify(heartbeat));
+    const heartbeat = {
+      at: '2026-11-11T09:00:00.000Z',
+      cpu: 3,
+      memory: 1000,
+      memoryLimit: null,
+      uptime: 60,
+      version: 'abc123',
+      eventLoopDelayMs: 1,
+      guilds: 12,
+      ping: 42,
+    };
+    store.set('metrics:live:bot', JSON.stringify(heartbeat));
     const alive = await server().get('/api/health/bot');
-    store.set('bot:heartbeat', 'pas du JSON');
+    store.set('metrics:live:bot', 'pas du JSON');
     const corrupt = await server().get('/api/health/bot');
-    store.delete('bot:heartbeat');
+    store.delete('metrics:live:bot');
     const absent = await server().get('/api/health/bot');
 
-    expect(alive.body).toEqual({ status: 'ok', ...heartbeat });
+    // La réponse d'avant la phase 11, pour les surveillances externes
+    expect(alive.body).toEqual({ status: 'ok', at: heartbeat.at, guilds: 12, ping: 42 });
     expect([corrupt.status, absent.status]).toEqual([503, 503]);
     expect(absent.body.message).toBe('Le bot ne donne plus signe de vie');
   });

@@ -24,6 +24,11 @@ const envSchema = storageEnvSchema.extend({
         .map((id) => id.trim())
         .filter(Boolean),
     ),
+  /** La version affichée sur la page Métriques (un SHA git, par exemple). Vide = « dev » */
+  APP_VERSION: z.preprocess(
+    (value) => (value === '' ? undefined : value),
+    z.string().default('dev'),
+  ),
 });
 
 export type Env = z.infer<typeof envSchema>;

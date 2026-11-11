@@ -1,4 +1,4 @@
-import { storageEnvSchema } from '@phenix/storage';
+import { garageAdminEnvSchema, storageEnvSchema } from '@phenix/storage';
 import { z } from 'zod';
 import { TRACKER_GG_URL } from './modules/td2/stats/tracker-gg.js';
 
@@ -8,8 +8,12 @@ const snowflake = z.string().regex(/^\d{17,20}$/, 'ID Discord invalide');
 const optional = <T extends z.ZodType>(schema: T) =>
   z.preprocess((value) => (value === '' ? undefined : value), schema.optional());
 
-/** Les variables du bot, plus celles du stockage S3 (transcripts et preuves). */
+/**
+ * Les variables du bot, plus celles du stockage S3 (transcripts et preuves) et de l'API
+ * d'administration de Garage (page Métriques).
+ */
 const envSchema = storageEnvSchema.extend({
+  ...garageAdminEnvSchema.shape,
   NODE_ENV: z.enum(['development', 'production', 'test']).default('development'),
   LOG_LEVEL: z.enum(['fatal', 'error', 'warn', 'info', 'debug', 'trace']).default('info'),
   DATABASE_URL: z.string().min(1),
@@ -34,6 +38,11 @@ const envSchema = storageEnvSchema.extend({
   TRN_API_URL: z.preprocess(
     (value) => (value === '' ? undefined : value),
     z.url().default(TRACKER_GG_URL),
+  ),
+  /** La version affichée sur la page Métriques (un SHA git, par exemple). Vide = « dev » */
+  APP_VERSION: z.preprocess(
+    (value) => (value === '' ? undefined : value),
+    z.string().default('dev'),
   ),
 });
 

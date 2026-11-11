@@ -5,13 +5,23 @@ import {
   createGiveawayQueue,
   createGiveawayScheduler,
   createGiveawayWorker,
+  createMetricsQueue,
+  createMetricsWorker,
   createTd2Queue,
   createTd2Scheduler,
   createTd2Worker,
+  ensureMetricsSchedules,
 } from '@phenix/jobs';
-import { createEvidenceStorage, createTranscriptStorage } from '@phenix/storage';
+import { createProcessMeter } from '@phenix/metrics';
+import { METRICS } from '@phenix/shared';
+import {
+  createEvidenceStorage,
+  createGarageAdminFromEnv,
+  createTranscriptStorage,
+} from '@phenix/storage';
 import { createClient } from './client.js';
 import { commands, ownerCommands } from './commands.js';
+import { createDbCommandUsageRecorder } from './core/command-usage.js';
 import type { BotContext } from './core/context.js';
 import { createGuildConfigCache } from './core/guild-config-cache.js';
 import { startHeartbeat } from './core/heartbeat.js';
@@ -28,6 +38,7 @@ import {
   resumeGiveaways,
 } from './modules/giveaways/index.js';
 import { createMessageXpHandler, levelingComponents } from './modules/leveling/index.js';
+import { createMetricsProcessor } from './modules/metrics/index.js';
 import { startBanExpiry } from './modules/moderation/index.js';
 import {
   createRolePanelPublisher,
@@ -90,6 +101,29 @@ const cache = new Redis(env.REDIS_URL, { enableOfflineQueue: false, maxRetriesPe
 cache.on('error', (err) => logger.warn({ err }, 'Cache et battement de cœur : erreur Valkey'));
 if (!env.TRN_API_KEY) logger.warn('TRN_API_KEY absente : /td2 stats est désactivée');
 
+// Les métriques des propriétaires (phase 11) : un relevé toutes les 5 minutes, planifié par
+// BullMQ (une seule exécution même avec plusieurs instances), et le compte des commandes
+const metricsQueue = createMetricsQueue(env.REDIS_URL);
+const metricsWorker = createMetricsWorker(
+  env.REDIS_URL,
+  createMetricsProcessor({
+    db: prisma,
+    redis: cache,
+    garage: createGarageAdminFromEnv(env),
+    meter: createProcessMeter(),
+    logger,
+  }),
+);
+metricsQueue.on('error', (err) => logger.error({ err }, 'File des métriques : erreur Valkey'));
+metricsWorker.on('error', (err) => logger.error({ err }, 'Worker des métriques : erreur'));
+metricsWorker.on('failed', (job, err) =>
+  logger.warn({ err, job: job?.name }, 'Relevé des métriques en échec'),
+);
+if (!env.GARAGE_ADMIN_URL || !env.GARAGE_ADMIN_TOKEN) {
+  logger.warn('GARAGE_ADMIN_URL ou GARAGE_ADMIN_TOKEN absente : pas de relevé Garage');
+}
+const usage = createDbCommandUsageRecorder(prisma, { logger, intervalMs: METRICS.usageFlushMs });
+
 const context: BotContext = {
   db: prisma,
   logger,
@@ -125,6 +159,7 @@ client.on(
       ...adminComponents,
     ]),
     context,
+    usage,
   }),
 );
 
@@ -137,7 +172,13 @@ client.once(Events.ClientReady, (ready) => {
     .then(() => logger.info('Serveurs synchronisés avec la base'))
     .catch((err: unknown) => logger.error({ err }, 'Échec de la synchronisation des serveurs'));
   stopBanExpiry = startBanExpiry(ready, context);
-  stopHeartbeat = startHeartbeat(ready, cache, logger);
+  stopHeartbeat = startHeartbeat({
+    client: ready,
+    store: cache,
+    logger,
+    meter: createProcessMeter(),
+    version: env.APP_VERSION,
+  });
   publishPendingRolePanels(ready, prisma, logger).catch((err: unknown) =>
     logger.error({ err }, 'Échec de la publication des panels en attente'),
   );
@@ -155,6 +196,10 @@ client.once(Events.ClientReady, (ready) => {
     logger.error({ err }, 'Échec de la reprise des giveaways'),
   );
   td2Worker.run().catch((err: unknown) => logger.error({ err }, 'Worker TD2 arrêté'));
+  ensureMetricsSchedules(metricsQueue, METRICS.sampleIntervalMs).catch((err: unknown) =>
+    logger.error({ err }, 'Échec de la planification des relevés'),
+  );
+  metricsWorker.run().catch((err: unknown) => logger.error({ err }, 'Worker des métriques arrêté'));
   resumeTd2Events(ready, prisma, context.td2, logger).catch((err: unknown) =>
     logger.error({ err }, 'Échec de la reprise des sorties TD2'),
   );
@@ -174,6 +219,10 @@ async function shutdown(signal: string): Promise<void> {
   await giveawayQueue.close();
   await td2Worker.close();
   await td2Queue.close();
+  await metricsWorker.close();
+  await metricsQueue.close();
+  // Le dernier lot des commandes comptées, avant de fermer la base
+  await usage.stop();
   await unsubscribe();
   cache.disconnect();
   await client.destroy();

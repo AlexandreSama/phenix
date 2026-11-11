@@ -1,4 +1,4 @@
-import type { DashboardModuleKey } from '@phenix/shared';
+import { METRICS_RANGE_KEYS, type DashboardModuleKey } from '@phenix/shared';
 import type { QueryClient } from '@tanstack/react-query';
 import {
   createRootRouteWithContext,
@@ -11,6 +11,7 @@ import { z } from 'zod';
 import { AdminLayout } from './features/admin/admin-layout';
 import { CataloguePage } from './features/admin/catalogue/catalogue-page';
 import { ForumAdminPage } from './features/admin/forum/forum-admin-page';
+import { MetricsPage } from './features/admin/metrics/metrics-page';
 import { ReportsPage } from './features/admin/reports/reports-page';
 import { currentUserQuery } from './features/auth/api';
 import { GeneralSettingsPage } from './features/dashboard/general/general-settings-page';
@@ -221,6 +222,16 @@ const adminForumRoute = createRoute({
   component: ForumAdminPage,
 });
 
+/** Métriques : la période choisie (24 h par défaut) vit dans l'adresse. */
+const adminMetricsRoute = createRoute({
+  getParentRoute: () => adminRoute,
+  path: 'metriques',
+  validateSearch: z.object({
+    range: z.enum(METRICS_RANGE_KEYS).optional().catch(undefined),
+  }),
+  component: MetricsPage,
+});
+
 /** Le forum : lecture publique. Seule l'écriture d'un nouveau sujet demande une connexion. */
 const forumRoute = createRoute({
   getParentRoute: () => rootRoute,
@@ -296,7 +307,12 @@ export const routeTree = rootRoute.addChildren([
   homeRoute,
   sortiesRoute,
   leaderboardRoute,
-  adminRoute.addChildren([adminCatalogueRoute, adminReportsRoute, adminForumRoute]),
+  adminRoute.addChildren([
+    adminCatalogueRoute,
+    adminReportsRoute,
+    adminForumRoute,
+    adminMetricsRoute,
+  ]),
   forumRoute.addChildren([
     forumHomeRoute,
     forumCategoryLayoutRoute.addChildren([

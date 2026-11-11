@@ -1,5 +1,6 @@
 import { MessageFlags, type Interaction } from 'discord.js';
 import type { ComponentHandler, SlashCommand } from './command.js';
+import { fullCommandName, type CommandUsageRecorder } from './command-usage.js';
 import type { BotContext } from './context.js';
 import { parseCustomId } from './custom-id.js';
 
@@ -8,12 +9,14 @@ interface RouterDeps {
   components: Map<string, ComponentHandler>;
   /** Transmis tel quel à chaque commande et handler */
   context: BotContext;
+  /** Compte chaque slash command (page Métriques) ; ni l'autocomplétion ni les boutons */
+  usage?: Pick<CommandUsageRecorder, 'record'>;
 }
 
 export const ERROR_MESSAGE = 'Oups, une erreur est survenue. Réessaie dans un instant.';
 
 /** Aiguille chaque interaction vers sa commande ou son handler, et rattrape toutes les erreurs. */
-export function createInteractionHandler({ commands, components, context }: RouterDeps) {
+export function createInteractionHandler({ commands, components, context, usage }: RouterDeps) {
   const { logger } = context;
   return async (interaction: Interaction): Promise<void> => {
     try {
@@ -23,7 +26,24 @@ export function createInteractionHandler({ commands, components, context }: Rout
           logger.warn({ command: interaction.commandName }, 'Commande inconnue');
           return;
         }
-        await command.execute(interaction, context);
+        const started = performance.now();
+        let ok = false;
+        try {
+          await command.execute(interaction, context);
+          ok = true;
+        } finally {
+          // Le compte ne doit jamais changer le sort de la commande
+          try {
+            usage?.record({
+              guildId: interaction.guildId,
+              command: fullCommandName(interaction),
+              durationMs: performance.now() - started,
+              ok,
+            });
+          } catch (err) {
+            logger.warn({ err }, 'Usage de la commande non compté');
+          }
+        }
         return;
       }
 

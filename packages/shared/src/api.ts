@@ -9,6 +9,7 @@ import type {
   Td2ReportStatusKey,
   Td2RoleKey,
 } from './constants.js';
+import type { MetricsRange, ServiceHeartbeat } from './metrics.js';
 import type { RolePanelInput, RolePanelMode } from './schemas/role-panel.js';
 import type { TicketSettingsInput } from './schemas/tickets.js';
 
@@ -371,4 +372,83 @@ export interface ForumMember {
   username: string;
   avatarUrl: string;
   role: ForumRoleKey;
+}
+
+// ---------- Métriques (phase 11) ----------
+
+/** Un service vu par la page Métriques : hors ligne si son battement manque. */
+export type ServiceStatus = { online: true; heartbeat: ServiceHeartbeat } | { online: false };
+
+/** Les commandes lancées sur une plage, et sur combien de serveurs. */
+export interface CommandTotals {
+  count: number;
+  errors: number;
+  guilds: number;
+}
+
+export interface StorageBucket {
+  name: string;
+  bytes: number;
+  objects: number;
+}
+
+/**
+ * Le haut de la page : l'état en direct, le stockage, les totaux. Postgres et Valkey sont lus
+ * en direct ; Garage vient du dernier relevé (seul le bot a le jeton d'administration).
+ */
+export interface MetricsOverview {
+  services: Record<'bot' | 'api', ServiceStatus>;
+  commands: Record<MetricsRange, CommandTotals>;
+  storage: {
+    /** Date du dernier relevé du stockage (Garage) ; null tant qu'il n'y en a pas */
+    takenAt: string | null;
+    /** null : la base n'a pas répondu à temps */
+    postgres: { bytes: number | null; tables: { name: string; bytes: number }[] };
+    /** maxBytes null : Valkey n'a pas de plafond (maxmemory 0) */
+    valkey: { bytes: number | null; maxBytes: number | null };
+    garage: StorageBucket[];
+  };
+}
+
+export interface CommandStat {
+  /** Avec la sous-commande : « td2 mission » */
+  command: string;
+  count: number;
+  errors: number;
+  avgDurationMs: number;
+}
+
+export interface CommandMetrics {
+  range: MetricsRange;
+  commands: CommandStat[];
+  /** Le total par jour (heure de Paris), du plus ancien au plus récent ; jour = AAAA-MM-JJ */
+  daily: { day: string; count: number; errors: number }[];
+}
+
+export interface GuildStat {
+  /** '' : les commandes lancées hors serveur, en message privé */
+  id: string;
+  /** null : un serveur que le bot ne connaît plus */
+  name: string | null;
+  iconUrl: string | null;
+  count: number;
+  topCommand: string;
+  lastActiveAt: string;
+}
+
+export interface GuildMetrics {
+  range: MetricsRange;
+  guilds: GuildStat[];
+}
+
+export interface MetricSeriesPoint {
+  at: string;
+  value: number;
+}
+
+export interface MetricSeries {
+  range: MetricsRange;
+  /** Le pas des points, en minutes : 5 sur 24 h, 60 sur 7 jours, 240 sur 30 jours */
+  binMinutes: number;
+  series: { name: string; points: MetricSeriesPoint[] }[];
 }

@@ -422,7 +422,9 @@ export const ModelName = {
   ForumCategory: 'ForumCategory',
   ForumThread: 'ForumThread',
   ForumAttachment: 'ForumAttachment',
-  ForumPost: 'ForumPost'
+  ForumPost: 'ForumPost',
+  CommandUsage: 'CommandUsage',
+  MetricSample: 'MetricSample'
 } as const
 
 export type ModelName = (typeof ModelName)[keyof typeof ModelName]
@@ -438,7 +440,7 @@ export type TypeMap<ExtArgs extends runtime.Types.Extensions.InternalArgs = runt
     omit: GlobalOmitOptions
   }
   meta: {
-    modelProps: "user" | "guild" | "guildConfig" | "guildDelegate" | "case" | "memberLevel" | "marriage" | "ticket" | "ticketPanel" | "giveaway" | "giveawayEntry" | "rolePanel" | "rolePanelOption" | "td2Profile" | "td2Activity" | "td2ActivityMode" | "td2ModeSlot" | "td2Directive" | "td2Event" | "td2EventSlot" | "td2Signup" | "td2Report" | "forumCategory" | "forumThread" | "forumAttachment" | "forumPost"
+    modelProps: "user" | "guild" | "guildConfig" | "guildDelegate" | "case" | "memberLevel" | "marriage" | "ticket" | "ticketPanel" | "giveaway" | "giveawayEntry" | "rolePanel" | "rolePanelOption" | "td2Profile" | "td2Activity" | "td2ActivityMode" | "td2ModeSlot" | "td2Directive" | "td2Event" | "td2EventSlot" | "td2Signup" | "td2Report" | "forumCategory" | "forumThread" | "forumAttachment" | "forumPost" | "commandUsage" | "metricSample"
     txIsolationLevel: TransactionIsolationLevel
   }
   model: {
@@ -2366,6 +2368,154 @@ export type TypeMap<ExtArgs extends runtime.Types.Extensions.InternalArgs = runt
         }
       }
     }
+    CommandUsage: {
+      payload: Prisma.$CommandUsagePayload<ExtArgs>
+      fields: Prisma.CommandUsageFieldRefs
+      operations: {
+        findUnique: {
+          args: Prisma.CommandUsageFindUniqueArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$CommandUsagePayload> | null
+        }
+        findUniqueOrThrow: {
+          args: Prisma.CommandUsageFindUniqueOrThrowArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$CommandUsagePayload>
+        }
+        findFirst: {
+          args: Prisma.CommandUsageFindFirstArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$CommandUsagePayload> | null
+        }
+        findFirstOrThrow: {
+          args: Prisma.CommandUsageFindFirstOrThrowArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$CommandUsagePayload>
+        }
+        findMany: {
+          args: Prisma.CommandUsageFindManyArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$CommandUsagePayload>[]
+        }
+        create: {
+          args: Prisma.CommandUsageCreateArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$CommandUsagePayload>
+        }
+        createMany: {
+          args: Prisma.CommandUsageCreateManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        createManyAndReturn: {
+          args: Prisma.CommandUsageCreateManyAndReturnArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$CommandUsagePayload>[]
+        }
+        delete: {
+          args: Prisma.CommandUsageDeleteArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$CommandUsagePayload>
+        }
+        update: {
+          args: Prisma.CommandUsageUpdateArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$CommandUsagePayload>
+        }
+        deleteMany: {
+          args: Prisma.CommandUsageDeleteManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        updateMany: {
+          args: Prisma.CommandUsageUpdateManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        updateManyAndReturn: {
+          args: Prisma.CommandUsageUpdateManyAndReturnArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$CommandUsagePayload>[]
+        }
+        upsert: {
+          args: Prisma.CommandUsageUpsertArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$CommandUsagePayload>
+        }
+        aggregate: {
+          args: Prisma.CommandUsageAggregateArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.AggregateCommandUsage>
+        }
+        groupBy: {
+          args: Prisma.CommandUsageGroupByArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.CommandUsageGroupByOutputType>[]
+        }
+        count: {
+          args: Prisma.CommandUsageCountArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.CommandUsageCountAggregateOutputType> | number
+        }
+      }
+    }
+    MetricSample: {
+      payload: Prisma.$MetricSamplePayload<ExtArgs>
+      fields: Prisma.MetricSampleFieldRefs
+      operations: {
+        findUnique: {
+          args: Prisma.MetricSampleFindUniqueArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$MetricSamplePayload> | null
+        }
+        findUniqueOrThrow: {
+          args: Prisma.MetricSampleFindUniqueOrThrowArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$MetricSamplePayload>
+        }
+        findFirst: {
+          args: Prisma.MetricSampleFindFirstArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$MetricSamplePayload> | null
+        }
+        findFirstOrThrow: {
+          args: Prisma.MetricSampleFindFirstOrThrowArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$MetricSamplePayload>
+        }
+        findMany: {
+          args: Prisma.MetricSampleFindManyArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$MetricSamplePayload>[]
+        }
+        create: {
+          args: Prisma.MetricSampleCreateArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$MetricSamplePayload>
+        }
+        createMany: {
+          args: Prisma.MetricSampleCreateManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        createManyAndReturn: {
+          args: Prisma.MetricSampleCreateManyAndReturnArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$MetricSamplePayload>[]
+        }
+        delete: {
+          args: Prisma.MetricSampleDeleteArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$MetricSamplePayload>
+        }
+        update: {
+          args: Prisma.MetricSampleUpdateArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$MetricSamplePayload>
+        }
+        deleteMany: {
+          args: Prisma.MetricSampleDeleteManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        updateMany: {
+          args: Prisma.MetricSampleUpdateManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        updateManyAndReturn: {
+          args: Prisma.MetricSampleUpdateManyAndReturnArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$MetricSamplePayload>[]
+        }
+        upsert: {
+          args: Prisma.MetricSampleUpsertArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$MetricSamplePayload>
+        }
+        aggregate: {
+          args: Prisma.MetricSampleAggregateArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.AggregateMetricSample>
+        }
+        groupBy: {
+          args: Prisma.MetricSampleGroupByArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.MetricSampleGroupByOutputType>[]
+        }
+        count: {
+          args: Prisma.MetricSampleCountArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.MetricSampleCountAggregateOutputType> | number
+        }
+      }
+    }
   }
 } & {
   other: {
@@ -2758,6 +2908,27 @@ export const ForumPostScalarFieldEnum = {
 } as const
 
 export type ForumPostScalarFieldEnum = (typeof ForumPostScalarFieldEnum)[keyof typeof ForumPostScalarFieldEnum]
+
+
+export const CommandUsageScalarFieldEnum = {
+  hour: 'hour',
+  guildId: 'guildId',
+  command: 'command',
+  count: 'count',
+  errors: 'errors',
+  totalDurationMs: 'totalDurationMs'
+} as const
+
+export type CommandUsageScalarFieldEnum = (typeof CommandUsageScalarFieldEnum)[keyof typeof CommandUsageScalarFieldEnum]
+
+
+export const MetricSampleScalarFieldEnum = {
+  name: 'name',
+  takenAt: 'takenAt',
+  value: 'value'
+} as const
+
+export type MetricSampleScalarFieldEnum = (typeof MetricSampleScalarFieldEnum)[keyof typeof MetricSampleScalarFieldEnum]
 
 
 export const SortOrder = {
@@ -3183,6 +3354,8 @@ export type GlobalOmitConfig = {
   forumThread?: Prisma.ForumThreadOmit
   forumAttachment?: Prisma.ForumAttachmentOmit
   forumPost?: Prisma.ForumPostOmit
+  commandUsage?: Prisma.CommandUsageOmit
+  metricSample?: Prisma.MetricSampleOmit
 }
 
 /* Types for Logging */

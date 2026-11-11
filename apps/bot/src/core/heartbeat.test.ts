@@ -1,8 +1,16 @@
-import { BOT_HEARTBEAT } from '@phenix/shared';
+import { METRICS } from '@phenix/shared';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { startHeartbeat, type HeartbeatClient } from './heartbeat.js';
 
 const NOW = new Date('2026-11-11T09:00:00Z');
+const READING = {
+  cpu: 12.5,
+  memory: 200_000_000,
+  memoryLimit: 536_870_912,
+  eventLoopDelayMs: 1.5,
+  uptime: 3600,
+  source: 'cgroup' as const,
+};
 
 function setup(ready = true) {
   const client: HeartbeatClient = {
@@ -10,10 +18,11 @@ function setup(ready = true) {
     guilds: { cache: { size: 12 } },
     ws: { ping: 42 },
   };
-  const redis = { set: vi.fn(async () => 'OK' as const) };
+  const store = { set: vi.fn(async () => 'OK' as const) };
   const logger = { warn: vi.fn() };
-  const stop = startHeartbeat(client, redis as never, logger as never, () => NOW);
-  return { redis, logger, stop };
+  const meter = { read: vi.fn(async () => READING) };
+  const stop = startHeartbeat({ client, store, logger, meter, version: 'abc123', now: () => NOW });
+  return { store, logger, meter, stop };
 }
 
 beforeEach(() => {
@@ -25,38 +34,50 @@ afterEach(() => {
 });
 
 describe('startHeartbeat', () => {
-  it('écrit tout de suite, puis toutes les 30 secondes, une clé qui expire en 90', () => {
-    const { redis, stop } = setup();
+  it('publie l’état du bot tout de suite, puis toutes les 30 secondes, une clé qui expire en 90', async () => {
+    const { store, stop } = setup();
+    await vi.advanceTimersByTimeAsync(0);
 
-    expect(redis.set).toHaveBeenCalledWith(
-      BOT_HEARTBEAT.key,
-      JSON.stringify({ at: NOW.toISOString(), guilds: 12, ping: 42 }),
+    expect(store.set).toHaveBeenCalledWith(
+      METRICS.live.keys.bot,
+      JSON.stringify({
+        at: NOW.toISOString(),
+        cpu: 12.5,
+        memory: 200_000_000,
+        memoryLimit: 536_870_912,
+        uptime: 3600,
+        version: 'abc123',
+        eventLoopDelayMs: 1.5,
+        guilds: 12,
+        ping: 42,
+      }),
       'EX',
       90,
     );
-    vi.advanceTimersByTime(30_000);
-    expect(redis.set).toHaveBeenCalledTimes(2);
+    await vi.advanceTimersByTimeAsync(30_000);
+    expect(store.set).toHaveBeenCalledTimes(2);
 
     stop();
-    vi.advanceTimersByTime(60_000);
-    expect(redis.set).toHaveBeenCalledTimes(2);
+    await vi.advanceTimersByTimeAsync(60_000);
+    expect(store.set).toHaveBeenCalledTimes(2);
   });
 
-  it('se tait tant que le bot n’est pas connecté à Discord', () => {
-    const { redis, stop } = setup(false);
+  it('se tait tant que le bot n’est pas connecté à Discord', async () => {
+    const { store, meter, stop } = setup(false);
 
-    vi.advanceTimersByTime(60_000);
+    await vi.advanceTimersByTimeAsync(60_000);
 
-    expect(redis.set).not.toHaveBeenCalled();
+    expect(store.set).not.toHaveBeenCalled();
+    expect(meter.read).not.toHaveBeenCalled();
     stop();
   });
 
   it('une panne de Valkey est journalisée, sans faire tomber le bot', async () => {
-    const { redis, logger, stop } = setup();
-    redis.set.mockRejectedValueOnce(new Error('ECONNREFUSED'));
+    const { store, logger, stop } = setup();
+    store.set.mockRejectedValueOnce(new Error('ECONNREFUSED'));
 
-    vi.advanceTimersByTime(30_000);
-    await vi.waitFor(() => expect(logger.warn).toHaveBeenCalled());
+    await vi.advanceTimersByTimeAsync(0);
+    expect(logger.warn).toHaveBeenCalled();
     stop();
   });
 });
