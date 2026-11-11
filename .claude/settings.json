@@ -1,0 +1,69 @@
+{
+  "$schema": "https://json.schemastore.org/claude-code-settings.json",
+  "model": "sonnet",
+  "effortLevel": "high",
+  "permissions": {
+    "allow": [
+      "Bash(git status *)",
+      "Bash(git diff *)",
+      "Bash(git log *)",
+      "Bash(git show *)",
+      "Bash(git branch *)",
+      "Bash(git remote -v)",
+      "Bash(glab repo view *)",
+      "Bash(glab mr list *)",
+      "Bash(glab mr view *)",
+      "Bash(glab ci status *)",
+      "Bash(glab ci lint *)",
+      "Bash(ls *)",
+      "Bash(node .claude/ci/check-config.js*)",
+      "Bash(glab issue list *)",
+      "Bash(glab issue view *)"
+    ],
+    "ask": [
+      "Bash(git push *)",
+      "Bash(glab repo create *)",
+      "Bash(glab issue create *)",
+      "Bash(glab issue update *)",
+      "Bash(glab issue note *)",
+      "Bash(glab issue close *)",
+      "Bash(glab api -X *)",
+      "Bash(glab api --method *)"
+    ],
+    "deny": [
+      "Read(./**/.env)",
+      "Read(./**/.env.*)",
+      "Read(./**/*.agekey)",
+      "Bash(git push --force *)",
+      "Bash(git push -f *)",
+      "Bash(git reset --hard *)",
+      "Bash(glab repo delete *)",
+      "Bash(git init*)"
+    ]
+  },
+  "hooks": {
+    "SessionStart": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "node \"$CLAUDE_PROJECT_DIR/.claude/hooks/orchestrateur.js\"",
+            "timeout": 10
+          }
+        ]
+      }
+    ],
+    "PreToolUse": [
+      {
+        "matcher": "Write|Edit|NotebookEdit",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "node \"$CLAUDE_PROJECT_DIR/.claude/hooks/protect-secrets.js\"",
+            "timeout": 10
+          }
+        ]
+      }
+    ]
+  }
+}
