@@ -27,59 +27,64 @@ export function formatStat(stat: Td2Stat): string {
   }
 }
 
-/** Les quatre blocs de l'embed, et le libellé de chaque ligne. */
-export const STAT_BLOCKS: { name: string; lines: [Td2StatKey, string][] }[] = [
-  {
-    name: 'Niveau',
-    lines: [
-      ['level', 'Niveau'],
-      ['gearScore', 'Score d’équipement'],
-      ['specialization', 'Spécialisation'],
-    ],
-  },
-  {
-    name: 'Temps de jeu',
-    lines: [
-      ['timePlayed', 'Total'],
-      ['timePve', 'PvE'],
-      ['timeDarkZone', 'Dark Zone'],
-    ],
-  },
-  {
-    name: 'PvE',
-    lines: [
-      ['npcKills', 'Ennemis éliminés'],
-      ['eliteKills', 'Élites'],
-      ['namedKills', 'Nommés'],
-      ['headshots', 'Tirs à la tête'],
-    ],
-  },
-  {
-    name: 'Dark Zone',
-    lines: [
-      ['dzRank', 'Rang'],
-      ['roguesKilled', 'Renégats éliminés'],
-      ['pvpKills', 'Agents éliminés'],
-    ],
-  },
+/** Les lignes d'un bloc : le chiffre d'abord, puis le libellé complet. */
+type StatLine = [Td2StatKey, (value: string) => string];
+
+const TIME_LINES: StatLine[] = [
+  ['timePlayed', (value) => `**${value}** au total`],
+  ['timePve', (value) => `**${value}** en PvE`],
+  ['timeDarkZone', (value) => `**${value}** en Dark Zone`],
 ];
 
-/** L'embed de /td2 stats. Un bloc sans aucune stat n'est pas affiché. */
+const PVE_LINES: StatLine[] = [
+  ['npcKills', (value) => `**${value}** ennemis éliminés`],
+  ['eliteKills', (value) => `**${value}** élites`],
+  ['namedKills', (value) => `**${value}** nommés`],
+  ['headshots', (value) => `**${value}** tirs à la tête`],
+];
+
+const DARK_ZONE_LINES: StatLine[] = [
+  ['dzRank', (value) => `Rang **${value}**`],
+  ['roguesKilled', (value) => `**${value}** renégats éliminés`],
+  ['pvpKills', (value) => `**${value}** agents éliminés`],
+];
+
+/** L'embed de /td2 stats. Un champ sans aucune stat n'est pas affiché. */
 export function careerMessage(career: Td2Career, credit: string) {
-  const embed = baseEmbed().setTitle(`${career.handle} · ${TD2_PLATFORM_LABELS[career.platform]}`);
+  const { stats } = career;
+  const embed = baseEmbed()
+    .setAuthor({ name: `${TD2_PLATFORM_LABELS[career.platform]} · PROFIL D’AGENT`.toUpperCase() })
+    .setTitle(career.handle);
+  if (career.profileUrl) embed.setURL(career.profileUrl);
   if (career.avatarUrl) embed.setThumbnail(career.avatarUrl);
   if (credit) embed.setFooter({ text: credit });
 
-  for (const block of STAT_BLOCKS) {
-    const lines = block.lines.flatMap(([key, label]) => {
-      const stat = career.stats[key];
-      return stat ? [`${label} : **${formatStat(stat)}**`] : [];
+  // niveau et score d'équipement en titre ###, la spécialisation dessous
+  const headline = [
+    stats.level && `Niveau ${formatStat(stats.level)}`,
+    stats.gearScore && `Score d’équipement ${formatStat(stats.gearScore)}`,
+  ].filter(Boolean);
+  const description = [
+    headline.length > 0 ? `### ${headline.join(' · ')}` : null,
+    stats.specialization ? `🧬 Spécialisation : **${formatStat(stats.specialization)}**` : null,
+  ].filter(Boolean);
+  if (description.length > 0) embed.setDescription(description.join('\n'));
+
+  const blocks: { name: string; lines: StatLine[]; inline: boolean }[] = [
+    { name: '⏱️ Temps de jeu', lines: TIME_LINES, inline: false },
+    { name: '🎯 PvE', lines: PVE_LINES, inline: true },
+    { name: '☠️ Dark Zone', lines: DARK_ZONE_LINES, inline: true },
+  ];
+  for (const block of blocks) {
+    const lines = block.lines.flatMap(([key, format]) => {
+      const stat = stats[key];
+      return stat ? [format(formatStat(stat))] : [];
     });
     if (lines.length > 0) {
-      embed.addFields({ name: block.name, value: lines.join('\n'), inline: true });
+      embed.addFields({ name: block.name, value: lines.join('\n'), inline: block.inline });
     }
   }
-  if (!embed.data.fields?.length) {
+  if (description.length === 0 && !embed.data.fields?.length) {
     embed.setDescription('Aucune statistique publique pour cet agent.');
   }
   return { embeds: [embed] };

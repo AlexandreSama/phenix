@@ -10,7 +10,7 @@ import type { Td2CareerResult, Td2StatsProvider } from './provider.js';
 
 const OK: Td2CareerResult = {
   status: 'ok',
-  career: { platform: 'PSN', handle: 'Agent47', avatarUrl: null, stats: {} },
+  career: { platform: 'PSN', handle: 'Agent47', avatarUrl: null, profileUrl: null, stats: {} },
 };
 
 /** Valkey en mémoire, avec la durée de vie demandée pour chaque clé. */

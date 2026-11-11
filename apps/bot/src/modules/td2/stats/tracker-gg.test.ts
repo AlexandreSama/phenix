@@ -1,6 +1,6 @@
 import { readFileSync } from 'node:fs';
 import { describe, expect, it, vi } from 'vitest';
-import { createTrackerGgProvider, toStat } from './tracker-gg.js';
+import { createTrackerGgProvider, toCareer, toStat } from './tracker-gg.js';
 
 const fixture = (name: string) =>
   readFileSync(new URL(`./fixtures/${name}`, import.meta.url), 'utf8');
@@ -9,6 +9,11 @@ const SEARCH = fixture('tracker-search.json');
 
 const json = (body: string, status = 200) =>
   new Response(body, { status, headers: { 'Content-Type': 'application/json' } });
+
+/** Le strict minimum d'une réponse de profil : un pseudo, aucun segment */
+const profileBody = (handle: string) => ({
+  data: { platformInfo: { platformUserHandle: handle }, segments: [] },
+});
 
 function setup(respond: () => Promise<Response> | Response = () => json(PROFILE)) {
   const fetchImpl = vi.fn(async (_url: string, _init?: RequestInit) => respond());
@@ -36,6 +41,15 @@ describe('la carrière d’un joueur', () => {
     expect(request().headers).toMatchObject({ 'TRN-Api-Key': 'cle-de-test' });
   });
 
+  it('l’adresse du profil encode le pseudo et suit la plateforme', () => {
+    expect(toCareer('UBI', profileBody('Agent 47/x#1')).profileUrl).toBe(
+      'https://tracker.gg/division-2/profile/ubi/Agent%2047%2Fx%231/overview',
+    );
+    expect(toCareer('XBL', profileBody('Agent47')).profileUrl).toBe(
+      'https://tracker.gg/division-2/profile/xbl/Agent47/overview',
+    );
+  });
+
   it('lit le pseudo exact, l’avatar et les stats du segment « overview »', async () => {
     const { provider } = setup();
 
@@ -47,6 +61,7 @@ describe('la carrière d’un joueur', () => {
         platform: 'PSN',
         handle: 'Agent47',
         avatarUrl: 'https://avatar-cdn.tracker.gg/api/avatar/2/Agent47.png',
+        profileUrl: 'https://tracker.gg/division-2/profile/psn/Agent47/overview',
       },
     });
     if (result.status !== 'ok') return;

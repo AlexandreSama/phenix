@@ -11,6 +11,9 @@ import {
 
 export const TRACKER_GG_URL = 'https://public-api.tracker.gg/v2';
 
+/** Les pages de profil du site (pas de l'API) ; format à confirmer en ouvrant un profil réel. */
+export const TRACKER_GG_PROFILE_URL = 'https://tracker.gg/division-2/profile';
+
 /** Les plateformes, comme les nomme l'API (documentation tracker.gg : ubi, psn, xbl). */
 export const PLATFORM_SLUGS: Record<Td2PlatformKey, string> = {
   UBI: 'ubi',
@@ -106,6 +109,7 @@ export function toCareer(platform: Td2PlatformKey, body: z.infer<typeof profileS
     platform,
     handle: platformInfo.platformUserHandle,
     avatarUrl: platformInfo.avatarUrl ?? null,
+    profileUrl: `${TRACKER_GG_PROFILE_URL}/${PLATFORM_SLUGS[platform]}/${encodeURIComponent(platformInfo.platformUserHandle)}/overview`,
     stats,
   };
 }
