@@ -1,4 +1,6 @@
-import { Queue, Worker, type ConnectionOptions, type Job, type JobsOptions } from 'bullmq';
+import { Queue, Worker, type Job } from 'bullmq';
+import { DEFAULT_JOB_OPTIONS, redisConnection } from './common.js';
+export * from './td2.js';
 
 /** Le nom de la file : le bot (qui traite) et l'API (qui ajoute) doivent dire le même. */
 export const GIVEAWAY_QUEUE = 'giveaways';
@@ -17,17 +19,6 @@ export type GiveawayJobData = GiveawayJob['data'];
 export const asGiveawayJob = (job: Pick<Job, 'name' | 'data'>): GiveawayJob =>
   ({ name: job.name, data: job.data }) as GiveawayJob;
 
-/**
- * Cinq essais espacés de 5 s, 10 s, 20 s, 40 s : Discord a le temps de revenir.
- * Une tâche finie (réussie ou abandonnée) ne reste pas dans Valkey : la base garde l'état.
- */
-export const DEFAULT_JOB_OPTIONS: JobsOptions = {
-  attempts: 5,
-  backoff: { type: 'exponential', delay: 5000 },
-  removeOnComplete: true,
-  removeOnFail: true,
-};
-
 /** Les clics arrivés pendant ce délai ne font qu'une seule mise à jour du message. */
 export const REFRESH_DELAY_MS = 5000;
 
@@ -40,12 +31,6 @@ export const giveawayJobId = {
   end: (giveawayId: number) => `end-${giveawayId}`,
   reroll: (giveawayId: number) => `reroll-${giveawayId}`,
 };
-
-/** maxRetriesPerRequest: null : exigé par les workers, qui attendent les tâches sans limite. */
-export const redisConnection = (url: string): ConnectionOptions => ({
-  url,
-  maxRetriesPerRequest: null,
-});
 
 export type GiveawayQueue = Queue<GiveawayJobData, void, GiveawayJobName>;
 

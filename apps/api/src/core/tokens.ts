@@ -9,3 +9,6 @@ export const GIVEAWAY_QUEUE = Symbol('GIVEAWAY_QUEUE');
 
 /** Jeton d'injection du planificateur des giveaways (publications, tirages). */
 export const GIVEAWAYS = Symbol('GIVEAWAYS');
+
+/** Jeton d'injection du bucket des preuves des signalements TD2 (Garage). */
+export const EVIDENCE = Symbol('EVIDENCE');

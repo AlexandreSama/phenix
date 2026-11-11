@@ -9,13 +9,15 @@ interface Deps {
   configs: GuildConfigCache;
   rolePanels: RolePanelPublisher;
   ticketPanels: TicketPanelPublisher;
+  /** Retire l'embed d'un signalement supprimé depuis la page d'administration */
+  removeTd2Report(event: { guildId: string; messageId: string }): Promise<void>;
   logger: Pick<Logger, 'info' | 'warn' | 'debug'>;
 }
 
 // Giveaways, panel de tickets : leurs modules arrivent dans les phases 6.2 et 6.3
 export function handleBotEvent(
   raw: string,
-  { configs, rolePanels, ticketPanels, logger }: Deps,
+  { configs, rolePanels, ticketPanels, removeTd2Report, logger }: Deps,
 ): void {
   const event = parseBotEvent(raw);
   if (!event) {
@@ -47,6 +49,11 @@ export function handleBotEvent(
     case 'ticketPanel.delete':
       ticketPanels.remove(event).catch((err: unknown) => {
         logger.warn({ err, messageId: event.messageId }, 'Retrait du panel de tickets en échec');
+      });
+      return;
+    case 'td2Report.deleted':
+      removeTd2Report(event).catch((err: unknown) => {
+        logger.warn({ err, messageId: event.messageId }, 'Retrait du signalement en échec');
       });
       return;
   }

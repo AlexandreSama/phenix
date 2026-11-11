@@ -13,6 +13,7 @@ import {
   markGiveawayAnnounced,
   rerollGiveaway,
 } from './giveaways.js';
+import { newGuildId } from '../test/ids.js';
 
 const prisma = createPrismaClient(inject('databaseUrl'));
 
@@ -20,10 +21,8 @@ afterAll(async () => {
   await prisma.$disconnect();
 });
 
-const runId = Date.now();
-let counter = 0;
 async function newGuild(): Promise<string> {
-  const id = `${runId}${counter++}`;
+  const id = newGuildId();
   await prisma.guild.create({ data: { id, name: 'Serveur de test' } });
   return id;
 }

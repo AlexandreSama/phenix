@@ -7,6 +7,7 @@ import {
   saveRolePanel,
 } from './role-panels.js';
 import { publicationStatus } from './publication.js';
+import { newGuildId } from '../test/ids.js';
 
 const prisma = createPrismaClient(inject('databaseUrl'));
 
@@ -14,7 +15,7 @@ afterAll(async () => {
   await prisma.$disconnect();
 });
 
-const guildId = `${Date.now()}`;
+const guildId = newGuildId();
 const input = {
   title: 'Tes jeux',
   description: null,

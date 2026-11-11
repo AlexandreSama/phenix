@@ -1,5 +1,6 @@
 import { z } from 'zod';
 import { storageEnvSchema } from '@phenix/storage';
+import { TRACKER_GG_URL } from './modules/td2/stats/tracker-gg.js';
 
 const snowflake = z.string().regex(/^\d{17,20}$/, 'ID Discord invalide');
 
@@ -26,6 +27,13 @@ const envSchema = storageEnvSchema.extend({
         .map((id) => id.trim())
         .filter(Boolean),
     ),
+  /** Clé de l'API Tracker Network. Vide = /td2 stats répond que les stats ne sont pas branchées */
+  TRN_API_KEY: optional(z.string().min(1)),
+  /** Adresse de l'API de stats : à changer seulement pour un service compatible */
+  TRN_API_URL: z.preprocess(
+    (value) => (value === '' ? undefined : value),
+    z.url().default(TRACKER_GG_URL),
+  ),
 });
 
 export type Env = z.infer<typeof envSchema>;

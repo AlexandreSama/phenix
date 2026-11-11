@@ -11,6 +11,7 @@ import {
   reserveTicketNumber,
   saveTicketPanel,
 } from './tickets.js';
+import { newGuildId } from '../test/ids.js';
 
 const prisma = createPrismaClient(inject('databaseUrl'));
 
@@ -18,10 +19,8 @@ afterAll(async () => {
   await prisma.$disconnect();
 });
 
-const runId = Date.now();
-let counter = 0;
 async function newGuild(): Promise<string> {
-  const id = `${runId}${counter++}`;
+  const id = newGuildId();
   await prisma.guild.create({ data: { id, name: 'Serveur de test' } });
   return id;
 }
@@ -103,10 +102,10 @@ describe('panel de tickets', () => {
     };
 
     await saveTicketPanel(prisma, guildId, panel);
-    await markTicketPanelPublished(prisma, guildId, `${runId}9`);
+    await markTicketPanelPublished(prisma, guildId, `900000000000000009`);
     const kept = await saveTicketPanel(prisma, guildId, { ...panel, title: 'Support' });
     expect(publicationStatus(kept)).toBe('pending');
-    expect(kept.messageId).toBe(`${runId}9`);
+    expect(kept.messageId).toBe(`900000000000000009`);
 
     const moved = await saveTicketPanel(prisma, guildId, panel, { forgetMessage: true });
     expect(moved.messageId).toBe(null);

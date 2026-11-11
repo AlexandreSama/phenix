@@ -1,5 +1,4 @@
 import { Events } from 'discord.js';
-import { prisma } from '@phenix/database';
 import { createClient } from './client.js';
 import { commands, ownerCommands } from './commands.js';
 import type { BotContext } from './core/context.js';
@@ -17,7 +16,6 @@ import {
   publishPendingRolePanels,
   roleComponents,
 } from './modules/roles/index.js';
-import { createTranscriptStorage } from '@phenix/storage';
 import {
   closeOrphanTickets,
   createTicketChannelDeleteHandler,
@@ -30,8 +28,25 @@ import {
   giveawayComponents,
   resumeGiveaways,
 } from './modules/giveaways/index.js';
-import { createGiveawayQueue, createGiveawayScheduler, createGiveawayWorker } from '@phenix/jobs';
+import {
+  createGiveawayQueue,
+  createGiveawayScheduler,
+  createGiveawayWorker,
+  createTd2Queue,
+  createTd2Scheduler,
+  createTd2Worker,
+} from '@phenix/jobs';
 import { adminComponents } from './modules/admin/index.js';
+import {
+  createTd2Processor,
+  createTd2Stats,
+  resumeTd2Events,
+  td2Components,
+} from './modules/td2/index.js';
+import { removeReportStaffMessage } from './modules/td2/reports/remove.js';
+import { prisma } from '@phenix/database';
+import { createEvidenceStorage, createTranscriptStorage } from '@phenix/storage';
+import { Redis } from 'ioredis';
 
 const env = loadEnv();
 const client = createClient();
@@ -52,19 +67,43 @@ giveawayWorker.on('failed', (job, err) =>
   ),
 );
 
+// La file des sorties TD2 : rappels et fermetures, à part pour ne pas attendre les giveaways
+const td2Queue = createTd2Queue(env.REDIS_URL);
+const td2Worker = createTd2Worker(
+  env.REDIS_URL,
+  createTd2Processor({ client, db: prisma, logger }),
+);
+td2Queue.on('error', (err) => logger.error({ err }, 'File TD2 : erreur Valkey'));
+td2Worker.on('error', (err) => logger.error({ err }, 'Worker TD2 : erreur'));
+td2Worker.on('failed', (job, err) =>
+  logger.warn(
+    { err, job: job?.name, data: job?.data, attempts: job?.attemptsMade },
+    'Tâche TD2 en échec',
+  ),
+);
+
+// Le cache des stats échoue vite plutôt que d'attendre Valkey : sans lui, le bot interroge tracker.gg
+const statsCache = new Redis(env.REDIS_URL, { enableOfflineQueue: false, maxRetriesPerRequest: 1 });
+statsCache.on('error', (err) => logger.warn({ err }, 'Cache des stats : erreur Valkey'));
+if (!env.TRN_API_KEY) logger.warn('TRN_API_KEY absente : /td2 stats est désactivée');
+
 const context: BotContext = {
   db: prisma,
   logger,
   configs,
   publicUrl: env.PUBLIC_URL?.replace(/\/$/, ''),
   transcripts: createTranscriptStorage(env),
+  evidence: createEvidenceStorage(env),
   giveaways: createGiveawayScheduler(giveawayQueue),
+  td2: createTd2Scheduler(td2Queue),
+  stats: createTd2Stats({ apiKey: env.TRN_API_KEY, baseUrl: env.TRN_API_URL, cache: statsCache }),
   ownerIds: env.BOT_OWNER_IDS,
 };
 const unsubscribe = subscribeToBotEvents(env.REDIS_URL, {
   configs,
   rolePanels: createRolePanelPublisher(client, prisma, logger),
   ticketPanels: createTicketPanelPublisher(client, prisma, logger),
+  removeTd2Report: (event) => removeReportStaffMessage(client, configs, event, logger),
   logger,
 });
 
@@ -80,6 +119,7 @@ client.on(
       ...ticketComponents,
       ...giveawayComponents,
       ...adminComponents,
+      ...td2Components,
     ]),
     context,
   }),
@@ -110,6 +150,10 @@ client.once(Events.ClientReady, (ready) => {
   resumeGiveaways(ready, prisma, context.giveaways, logger).catch((err: unknown) =>
     logger.error({ err }, 'Échec de la reprise des giveaways'),
   );
+  td2Worker.run().catch((err: unknown) => logger.error({ err }, 'Worker TD2 arrêté'));
+  resumeTd2Events(ready, prisma, context.td2, logger).catch((err: unknown) =>
+    logger.error({ err }, 'Échec de la reprise des sorties TD2'),
+  );
 });
 
 registerGuildEvents(client, prisma, logger);
@@ -123,6 +167,9 @@ async function shutdown(signal: string): Promise<void> {
   // Laisse finir la tâche en cours ; les autres attendent dans Valkey
   await giveawayWorker.close();
   await giveawayQueue.close();
+  await td2Worker.close();
+  await td2Queue.close();
+  statsCache.disconnect();
   await unsubscribe();
   await client.destroy();
   await prisma.$disconnect();

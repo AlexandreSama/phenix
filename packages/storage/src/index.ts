@@ -1,4 +1,10 @@
-import { GetObjectCommand, NoSuchKey, PutObjectCommand, S3Client } from '@aws-sdk/client-s3';
+import {
+  DeleteObjectCommand,
+  GetObjectCommand,
+  NoSuchKey,
+  PutObjectCommand,
+  S3Client,
+} from '@aws-sdk/client-s3';
 import { z } from 'zod';
 
 /**
@@ -11,14 +17,25 @@ export const storageEnvSchema = z.object({
   S3_ACCESS_KEY_ID: z.string().min(1),
   S3_SECRET_ACCESS_KEY: z.string().min(1),
   S3_TRANSCRIPTS_BUCKET: z.string().min(1).default('transcripts'),
+  /** Preuves des signalements TD2 (phase 7.2) : des captures, jamais publiques */
+  S3_EVIDENCE_BUCKET: z.string().min(1).default('evidence'),
 });
 
 export type StorageEnv = z.infer<typeof storageEnvSchema>;
 
+export interface StoredObject {
+  body: Uint8Array;
+  contentType: string | null;
+}
+
 export interface ObjectStorage {
-  put(key: string, body: string, contentType: string): Promise<void>;
+  put(key: string, body: string | Uint8Array, contentType: string): Promise<void>;
   /** Le contenu d'un objet texte, ou null s'il n'existe pas. */
   getText(key: string): Promise<string | null>;
+  /** Les octets d'un objet et son type, ou null s'il n'existe pas. */
+  getBytes(key: string): Promise<StoredObject | null>;
+  /** Supprime des objets ; une clé déjà absente n'est pas une erreur. */
+  delete(keys: readonly string[]): Promise<void>;
 }
 
 /** Un client S3 pour un bucket. `client` se remplace dans les tests. */
@@ -36,6 +53,26 @@ export function createObjectStorage(bucket: string, client: S3Client): ObjectSto
       } catch (err) {
         if (err instanceof NoSuchKey) return null;
         throw err;
+      }
+    },
+    async getBytes(key) {
+      try {
+        const object = await client.send(new GetObjectCommand({ Bucket: bucket, Key: key }));
+        if (!object.Body) return null;
+        return {
+          body: await object.Body.transformToByteArray(),
+          contentType: object.ContentType ?? null,
+        };
+      } catch (err) {
+        if (err instanceof NoSuchKey) return null;
+        throw err;
+      }
+    },
+    async delete(keys) {
+      // Une requête par clé : DeleteObjects exige une somme de contrôle que tous les stockages
+      // compatibles S3 ne vérifient pas de la même façon. Un signalement a 3 preuves au plus.
+      for (const key of keys) {
+        await client.send(new DeleteObjectCommand({ Bucket: bucket, Key: key }));
       }
     },
   };
@@ -58,4 +95,9 @@ export function createS3Client(env: StorageEnv): S3Client {
 /** Le stockage des transcripts de tickets, tel que le bot et l'API l'utilisent. */
 export function createTranscriptStorage(env: StorageEnv): ObjectStorage {
   return createObjectStorage(env.S3_TRANSCRIPTS_BUCKET, createS3Client(env));
+}
+
+/** Le stockage des preuves des signalements TD2 : le bot y écrit, l'API les sert aux propriétaires. */
+export function createEvidenceStorage(env: StorageEnv): ObjectStorage {
+  return createObjectStorage(env.S3_EVIDENCE_BUCKET, createS3Client(env));
 }

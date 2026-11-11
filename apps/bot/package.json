@@ -9,7 +9,8 @@
     "start": "node --enable-source-maps dist/index.js",
     "typecheck": "tsc --noEmit",
     "test": "vitest run --coverage",
-    "deploy-commands": "tsx --env-file-if-exists=../../.env src/scripts/deploy-commands.ts"
+    "deploy-commands": "tsx --env-file-if-exists=../../.env src/scripts/deploy-commands.ts",
+    "td2:record": "tsx --env-file-if-exists=../../.env src/scripts/record-td2-profile.ts"
   },
   "dependencies": {
     "@phenix/database": "workspace:*",

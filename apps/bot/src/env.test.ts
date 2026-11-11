@@ -24,6 +24,16 @@ describe('loadEnv', () => {
     expect(env.DISCORD_DEV_GUILD_ID).toBeUndefined();
   });
 
+  it('stats TD2 : sans clé par défaut, et l’adresse de tracker.gg si rien n’est précisé', () => {
+    expect(loadEnv({ ...base, TRN_API_KEY: '', TRN_API_URL: '' })).toMatchObject({
+      TRN_API_KEY: undefined,
+      TRN_API_URL: 'https://public-api.tracker.gg/v2',
+    });
+    expect(
+      loadEnv({ ...base, TRN_API_KEY: 'cle', TRN_API_URL: 'http://localhost:4010/v2' }),
+    ).toMatchObject({ TRN_API_KEY: 'cle', TRN_API_URL: 'http://localhost:4010/v2' });
+  });
+
   it('arrête le processus si une variable obligatoire manque', () => {
     const exit = vi.spyOn(process, 'exit').mockImplementation(() => undefined as never);
     vi.spyOn(console, 'error').mockImplementation(() => {});

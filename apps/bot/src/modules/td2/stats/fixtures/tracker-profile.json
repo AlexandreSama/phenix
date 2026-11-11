@@ -1,0 +1,105 @@
+{
+  "data": {
+    "platformInfo": {
+      "platformSlug": "psn",
+      "platformUserHandle": "Agent47",
+      "platformUserIdentifier": "Agent47",
+      "avatarUrl": "https://avatar-cdn.tracker.gg/api/avatar/2/Agent47.png"
+    },
+    "segments": [
+      {
+        "type": "overview",
+        "metadata": {
+          "name": "Lifetime Overview"
+        },
+        "stats": {
+          "timePlayed": {
+            "displayName": "Time Played",
+            "value": 1234567,
+            "displayValue": "342h 56m",
+            "displayType": "TimeSeconds"
+          },
+          "highestPlayerLevel": {
+            "displayName": "Level",
+            "value": 40,
+            "displayValue": "40",
+            "displayType": "Number"
+          },
+          "latestGearScore": {
+            "displayName": "Gear Score",
+            "value": 515,
+            "displayValue": "515",
+            "displayType": "Number"
+          },
+          "specialization": {
+            "displayName": "Specialization",
+            "value": "Firewall",
+            "displayValue": "Firewall",
+            "displayType": "String"
+          },
+          "xPTotal": {
+            "displayName": "Total XP",
+            "value": 98765432,
+            "displayValue": "98,765,432",
+            "displayType": "Number"
+          },
+          "killsNpc": {
+            "displayName": "NPC Kills",
+            "value": 48213,
+            "displayValue": "48,213",
+            "displayType": "Number"
+          },
+          "headshots": {
+            "displayName": "Headshots",
+            "value": 21987,
+            "displayValue": "21,987",
+            "displayType": "Number"
+          },
+          "timePlayedPve": {
+            "displayName": "PvE Time Played",
+            "value": 864000,
+            "displayValue": "240h 0m",
+            "displayType": "TimeSeconds"
+          },
+          "killsRoleElite": {
+            "displayName": "Elite Kills",
+            "value": 9120,
+            "displayValue": "9,120",
+            "displayType": "Number"
+          },
+          "killsRoleNamed": {
+            "displayName": "Named Kills",
+            "value": 1534,
+            "displayValue": "1,534",
+            "displayType": "Number"
+          },
+          "timePlayedDarkZone": {
+            "displayName": "Dark Zone Time Played",
+            "value": 183900,
+            "displayValue": "51h 5m",
+            "displayType": "TimeSeconds"
+          },
+          "rankDZ": {
+            "displayName": "Dark Zone Rank",
+            "value": 87,
+            "displayValue": "87",
+            "displayType": "Number"
+          },
+          "roguesKilled": {
+            "displayName": "Rogues Killed",
+            "value": 312,
+            "displayValue": "312",
+            "displayType": "Number"
+          },
+          "killsPvP": {
+            "displayName": "PvP Kills",
+            "value": 645,
+            "displayValue": "645",
+            "displayType": "Number"
+          }
+        }
+      }
+    ],
+    "expiryDate": "2026-11-10T12:15:00+00:00"
+  }
+}

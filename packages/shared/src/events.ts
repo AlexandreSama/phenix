@@ -14,6 +14,12 @@ export const botEventSchema = z.discriminatedUnion('type', [
     messageId: z.string(),
   }),
   z.object({ type: z.literal('ticketPanel.publish'), guildId: z.string() }),
+  // Supprimé depuis la page d'administration : le bot retire son embed du salon du staff
+  z.object({
+    type: z.literal('td2Report.deleted'),
+    guildId: z.string(),
+    messageId: z.string(),
+  }),
   // Le panel change de salon : l'ancien message part, comme pour un panel de rôles
   z.object({
     type: z.literal('ticketPanel.delete'),

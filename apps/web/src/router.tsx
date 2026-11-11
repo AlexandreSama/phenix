@@ -3,6 +3,7 @@ import {
   createRootRouteWithContext,
   createRoute,
   createRouter,
+  notFound,
   redirect,
 } from '@tanstack/react-router';
 import { z } from 'zod';
@@ -22,6 +23,10 @@ import { TicketSettingsPage } from './features/dashboard/tickets/ticket-settings
 import { TranscriptPage } from './features/dashboard/tickets/transcript-page';
 import { GiveawaysPage } from './features/dashboard/giveaways/giveaway-page';
 import { GiveawayCreatePage } from './features/dashboard/giveaways/giveaway-create-page';
+import { Td2Page } from './features/dashboard/td2/td2-page';
+import { AdminLayout } from './features/admin/admin-layout';
+import { CataloguePage } from './features/admin/catalogue/catalogue-page';
+import { ReportsPage } from './features/admin/report/report-page';
 
 const rootRoute = createRootRouteWithContext<{ queryClient: QueryClient }>()({
   component: RootLayout,
@@ -149,9 +154,50 @@ const giveawayCreateRoute = createRoute({
   component: GiveawayCreatePage,
 });
 
+/** Onglet « TD2 » : le salon des sorties et les sorties à venir. */
+const td2Route = createRoute({
+  getParentRoute: () => guildRoute,
+  path: 'td2',
+  component: Td2Page,
+});
+
+/**
+ * Administration : réservée aux propriétaires du bot. Pour les autres, la page n'existe pas ;
+ * l'API refuse de toute façon chaque appel (403), le site ne fait que ne pas la montrer.
+ */
+const adminRoute = createRoute({
+  getParentRoute: () => rootRoute,
+  path: 'admin',
+  beforeLoad: async ({ context }) => {
+    const user = await context.queryClient.ensureQueryData(currentUserQuery);
+    if (!user) throw redirect({ to: '/', search: { connexion: 'requise' } });
+    if (!user.isOwner) throw notFound();
+  },
+  component: AdminLayout,
+});
+
+const adminCatalogueRoute = createRoute({
+  getParentRoute: () => adminRoute,
+  path: '/',
+  component: CataloguePage,
+});
+
+const REPORT_STATUSES = ['PENDING', 'IN_REVIEW', 'CONFIRMED', 'REJECTED'] as const;
+
+const adminReportsRoute = createRoute({
+  getParentRoute: () => adminRoute,
+  path: 'signalements',
+  validateSearch: z.object({
+    status: z.enum(REPORT_STATUSES).optional().catch(undefined),
+    q: z.string().max(40).optional().catch(undefined),
+  }),
+  component: ReportsPage,
+});
+
 const routeTree = rootRoute.addChildren([
   homeRoute,
   leaderboardRoute,
+  adminRoute.addChildren([adminCatalogueRoute, adminReportsRoute]),
   dashboardRoute.addChildren([
     guildPickerRoute,
     guildRoute.addChildren([guildGeneralRoute, guildLevelingRoute]),
@@ -162,6 +208,7 @@ const routeTree = rootRoute.addChildren([
     guildRolesRoute.addChildren([rolePanelsRoute, rolePanelEditorRoute]),
     guildTicketsRoute.addChildren([ticketsRoute, ticketSettingsRoute, transcriptRoute]),
     guildGiveawaysRoute.addChildren([giveawaysRoute, giveawayCreateRoute]),
+    td2Route,
   ]),
 ]);
 

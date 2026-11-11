@@ -23,29 +23,36 @@ export const TD2_CATALOGUE: {
   { kind: 'INCURSION', name: 'Broken Rain', modes: INCURSION_MODES },
 ];
 
-/** Remplit le catalogue TD2. Relançable sans risque : rien n'est dupliqué. */
+/**
+ * Remplit le catalogue TD2. Relançable sans risque, même deux fois en même temps
+ * (deux fichiers de test en parallèle) : rien n'est dupliqué.
+ *
+ * Pas d'`upsert` ici : Prisma le traduit en « chercher, puis insérer », et deux seeds
+ * simultanés insèrent tous les deux. `createMany` + `skipDuplicates` devient un seul
+ * `INSERT … ON CONFLICT DO NOTHING`, que Postgres rend atomique.
+ */
 export async function seedTd2Catalogue(prisma: PrismaClient): Promise<void> {
   for (const { kind, name, modes } of TD2_CATALOGUE) {
-    const activity = await prisma.td2Activity.upsert({
+    await prisma.td2Activity.createMany({ data: [{ kind, name }], skipDuplicates: true });
+    const activity = await prisma.td2Activity.findUniqueOrThrow({
       where: { kind_name: { kind, name } },
-      update: {},
-      create: { kind, name },
     });
 
     for (const [modeName, composition] of Object.entries(modes)) {
-      const mode = await prisma.td2ActivityMode.upsert({
+      await prisma.td2ActivityMode.createMany({
+        data: [{ activityId: activity.id, name: modeName }],
+        skipDuplicates: true,
+      });
+      const mode = await prisma.td2ActivityMode.findUniqueOrThrow({
         where: { activityId_name: { activityId: activity.id, name: modeName } },
-        update: {},
-        create: { activityId: activity.id, name: modeName },
       });
 
       for (const [role, count] of Object.entries(composition)) {
         if (!count) continue;
-        await prisma.td2ModeSlot.upsert({
-          where: { modeId_role: { modeId: mode.id, role: role as Td2Role } },
-          update: { count },
-          create: { modeId: mode.id, role: role as Td2Role, count },
-        });
+        const slot = { modeId: mode.id, role: role as Td2Role };
+        await prisma.td2ModeSlot.createMany({ data: [{ ...slot, count }], skipDuplicates: true });
+        // La composition du seed fait foi : un nombre de places changé ici est mis à jour
+        await prisma.td2ModeSlot.update({ where: { modeId_role: slot }, data: { count } });
       }
     }
   }
