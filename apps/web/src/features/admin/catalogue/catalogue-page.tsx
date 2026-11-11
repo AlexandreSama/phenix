@@ -9,6 +9,7 @@ import { PageHeader, Panel } from '../../../components/ui/panel';
 import { LoadError, PageSkeleton } from '../../dashboard/query-state';
 import { catalogueQuery, useCreateActivity } from '../api';
 import { ActivityCard } from './activity-card';
+import { DirectivesPanel } from './directives-panel';
 
 const SECTIONS: { kind: Td2KindKey; title: string; empty: string }[] = [
   { kind: 'RAID', title: 'Raids', empty: 'Aucun raid pour l’instant' },
@@ -90,7 +91,7 @@ export function CataloguePage() {
     <div className="flex flex-col gap-8">
       <PageHeader
         title="Catalogue The Division 2"
-        description="Les activités et leurs modes, proposés par /td2 sur tous les serveurs. Une composition modifiée vaut pour les prochaines sorties : celles déjà créées gardent la leur."
+        description="Les activités et leurs modes proposés par /td2 sur tous les serveurs, et les directives des missions. Une composition modifiée vaut pour les prochaines sorties : celles déjà créées gardent la leur."
       />
 
       <Panel
@@ -132,6 +133,8 @@ export function CataloguePage() {
             </section>
           );
         })}
+
+      <DirectivesPanel />
     </div>
   );
 }

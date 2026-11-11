@@ -6,24 +6,12 @@ export const TD2_ROLE_LABELS = {
   HEAL_TANK: 'Heal/Tank',
 } as const;
 
-/** Libellés des types de sanction, affichés par le bot et le site. */
-export const CASE_TYPE_LABELS = {
-  WARN: 'Avertissement',
-  MUTE: 'Sourdine',
-  UNMUTE: 'Fin de sourdine',
-  KICK: 'Expulsion',
-  BAN: 'Bannissement',
-  UNBAN: 'Débannissement',
-} as const;
-
-/**
- * Permissions demandées à l'invitation du bot, en entier Discord.
- * Le bot vérifie dans ses tests que ce nombre correspond à sa liste BOT_PERMISSIONS.
- */
-export const BOT_INVITE_PERMISSIONS = '1099780189206';
-
-export type CaseTypeKey = keyof typeof CASE_TYPE_LABELS;
 export type Td2RoleKey = keyof typeof TD2_ROLE_LABELS;
+
+/** Tous les rôles d'inscription : ceux d'une escouade, plus la place sans rôle d'une mission. */
+export const TD2_SIGNUP_ROLE_LABELS = { ...TD2_ROLE_LABELS, PLAYER: 'Joueur' } as const;
+
+export type Td2SignupRoleKey = keyof typeof TD2_SIGNUP_ROLE_LABELS;
 
 /** Types d'activité TD2, au singulier, pour les titres et les listes. */
 export const TD2_KIND_LABELS = {
@@ -32,6 +20,31 @@ export const TD2_KIND_LABELS = {
 } as const;
 
 export type Td2KindKey = keyof typeof TD2_KIND_LABELS;
+
+/** Les types de sortie : les activités du catalogue, plus la mission, que l'organisateur nomme. */
+export const TD2_EVENT_KIND_LABELS = { ...TD2_KIND_LABELS, MISSION: 'Mission' } as const;
+
+export type Td2EventKindKey = keyof typeof TD2_EVENT_KIND_LABELS;
+
+/** Les difficultés d'une mission, de la plus douce à la plus dure. */
+export const TD2_DIFFICULTY_LABELS = {
+  NORMAL: 'Normal',
+  HARD: 'Difficile',
+  CHALLENGING: 'Exigeant',
+  HEROIC: 'Héroïque',
+  LEGENDARY: 'Légendaire',
+} as const;
+
+export type Td2DifficultyKey = keyof typeof TD2_DIFFICULTY_LABELS;
+
+/** Une mission : un nom libre, et une escouade de 4 joueurs au plus, comme en jeu. */
+export const TD2_MISSION_LIMITS = { nameMax: 80, maxPlayers: 4 } as const;
+
+/**
+ * Les directives, gérées par les propriétaires du bot. Le bot les propose dans un menu
+ * Discord, qui ne prend pas plus de 25 choix.
+ */
+export const TD2_DIRECTIVE_LIMITS = { nameMax: 40, descriptionMax: 100, maxActive: 25 } as const;
 
 /** Plateformes d'un compte TD2 : le pseudo d'un joueur n'a de sens qu'avec elle. */
 export const TD2_PLATFORM_LABELS = {
@@ -90,3 +103,38 @@ export const FORUM_LIMITS = {
   threadsPerPage: 20,
   postsPerPage: 20,
 } as const;
+
+/** Les onglets du tableau de bord d'un serveur, qu'un administrateur peut ouvrir à un membre. */
+export const DASHBOARD_MODULE_LABELS = {
+  GENERAL: 'Général',
+  LEVELING: 'Niveaux',
+  ROLES: 'Rôles',
+  TICKETS: 'Tickets',
+  GIVEAWAYS: 'Giveaways',
+  TD2: 'The Division 2',
+} as const;
+
+export type DashboardModuleKey = keyof typeof DASHBOARD_MODULE_LABELS;
+
+export const DASHBOARD_MODULES = Object.keys(DASHBOARD_MODULE_LABELS) as [
+  DashboardModuleKey,
+  ...DashboardModuleKey[],
+];
+
+/** Libellés des types de sanction, affichés par le bot et le site. */
+export const CASE_TYPE_LABELS = {
+  WARN: 'Avertissement',
+  MUTE: 'Sourdine',
+  UNMUTE: 'Fin de sourdine',
+  KICK: 'Expulsion',
+  BAN: 'Bannissement',
+  UNBAN: 'Débannissement',
+} as const;
+
+export type CaseTypeKey = keyof typeof CASE_TYPE_LABELS;
+
+/**
+ * Permissions demandées à l'invitation du bot, en entier Discord.
+ * Le bot vérifie dans ses tests que ce nombre correspond à sa liste BOT_PERMISSIONS.
+ */
+export const BOT_INVITE_PERMISSIONS = '1099780189207';

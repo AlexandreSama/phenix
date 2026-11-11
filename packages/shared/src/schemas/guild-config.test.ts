@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { generalConfigPatchSchema, generalConfigSchema } from './guild-config.js';
 
-describe('guildConfigSchema', () => {
+describe('generalConfigSchema', () => {
   const general = {
     timezone: 'Europe/Paris',
     modLogChannelId: null,

@@ -1,33 +1,6 @@
 import { Events } from 'discord.js';
-import { createClient } from './client.js';
-import { commands, ownerCommands } from './commands.js';
-import type { BotContext } from './core/context.js';
-import { createInteractionHandler } from './core/interaction-router.js';
-import { createCommandRegistry, createComponentRegistry } from './core/registry.js';
-import { loadEnv } from './env.js';
-import { registerGuildEvents, syncGuilds } from './events/guilds.js';
-import { logger } from './logger.js';
-import { startBanExpiry } from './modules/moderation/index.js';
-import { createGuildConfigCache } from './core/guild-config-cache.js';
-import { subscribeToBotEvents } from './events/bot-events.js';
-import { createMessageXpHandler, levelingComponents } from './modules/leveling/index.js';
-import {
-  createRolePanelPublisher,
-  publishPendingRolePanels,
-  roleComponents,
-} from './modules/roles/index.js';
-import {
-  closeOrphanTickets,
-  createTicketChannelDeleteHandler,
-  createTicketPanelPublisher,
-  publishPendingTicketPanels,
-  ticketComponents,
-} from './modules/tickets/index.js';
-import {
-  createGiveawayProcessor,
-  giveawayComponents,
-  resumeGiveaways,
-} from './modules/giveaways/index.js';
+import { Redis } from 'ioredis';
+import { prisma } from '@phenix/database';
 import {
   createGiveawayQueue,
   createGiveawayScheduler,
@@ -36,21 +9,50 @@ import {
   createTd2Scheduler,
   createTd2Worker,
 } from '@phenix/jobs';
+import { createEvidenceStorage, createTranscriptStorage } from '@phenix/storage';
+import { createClient } from './client.js';
+import { commands, ownerCommands } from './commands.js';
+import type { BotContext } from './core/context.js';
+import { createGuildConfigCache } from './core/guild-config-cache.js';
+import { startHeartbeat } from './core/heartbeat.js';
+import { createInteractionHandler } from './core/interaction-router.js';
+import { createCommandRegistry, createComponentRegistry } from './core/registry.js';
+import { loadEnv } from './env.js';
+import { subscribeToBotEvents } from './events/bot-events.js';
+import { registerGuildEvents, syncGuilds } from './events/guilds.js';
+import { logger } from './logger.js';
 import { adminComponents } from './modules/admin/index.js';
+import {
+  createGiveawayProcessor,
+  giveawayComponents,
+  resumeGiveaways,
+} from './modules/giveaways/index.js';
+import { createMessageXpHandler, levelingComponents } from './modules/leveling/index.js';
+import { startBanExpiry } from './modules/moderation/index.js';
+import {
+  createRolePanelPublisher,
+  publishPendingRolePanels,
+  roleComponents,
+} from './modules/roles/index.js';
 import {
   createTd2Processor,
   createTd2Stats,
+  removeReportStaffMessage,
   resumeTd2Events,
   td2Components,
 } from './modules/td2/index.js';
-import { removeReportStaffMessage } from './modules/td2/reports/remove.js';
-import { prisma } from '@phenix/database';
-import { createEvidenceStorage, createTranscriptStorage } from '@phenix/storage';
-import { Redis } from 'ioredis';
+import {
+  closeOrphanTickets,
+  createTicketChannelDeleteHandler,
+  createTicketPanelPublisher,
+  publishPendingTicketPanels,
+  ticketComponents,
+} from './modules/tickets/index.js';
 
 const env = loadEnv();
 const client = createClient();
 const configs = createGuildConfigCache(prisma);
+
 // La file des giveaways : le bot y ajoute des tâches (comme l'API) et il est seul à les traiter
 const giveawayQueue = createGiveawayQueue(env.REDIS_URL);
 const giveawayWorker = createGiveawayWorker(
@@ -82,9 +84,10 @@ td2Worker.on('failed', (job, err) =>
   ),
 );
 
-// Le cache des stats échoue vite plutôt que d'attendre Valkey : sans lui, le bot interroge tracker.gg
-const statsCache = new Redis(env.REDIS_URL, { enableOfflineQueue: false, maxRetriesPerRequest: 1 });
-statsCache.on('error', (err) => logger.warn({ err }, 'Cache des stats : erreur Valkey'));
+// Une connexion qui échoue vite plutôt que d'attendre Valkey : le cache des stats (sans lui, le bot
+// interroge tracker.gg) et le battement de cœur (sans lui, /api/health/bot signale le bot absent)
+const cache = new Redis(env.REDIS_URL, { enableOfflineQueue: false, maxRetriesPerRequest: 1 });
+cache.on('error', (err) => logger.warn({ err }, 'Cache et battement de cœur : erreur Valkey'));
 if (!env.TRN_API_KEY) logger.warn('TRN_API_KEY absente : /td2 stats est désactivée');
 
 const context: BotContext = {
@@ -96,7 +99,7 @@ const context: BotContext = {
   evidence: createEvidenceStorage(env),
   giveaways: createGiveawayScheduler(giveawayQueue),
   td2: createTd2Scheduler(td2Queue),
-  stats: createTd2Stats({ apiKey: env.TRN_API_KEY, baseUrl: env.TRN_API_URL, cache: statsCache }),
+  stats: createTd2Stats({ apiKey: env.TRN_API_KEY, baseUrl: env.TRN_API_URL, cache }),
   ownerIds: env.BOT_OWNER_IDS,
 };
 const unsubscribe = subscribeToBotEvents(env.REDIS_URL, {
@@ -106,8 +109,8 @@ const unsubscribe = subscribeToBotEvents(env.REDIS_URL, {
   removeTd2Report: (event) => removeReportStaffMessage(client, configs, event, logger),
   logger,
 });
-
 let stopBanExpiry: (() => void) | undefined;
+let stopHeartbeat: (() => void) | undefined;
 
 client.on(
   Events.InteractionCreate,
@@ -118,8 +121,8 @@ client.on(
       ...roleComponents,
       ...ticketComponents,
       ...giveawayComponents,
-      ...adminComponents,
       ...td2Components,
+      ...adminComponents,
     ]),
     context,
   }),
@@ -134,6 +137,7 @@ client.once(Events.ClientReady, (ready) => {
     .then(() => logger.info('Serveurs synchronisés avec la base'))
     .catch((err: unknown) => logger.error({ err }, 'Échec de la synchronisation des serveurs'));
   stopBanExpiry = startBanExpiry(ready, context);
+  stopHeartbeat = startHeartbeat(ready, cache, logger);
   publishPendingRolePanels(ready, prisma, logger).catch((err: unknown) =>
     logger.error({ err }, 'Échec de la publication des panels en attente'),
   );
@@ -164,13 +168,14 @@ process.on('unhandledRejection', (err) => logger.error({ err }, 'Promesse rejet�
 async function shutdown(signal: string): Promise<void> {
   logger.info({ signal }, 'Arrêt en cours');
   stopBanExpiry?.();
+  stopHeartbeat?.();
   // Laisse finir la tâche en cours ; les autres attendent dans Valkey
   await giveawayWorker.close();
   await giveawayQueue.close();
   await td2Worker.close();
   await td2Queue.close();
-  statsCache.disconnect();
   await unsubscribe();
+  cache.disconnect();
   await client.destroy();
   await prisma.$disconnect();
   process.exit(0);

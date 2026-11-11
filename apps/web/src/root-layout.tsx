@@ -15,18 +15,27 @@ export function RootLayout() {
           <div className="flex items-center gap-5 sm:gap-7">
             <Link to="/" className="flex items-center gap-2.5 text-white">
               <img src="/logo.png" alt="" className="size-8 rounded-lg" />
-              {/* Sur téléphone, le logo seul laisse la place au lien du forum */}
+              {/* Sur téléphone, le logo seul laisse la place aux liens des sorties et du forum */}
               <span className="hidden font-display text-lg font-semibold tracking-tight sm:inline">
                 PhenixMG
               </span>
             </Link>
-            <Link
-              to="/forum"
-              className="text-sm text-stone-300 hover:text-white"
-              activeProps={{ className: 'text-white!' }}
-            >
-              Forum
-            </Link>
+            <nav aria-label="Principale" className="flex items-center gap-4 sm:gap-6">
+              <Link
+                to="/sorties"
+                className="py-2 text-sm text-stone-300 hover:text-white"
+                activeProps={{ className: 'text-white!' }}
+              >
+                Sorties
+              </Link>
+              <Link
+                to="/forum"
+                className="py-2 text-sm text-stone-300 hover:text-white"
+                activeProps={{ className: 'text-white!' }}
+              >
+                Forum
+              </Link>
+            </nav>
           </div>
           {/* L'invitation du bot est dans les pages (accueil, choix du serveur) : ici, le compte */}
           <UserMenu />

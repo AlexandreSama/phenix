@@ -1,18 +1,20 @@
 import { ForbiddenException, Injectable, NotFoundException } from '@nestjs/common';
-import { PrismaClient } from '@phenix/database';
-import type {
-  GuildChannelSummary,
-  GuildRoleSummary,
-  ManageableGuild,
-  GuildCategorySummary,
+import { listDelegationsOf, PrismaClient } from '@phenix/database';
+import {
+  DASHBOARD_MODULES,
+  hasForbiddenPermissions,
+  type GuildCategorySummary,
+  type GuildChannelSummary,
+  type GuildRoleSummary,
+  type ManageableGuild,
 } from '@phenix/shared';
 import { ChannelType } from 'discord-api-types/v10';
+import type { GuildModuleRequirement } from '../../common/guards/guild-access.guard.js';
 import { CacheService } from '../../core/cache.service.js';
+import { guildIconUrl } from '../../discord/cdn.js';
 import { DiscordService } from '../../discord/discord.service.js';
 import type { Session } from '../auth/session.service.js';
 import { canManageGuild } from './permissions.js';
-import { guildIconUrl } from '../../discord/cdn.js';
-import { hasForbiddenPermissions } from '@phenix/shared';
 
 /** Discord limite fortement ces appels : on garde les réponses une minute. */
 const CACHE_SECONDS = 60;
@@ -45,32 +47,71 @@ export class GuildsService {
     private readonly cache: CacheService,
   ) {}
 
-  /** Les serveurs que l'utilisateur peut gérer, ceux où le bot est présent en premier. */
+  /**
+   * Les serveurs que l'utilisateur peut régler, ceux où le bot est présent en premier :
+   * ceux qu'il gère (tous les onglets), et ceux où un administrateur lui a ouvert des onglets.
+   */
   async listManageable(session: Session): Promise<ManageableGuild[]> {
-    const manageable = (await this.userGuilds(session)).filter(canManageGuild);
-    const present = await this.db.guild.findMany({
-      where: { id: { in: manageable.map((guild) => guild.id) }, leftAt: null },
-      select: { id: true },
-    });
+    const memberOf = await this.userGuilds(session);
+    const managed = memberOf.filter(canManageGuild);
+    const managedIds = new Set(managed.map((guild) => guild.id));
+    const [present, delegations] = await Promise.all([
+      this.db.guild.findMany({
+        where: { id: { in: [...managedIds] }, leftAt: null },
+        select: { id: true },
+      }),
+      listDelegationsOf(this.db, session.userId),
+    ]);
     const presentIds = new Set(present.map((guild) => guild.id));
+    const byId = new Map(memberOf.map((guild) => [guild.id, guild]));
 
-    return manageable
-      .map((guild) => ({
-        id: guild.id,
-        name: guild.name,
-        iconUrl: guildIconUrl(guild.id, guild.icon),
-        botPresent: presentIds.has(guild.id),
-      }))
-      .toSorted(
-        (a, b) => Number(b.botPresent) - Number(a.botPresent) || a.name.localeCompare(b.name, 'fr'),
-      );
+    const asAdmin = managed.map((guild): ManageableGuild => ({
+      id: guild.id,
+      name: guild.name,
+      iconUrl: guildIconUrl(guild.id, guild.icon),
+      botPresent: presentIds.has(guild.id),
+      access: 'admin',
+      modules: [...DASHBOARD_MODULES],
+    }));
+    // Un accès délégué ne vaut que tant qu'il est membre du serveur (et qu'il ne le gère pas déjà)
+    const asDelegate = delegations.flatMap(({ guildId, modules }): ManageableGuild[] => {
+      const guild = byId.get(guildId);
+      if (!guild || managedIds.has(guildId)) return [];
+      return [
+        {
+          id: guildId,
+          name: guild.name,
+          iconUrl: guildIconUrl(guildId, guild.icon),
+          botPresent: true,
+          access: 'delegate',
+          modules: DASHBOARD_MODULES.filter((module) => modules.includes(module)),
+        },
+      ];
+    });
+
+    return [...asAdmin, ...asDelegate].toSorted(
+      (a, b) => Number(b.botPresent) - Number(a.botPresent) || a.name.localeCompare(b.name, 'fr'),
+    );
   }
 
-  /** Lève une erreur si l'utilisateur ne peut pas gérer ce serveur, ou si le bot n'y est pas. */
-  async assertManageable(session: Session, guildId: string): Promise<void> {
+  /**
+   * Vérifie que l'utilisateur peut ouvrir cette partie du serveur, et que le bot y est.
+   * Sans `module`, la route est réservée aux administrateurs du serveur.
+   */
+  async assertAccess(
+    session: Session,
+    guildId: string,
+    module?: GuildModuleRequirement,
+  ): Promise<ManageableGuild> {
     const guild = (await this.listManageable(session)).find((entry) => entry.id === guildId);
-    if (!guild) throw new ForbiddenException("Tu n'as pas le droit de gérer ce serveur");
+    if (!guild) throw new ForbiddenException("Tu n'as pas accès à ce serveur");
     if (!guild.botPresent) throw new NotFoundException("Le bot n'est pas sur ce serveur");
+    if (guild.access === 'admin') return guild;
+    if (!module) throw new ForbiddenException('Réservé aux administrateurs du serveur');
+    if (module !== 'ANY' && !guild.modules.includes(module)) {
+      throw new ForbiddenException('Cet onglet ne t’a pas été ouvert sur ce serveur');
+    }
+    return guild;
   }
 
   async channels(guildId: string): Promise<GuildChannelSummary[]> {

@@ -8,7 +8,7 @@ import type {
 import type { BotContext } from './context.js';
 
 export type CommandCategory =
-  'fun' | 'utils' | 'moderation' | 'admin' | 'td2' | 'leveling' | 'giveaways';
+  'fun' | 'utils' | 'moderation' | 'leveling' | 'giveaways' | 'admin' | 'td2';
 
 /** Une slash command : sa définition pour Discord et ce qu'elle fait. */
 export interface SlashCommand {

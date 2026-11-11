@@ -1,5 +1,5 @@
-import type { PrismaClient, Ticket, TicketPanel } from './generated/prisma/client.js';
 import type { TicketPanelInput } from '@phenix/shared';
+import type { PrismaClient, Ticket, TicketPanel } from './generated/prisma/client.js';
 
 type TicketDb = Pick<PrismaClient, 'ticket'>;
 type PanelDb = Pick<PrismaClient, 'ticketPanel'>;

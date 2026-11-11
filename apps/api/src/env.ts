@@ -1,6 +1,7 @@
-import { z } from 'zod';
 import { storageEnvSchema } from '@phenix/storage';
+import { z } from 'zod';
 
+/** Les variables S3 viennent du paquet storage : le bot et l'API lisent les mêmes. */
 const envSchema = storageEnvSchema.extend({
   NODE_ENV: z.enum(['development', 'production', 'test']).default('development'),
   LOG_LEVEL: z.enum(['fatal', 'error', 'warn', 'info', 'debug', 'trace']).default('info'),

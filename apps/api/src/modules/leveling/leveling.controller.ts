@@ -5,12 +5,13 @@ import {
   type LevelingConfigPatch,
 } from '@phenix/shared';
 import { AuthGuard } from '../../common/guards/auth.guard.js';
-import { GuildAdminGuard } from '../../common/guards/guild-admin.guard.js';
+import { GuildAccessGuard, GuildModule } from '../../common/guards/guild-access.guard.js';
 import { LevelingService } from './leveling.service.js';
 
 /** Réglages XP d'un serveur : page « Niveaux » du tableau de bord. */
 @Controller('guilds/:guildId/leveling')
-@UseGuards(AuthGuard, GuildAdminGuard)
+@UseGuards(AuthGuard, GuildAccessGuard)
+@GuildModule('LEVELING')
 export class LevelingConfigController {
   constructor(private readonly leveling: LevelingService) {}
 

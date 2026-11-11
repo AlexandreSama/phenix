@@ -5,17 +5,20 @@ import {
   canManage,
   cancelTd2Button,
   confirmCancelTd2Button,
+  directivesTd2Select,
   MANAGE_REPLIES,
   manageTd2Button,
   rescheduleTd2Modal,
 } from './manage.js';
-import { GUILD, ORGANIZER, raidEvent, signup } from './test-fixtures.js';
+import { GUILD, missionEvent, ORGANIZER, raidEvent, signup } from './test-fixtures.js';
 
 const database = vi.hoisted(() => ({
   cancelTd2Event: vi.fn(),
   findTd2Event: vi.fn(),
+  listTd2Directives: vi.fn(),
   markTd2EventPublished: vi.fn(),
   rescheduleTd2Event: vi.fn(),
+  setTd2EventDirectives: vi.fn(),
 }));
 vi.mock('@phenix/database', () => database);
 
@@ -39,6 +42,8 @@ function setup(userId = ORGANIZER, options: Parameters<typeof member>[1] = {}) {
   };
   const interaction = {
     isButton: () => true,
+    isStringSelectMenu: () => true,
+    values: ['2', '1'],
     isModalSubmit: () => true,
     isFromMessage: () => true,
     inCachedGuild: () => true,
@@ -172,5 +177,50 @@ describe('annuler', () => {
       expect.objectContaining({ allowedMentions: { users: ['1'] } }),
     );
     expect(said(interaction.update)).toBe(MANAGE_REPLIES.cancelled);
+  });
+});
+
+describe('directives d’une mission', () => {
+  it('« Gérer » d’une mission lit les directives actives et ajoute leur menu', async () => {
+    database.findTd2Event.mockResolvedValue(missionEvent());
+    database.listTd2Directives.mockResolvedValue([
+      { id: 1, name: 'Brouillard de guerre', description: null, active: true },
+    ]);
+    const { interaction, run } = setup();
+
+    await run(manageTd2Button);
+
+    expect(database.listTd2Directives).toHaveBeenCalledWith({}, { activeOnly: true });
+    const [reply] = interaction.reply.mock.calls.at(-1) as unknown as [{ components: unknown[] }];
+    expect(reply.components).toHaveLength(2);
+  });
+
+  it('le menu remplace les directives, met le message à jour et le confirme', async () => {
+    const updated = missionEvent({ directives: ['Brouillard de guerre', 'Sans régénération'] });
+    database.findTd2Event.mockResolvedValue(missionEvent());
+    database.setTd2EventDirectives.mockResolvedValue(updated);
+    const { channel, interaction, run, said } = setup();
+
+    await run(directivesTd2Select);
+
+    expect(database.setTd2EventDirectives).toHaveBeenCalledWith({}, 12, [2, 1]);
+    expect(channel.messages.edit).toHaveBeenCalled();
+    expect(said(interaction.update)).toBe(
+      'Directives enregistrées : Brouillard de guerre · Sans régénération.',
+    );
+  });
+
+  it('refuse un inconnu, et un raid', async () => {
+    database.findTd2Event.mockResolvedValue(missionEvent());
+    const stranger = setup('9');
+    await stranger.run(directivesTd2Select);
+    expect(stranger.said(stranger.interaction.reply)).toBe(MANAGE_REPLIES.forbidden);
+    expect(database.setTd2EventDirectives).not.toHaveBeenCalled();
+
+    database.findTd2Event.mockResolvedValue(raidEvent());
+    database.setTd2EventDirectives.mockResolvedValue('not-mission');
+    const organizer = setup();
+    await organizer.run(directivesTd2Select);
+    expect(organizer.said(organizer.interaction.reply)).toBe(MANAGE_REPLIES.notMission);
   });
 });

@@ -16,6 +16,7 @@ const roles = [
 ];
 const EMPTY: Td2Settings = {
   channelId: null,
+  publicListing: false,
   reportChannelId: null,
   reportViewerRoleIds: [],
   reportFeedChannelId: null,
@@ -50,6 +51,7 @@ describe('Td2SettingsForm', () => {
     await vi.waitFor(() =>
       expect(onSubmit).toHaveBeenCalledWith({
         channelId: CHANNEL,
+        publicListing: false,
         reportChannelId: STAFF_CHANNEL,
         reportViewerRoleIds: [ROLE],
         reportFeedChannelId: null,
@@ -73,10 +75,31 @@ describe('Td2SettingsForm', () => {
     await vi.waitFor(() =>
       expect(onSubmit).toHaveBeenCalledWith({
         channelId: null,
+        publicListing: false,
         reportChannelId: null,
         reportViewerRoleIds: [],
         reportFeedChannelId: null,
       }),
+    );
+  });
+
+  it('montre le serveur sur la page publique, une fois le salon des sorties choisi', async () => {
+    const onSubmit = setup();
+    const listing = screen.getByRole('switch', { name: /Afficher sur la page publique/ });
+
+    fireEvent.click(listing);
+    save();
+    expect((await screen.findByRole('alert')).textContent).toBe(
+      'Choisis d’abord le salon des sorties : l’invitation y mène',
+    );
+    expect(onSubmit).not.toHaveBeenCalled();
+
+    fireEvent.change(screen.getByLabelText('Salon des sorties'), { target: { value: CHANNEL } });
+    save();
+    await vi.waitFor(() =>
+      expect(onSubmit).toHaveBeenCalledWith(
+        expect.objectContaining({ channelId: CHANNEL, publicListing: true }),
+      ),
     );
   });
 

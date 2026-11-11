@@ -3,15 +3,15 @@ import { hug, meurtre, punch } from './modules/fun/commands/actions.js';
 import { avatar } from './modules/fun/commands/avatar.js';
 import { eightBall } from './modules/fun/commands/eight-ball.js';
 import { ship } from './modules/fun/commands/ship.js';
+import { giveawayCommands } from './modules/giveaways/index.js';
+import { levelingCommands } from './modules/leveling/index.js';
+import { moderationCommands } from './modules/moderation/index.js';
+import { roleCommands } from './modules/roles/index.js';
+import { td2Commands } from './modules/td2/index.js';
 import { botinfos } from './modules/utils/commands/botinfos.js';
 import { botinvite } from './modules/utils/commands/botinvite.js';
 import { ping } from './modules/utils/commands/ping.js';
 import { serverinfos } from './modules/utils/commands/serverinfos.js';
-import { moderationCommands } from './modules/moderation/index.js';
-import { levelingCommands } from './modules/leveling/index.js';
-import { roleCommands } from './modules/roles/index.js';
-import { giveawayCommands } from './modules/giveaways/index.js';
-import { td2Commands } from './modules/td2/index.js';
 
 /** Toutes les slash commands du bot. Une nouvelle commande s'ajoute ici. */
 export const commands: SlashCommand[] = [
@@ -31,11 +31,11 @@ export const commands: SlashCommand[] = [
   ...moderationCommands,
   // Niveaux
   ...levelingCommands,
-  // Roles
+  // Rôles
   ...roleCommands,
   // Giveaways
   ...giveawayCommands,
-  // The Division
+  // The Division 2
   ...td2Commands,
 ];
 

@@ -1,6 +1,7 @@
 import { zodResolver } from '@hookform/resolvers/zod';
 import {
-  td2SettingsSchema,
+  td2PublicListingRule,
+  td2SettingsFields,
   type GuildChannelSummary,
   type GuildRoleSummary,
   type Td2Settings,
@@ -11,6 +12,7 @@ import { z } from 'zod';
 import { Field, inputClass } from '../../../components/ui/field';
 import { FormActions } from '../../../components/ui/form-actions';
 import { Panel } from '../../../components/ui/panel';
+import { Switch } from '../../../components/ui/switch';
 import { ChannelOptions, RoleChecklist } from '../form-parts';
 
 /** Un <select> laissé sur l'option vide envoie '' ; l'API attend null. */
@@ -21,16 +23,20 @@ const emptyToNull = <T extends z.ZodType>(schema: T) =>
 const asArray = (value: unknown) =>
   Array.isArray(value) ? value : typeof value === 'string' ? [value] : [];
 
-const formSchema = td2SettingsSchema.extend({
-  channelId: emptyToNull(td2SettingsSchema.shape.channelId),
-  reportChannelId: emptyToNull(td2SettingsSchema.shape.reportChannelId),
-  reportViewerRoleIds: z.preprocess(asArray, td2SettingsSchema.shape.reportViewerRoleIds),
-  reportFeedChannelId: emptyToNull(td2SettingsSchema.shape.reportFeedChannelId),
-});
+// Les champs adaptés au formulaire, puis la règle partagée (page publique ⇒ salon des sorties)
+const formSchema = td2PublicListingRule(
+  td2SettingsFields.extend({
+    channelId: emptyToNull(td2SettingsFields.shape.channelId),
+    reportChannelId: emptyToNull(td2SettingsFields.shape.reportChannelId),
+    reportViewerRoleIds: z.preprocess(asArray, td2SettingsFields.shape.reportViewerRoleIds),
+    reportFeedChannelId: emptyToNull(td2SettingsFields.shape.reportFeedChannelId),
+  }),
+);
 type FormInput = z.input<typeof formSchema>;
 
 const toForm = (settings: Td2Settings): FormInput => ({
   channelId: settings.channelId ?? '',
+  publicListing: settings.publicListing,
   reportChannelId: settings.reportChannelId ?? '',
   reportViewerRoleIds: settings.reportViewerRoleIds,
   reportFeedChannelId: settings.reportFeedChannelId ?? '',
@@ -77,7 +83,12 @@ export function Td2SettingsForm({ settings, channels, roles, onSubmit }: Props) 
       <Panel
         icon="hash"
         title="Sorties"
-        description={<>Où le bot poste les raids et incursions créés avec {command('/td2')}.</>}
+        description={
+          <>
+            Où le bot poste les raids, incursions et missions créés avec {command('/td2')}, et qui
+            peut les voir.
+          </>
+        }
       >
         <Field
           id="td2ChannelId"
@@ -89,6 +100,21 @@ export function Td2SettingsForm({ settings, channels, roles, onSubmit }: Props) 
             <ChannelOptions channels={channels} empty="Là où la commande est lancée" />
           </select>
         </Field>
+
+        <div className="flex flex-col gap-2 border-t border-white/6 pt-5">
+          <Switch
+            id="td2PublicListing"
+            label="Afficher sur la page publique"
+            hint="Les sorties de ce serveur apparaissent sur la page Sorties du site, avec un bouton « Rejoindre ce serveur ». Le bot crée l’invitation dans le salon des sorties : il lui faut la permission « Créer une invitation »."
+            aria-invalid={errors.publicListing ? true : undefined}
+            {...register('publicListing')}
+          />
+          {errors.publicListing && (
+            <p role="alert" className="text-[13px] text-flame">
+              {errors.publicListing.message}
+            </p>
+          )}
+        </div>
       </Panel>
 
       <Panel

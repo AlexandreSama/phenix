@@ -54,6 +54,7 @@ export const ModelName = {
   User: 'User',
   Guild: 'Guild',
   GuildConfig: 'GuildConfig',
+  GuildDelegate: 'GuildDelegate',
   Case: 'Case',
   MemberLevel: 'MemberLevel',
   Marriage: 'Marriage',
@@ -67,6 +68,7 @@ export const ModelName = {
   Td2Activity: 'Td2Activity',
   Td2ActivityMode: 'Td2ActivityMode',
   Td2ModeSlot: 'Td2ModeSlot',
+  Td2Directive: 'Td2Directive',
   Td2Event: 'Td2Event',
   Td2EventSlot: 'Td2EventSlot',
   Td2Signup: 'Td2Signup',
@@ -136,10 +138,25 @@ export const GuildConfigScalarFieldEnum = {
   td2ReportChannelId: 'td2ReportChannelId',
   td2ReportViewerRoleIds: 'td2ReportViewerRoleIds',
   td2ReportFeedChannelId: 'td2ReportFeedChannelId',
+  td2PublicListing: 'td2PublicListing',
   updatedAt: 'updatedAt'
 } as const
 
 export type GuildConfigScalarFieldEnum = (typeof GuildConfigScalarFieldEnum)[keyof typeof GuildConfigScalarFieldEnum]
+
+
+export const GuildDelegateScalarFieldEnum = {
+  guildId: 'guildId',
+  userId: 'userId',
+  username: 'username',
+  avatar: 'avatar',
+  modules: 'modules',
+  grantedById: 'grantedById',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt'
+} as const
+
+export type GuildDelegateScalarFieldEnum = (typeof GuildDelegateScalarFieldEnum)[keyof typeof GuildDelegateScalarFieldEnum]
 
 
 export const CaseScalarFieldEnum = {
@@ -314,10 +331,23 @@ export const Td2ModeSlotScalarFieldEnum = {
 export type Td2ModeSlotScalarFieldEnum = (typeof Td2ModeSlotScalarFieldEnum)[keyof typeof Td2ModeSlotScalarFieldEnum]
 
 
+export const Td2DirectiveScalarFieldEnum = {
+  id: 'id',
+  name: 'name',
+  description: 'description',
+  active: 'active'
+} as const
+
+export type Td2DirectiveScalarFieldEnum = (typeof Td2DirectiveScalarFieldEnum)[keyof typeof Td2DirectiveScalarFieldEnum]
+
+
 export const Td2EventScalarFieldEnum = {
   id: 'id',
   guildId: 'guildId',
   modeId: 'modeId',
+  missionName: 'missionName',
+  difficulty: 'difficulty',
+  directives: 'directives',
   scheduledAt: 'scheduledAt',
   channelId: 'channelId',
   messageId: 'messageId',

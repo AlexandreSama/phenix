@@ -1,5 +1,5 @@
-import type { PrismaClient, RolePanel, RolePanelOption } from './generated/prisma/client.js';
 import type { RolePanelInput } from '@phenix/shared';
+import type { PrismaClient, RolePanel, RolePanelOption } from './generated/prisma/client.js';
 
 type Db = Pick<PrismaClient, 'rolePanel'>;
 

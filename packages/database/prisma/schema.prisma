@@ -28,23 +28,24 @@ model User {
 
 // ---------- Guildes ----------
 model Guild {
-  id            String        @id // ID Discord de la guilde
-  name          String
-  icon          String? // hash de l'icône Discord, pour le classement public
-  caseCounter   Int           @default(0)
-  ticketCounter Int           @default(0)
-  joinedAt      DateTime      @default(now())
-  leftAt        DateTime? // rempli par guildDelete
-  config        GuildConfig?
-  cases         Case[]
-  levels        MemberLevel[]
-  marriages     Marriage[]
-  tickets       Ticket[]
-  ticketPanel   TicketPanel?
-  giveaways     Giveaway[]
-  rolePanels    RolePanel[]
-  td2Events     Td2Event[]
-  td2Reports    Td2Report[]
+  id             String          @id // ID Discord de la guilde
+  name           String
+  icon           String? // hash de l'icône Discord, pour le classement public
+  caseCounter    Int             @default(0)
+  ticketCounter  Int             @default(0)
+  joinedAt       DateTime        @default(now())
+  leftAt         DateTime? // rempli par guildDelete
+  config         GuildConfig?
+  cases          Case[]
+  levels         MemberLevel[]
+  marriages      Marriage[]
+  tickets        Ticket[]
+  ticketPanel    TicketPanel?
+  giveaways      Giveaway[]
+  rolePanels     RolePanel[]
+  td2Events      Td2Event[]
+  td2Reports     Td2Report[]
+  guildDelegates GuildDelegate[]
 }
 
 model GuildConfig {
@@ -67,7 +68,35 @@ model GuildConfig {
   td2ReportChannelId     String? // signalements reçus, côté staff
   td2ReportViewerRoleIds String[] // rôles autorisés à consulter les signalements
   td2ReportFeedChannelId String? // fil des signalements confirmés du réseau
+  td2PublicListing       Boolean  @default(false) // sorties visibles sur la page publique /sorties
   updatedAt              DateTime @updatedAt
+}
+
+// ---------- Accès délégués au tableau de bord ----------
+// les onglets du tableau de bord, un par module
+enum DashboardModule {
+  GENERAL
+  LEVELING
+  ROLES
+  TICKETS
+  GIVEAWAYS
+  TD2
+}
+
+// un membre à qui un admin du serveur ouvre certains onglets du site
+model GuildDelegate {
+  guildId     String
+  guild       Guild             @relation(fields: [guildId], references: [id], onDelete: Cascade)
+  userId      String // ID Discord du membre
+  username    String // pseudo au moment de l'ajout, pour l'affichage
+  avatar      String? // hash de son avatar Discord
+  modules     DashboardModule[]
+  grantedById String // l'admin qui a donné l'accès
+  createdAt   DateTime          @default(now())
+  updatedAt   DateTime          @updatedAt
+
+  @@id([guildId, userId])
+  @@index([userId])
 }
 
 // ---------- Modération ----------
@@ -258,6 +287,16 @@ enum Td2Role {
   HEAL
   TANK
   HEAL_TANK // build hybride des incursions
+  PLAYER // missions : une place, sans rôle
+}
+
+// difficulté d'une mission, comme dans le jeu
+enum Td2Difficulty {
+  NORMAL
+  HARD
+  CHALLENGING
+  HEROIC
+  LEGENDARY
 }
 
 enum Td2SignupStatus {
@@ -313,20 +352,32 @@ model Td2ModeSlot {
   @@id([modeId, role])
 }
 
+// directives : les règles qui durcissent une mission, gérées par le propriétaire du bot
+model Td2Directive {
+  id          Int     @id @default(autoincrement())
+  name        String  @unique
+  description String?
+  active      Boolean @default(true)
+}
+
 model Td2Event {
-  id          Int             @id @default(autoincrement())
+  id          Int              @id @default(autoincrement())
   guildId     String
-  guild       Guild           @relation(fields: [guildId], references: [id], onDelete: Cascade)
-  modeId      Int
-  mode        Td2ActivityMode @relation(fields: [modeId], references: [id])
+  guild       Guild            @relation(fields: [guildId], references: [id], onDelete: Cascade)
+  // null pour une mission ; Restrict : supprimer un mode ne change pas un raid en mission
+  modeId      Int?
+  mode        Td2ActivityMode? @relation(fields: [modeId], references: [id], onDelete: Restrict)
+  missionName String? // mission : le nom choisi par l'organisateur
+  difficulty  Td2Difficulty? // mission : sa difficulté
+  directives  String[]         @default([]) // mission : noms des directives, copiés à la création
   scheduledAt DateTime
   channelId   String
-  messageId   String?         @unique
+  messageId   String?          @unique
   organizerId String
   cancelledAt DateTime?
   slots       Td2EventSlot[] // composition copiée du mode à la création
   signups     Td2Signup[]
-  createdAt   DateTime        @default(now())
+  createdAt   DateTime         @default(now())
 }
 
 model Td2EventSlot {

@@ -1,8 +1,8 @@
 import { BadRequestException, Injectable } from '@nestjs/common';
-import { BotEventsService } from '../../core/bot-events.service.js';
-import { GuildsService } from '../guilds/guilds.service.js';
 import { PrismaClient } from '@phenix/database';
 import type { GeneralConfig, GeneralConfigPatch } from '@phenix/shared';
+import { BotEventsService } from '../../core/bot-events.service.js';
+import { GuildsService } from '../guilds/guilds.service.js';
 
 /** Une config neuve : les listes de Postgres n'ont pas de valeur par défaut dans Prisma. */
 export function newGuildConfig(guildId: string) {

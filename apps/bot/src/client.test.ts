@@ -1,8 +1,7 @@
-import { BOT_INVITE_PERMISSIONS } from '@phenix/shared';
+import { BOT_INVITE_PERMISSIONS, ROLE_PANEL_FORBIDDEN_PERMISSIONS } from '@phenix/shared';
 import { PermissionFlagsBits, PermissionsBitField } from 'discord.js';
 import { describe, expect, it } from 'vitest';
 import { BOT_PERMISSIONS } from './client.js';
-import { ROLE_PANEL_FORBIDDEN_PERMISSIONS } from '@phenix/shared';
 
 describe('BOT_PERMISSIONS', () => {
   it('correspond au nombre utilisé par le lien d’invitation du site', () => {

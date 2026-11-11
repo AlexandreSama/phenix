@@ -1,16 +1,17 @@
 import 'reflect-metadata';
+import { DiscordAPIError } from '@discordjs/rest';
 import type { NestExpressApplication } from '@nestjs/platform-express';
 import { Test } from '@nestjs/testing';
 import { PrismaClient } from '@phenix/database';
 import { Redis } from 'ioredis';
+import sharp from 'sharp';
 import request from 'supertest';
 import { afterAll, beforeAll, beforeEach, describe, expect, it, vi } from 'vitest';
 import { AppModule } from './app.module.js';
 import { configureApp } from './app.setup.js';
+import { EVIDENCE, GIVEAWAY_QUEUE, MEDIA, TRANSCRIPTS } from './core/tokens.js';
 import { DiscordService } from './discord/discord.service.js';
 import type { Env } from './env.js';
-import { EVIDENCE, GIVEAWAY_QUEUE, MEDIA, TRANSCRIPTS } from './core/tokens.js';
-import sharp from 'sharp';
 
 const env: Env = {
   NODE_ENV: 'test',
@@ -43,6 +44,9 @@ const CATEGORY = '400000000000000009';
 const SESSION_ID = 'a'.repeat(43);
 /** Une seconde session, celle d'un propriétaire du bot (BOT_OWNER_IDS). */
 const OWNER_SESSION_ID = 'o'.repeat(43);
+/** Un membre de MANAGED sans « Gérer le serveur », à qui l'onglet TD2 a été ouvert. */
+const DELEGATE = '700000000000000009';
+const DELEGATE_SESSION_ID = 'd'.repeat(43);
 
 /** Valkey en mémoire : sessions, cache et publication. */
 const store = new Map<string, string>();
@@ -51,8 +55,6 @@ const redis = {
   set: vi.fn(async (key: string, value: string) => void store.set(key, value)),
   del: vi.fn(async (key: string) => Number(store.delete(key))),
   publish: vi.fn(async (_channel: string, _message: string) => 1),
-  ping: vi.fn(async () => 'PONG'),
-  quit: vi.fn(async () => 'OK'),
   // Les limites de débit du forum : un compteur par clé
   incr: vi.fn(async (key: string) => {
     const count = Number(store.get(key) ?? 0) + 1;
@@ -60,6 +62,8 @@ const redis = {
     return count;
   }),
   expire: vi.fn(async () => 1),
+  ping: vi.fn(async () => 'PONG'),
+  quit: vi.fn(async () => 'OK'),
 };
 
 const config = {
@@ -74,11 +78,11 @@ const config = {
   levelUpChannelId: null,
   leaderboardPublic: true,
   td2ChannelId: null as string | null,
+  td2PublicListing: false,
   td2ReportChannelId: null as string | null,
   td2ReportViewerRoleIds: [] as string[],
   td2ReportFeedChannelId: null as string | null,
 };
-
 const publicGuild = {
   id: MANAGED,
   name: 'Les Agents',
@@ -86,7 +90,19 @@ const publicGuild = {
   leftAt: null,
   config: { leaderboardPublic: true },
 };
-
+/** Un panel déjà publié dans CHANNEL. */
+const panel = {
+  id: 7,
+  guildId: MANAGED,
+  channelId: CHANNEL,
+  messageId: '700000000000000001',
+  title: 'Tes jeux',
+  description: null,
+  mode: 'MULTIPLE',
+  publishedAt: new Date(),
+  publishError: null,
+  options: [{ roleId: GAMER_ROLE, label: 'Gamer', emoji: null, position: 0 }],
+};
 /** Un ticket fermé, avec son transcript dans Garage. */
 const ticket = {
   id: 12,
@@ -113,7 +129,6 @@ const ticketPanel = {
   publishedAt: new Date(),
   publishError: null,
 };
-
 /** Un giveaway en cours dans CHANNEL, publié, avec 3 participants. */
 const giveaway = {
   id: 12,
@@ -133,20 +148,15 @@ const giveaway = {
   createdAt: new Date('2026-11-09T12:00:00Z'),
   _count: { entries: 3 },
 };
-/** La file BullMQ, sans Valkey : on regarde les tâches ajoutées. */
-const giveawayQueue = {
-  add: vi.fn(async () => ({})),
-  getJob: vi.fn(async () => undefined),
-  remove: vi.fn(async () => 1),
-  close: vi.fn(async () => {}),
-};
-
 /** Une sortie Dark Hours samedi soir : 3 confirmés sur 8, 1 en réserve. */
 const td2Event = {
   id: 12,
   scheduledAt: new Date('2026-11-14T20:00:00Z'),
   channelId: CHANNEL,
-  mode: { name: 'Normal', activity: { kind: 'RAID', name: 'Dark Hours' } },
+  missionName: null as string | null,
+  difficulty: null as string | null,
+  directives: [] as string[],
+  mode: { name: 'Normal', activity: { kind: 'RAID', name: 'Dark Hours' } } as object | null,
   slots: [{ count: 6 }, { count: 1 }, { count: 1 }],
   signups: [
     { status: 'CONFIRMED' },
@@ -155,7 +165,6 @@ const td2Event = {
     { status: 'RESERVE' },
   ],
 };
-
 /** Le catalogue : un raid, un mode qui a déjà servi à 2 sorties. */
 const td2Activity = {
   id: 1,
@@ -194,6 +203,22 @@ const td2Report = {
   staffMessageId: '700000000000000007',
   createdAt: new Date('2026-11-10T12:00:00Z'),
 };
+/** Les directives des missions : une active, une retirée. */
+const td2Directives = [
+  { id: 1, name: 'Brouillard de guerre', description: 'Mini-carte vide.', active: true },
+  { id: 2, name: 'Ancienne', description: null, active: false },
+];
+/** L'accès de DELEGATE sur MANAGED, tel que la base le garde. */
+const delegateRow = {
+  guildId: MANAGED,
+  userId: DELEGATE,
+  username: 'faye',
+  avatar: null,
+  modules: ['TD2'],
+  grantedById: '1',
+  createdAt: new Date('2026-11-10T12:00:00Z'),
+  updatedAt: new Date('2026-11-10T12:00:00Z'),
+};
 const evidence = {
   put: vi.fn(),
   getText: vi.fn(),
@@ -203,12 +228,17 @@ const evidence = {
   })),
   delete: vi.fn(async (_keys: readonly string[]) => {}),
 };
-
+/** La file BullMQ, sans Valkey : on regarde les tâches ajoutées. */
+const giveawayQueue = {
+  add: vi.fn(async () => ({})),
+  getJob: vi.fn(async () => undefined),
+  remove: vi.fn(async () => 1),
+  close: vi.fn(async () => {}),
+};
 const transcripts = {
   put: vi.fn(),
   getText: vi.fn(async (_key: string): Promise<string | null> => '<!doctype html><p>Bonjour</p>'),
 };
-
 /** Le forum : une catégorie, un sujet de deux messages, deux auteurs. */
 const FORUM_MEMBER = '1';
 const FORUM_OTHER = '700000000000000002';
@@ -275,7 +305,6 @@ const media = {
   })),
   delete: vi.fn(async (_keys: readonly string[]) => {}),
 };
-
 const db = {
   $transaction: vi.fn(async (run: (tx: unknown) => Promise<unknown>) => run(db)),
   giveaway: {
@@ -292,52 +321,24 @@ const db = {
     updateMany: vi.fn(async () => ({ count: 1 })),
   },
   giveawayEntry: { findMany: vi.fn(async () => []) },
-  ticket: {
-    count: vi.fn(async () => 25),
-    findMany: vi.fn(async () => [ticket]),
-    findUnique: vi.fn(async () => ticket as typeof ticket | null),
-  },
-  ticketPanel: {
-    findUnique: vi.fn(async () => ticketPanel as typeof ticketPanel | null),
-    upsert: vi.fn(async ({ update }: { update: object }) => ({ ...ticketPanel, ...update })),
-  },
-  guild: {
-    findMany: vi.fn(async () => [{ id: MANAGED }, { id: NOT_MANAGED }]),
-    findUnique: vi.fn(async () => publicGuild),
-  },
-  guildConfig: {
-    findUnique: vi.fn(async () => null as object | null),
-    upsert: vi.fn(async (args: { update: object }) => ({ ...config, ...args.update })),
-    update: vi.fn(async ({ data }: { data: object }) => ({ ...config, ...data })),
-  },
-  rolePanel: {
-    count: vi.fn(async () => 0),
-    findUnique: vi.fn(async () => panel),
-    findMany: vi.fn(async () => [panel]),
-    create: vi.fn(async () => ({ ...panel, messageId: null })),
-    update: vi.fn(async () => panel),
-    delete: vi.fn(async () => panel),
-  },
-  memberLevel: {
+  td2Event: { findMany: vi.fn(async () => [td2Event] as object[]), count: vi.fn(async () => 2) },
+  td2Directive: {
+    findMany: vi.fn(async () => td2Directives),
+    findUnique: vi.fn(async () => td2Directives[1] as object | null),
+    findUniqueOrThrow: vi.fn(async () => td2Directives[0]),
     count: vi.fn(async () => 1),
-    findMany: vi.fn(async () => [
-      {
-        userId: '500000000000000001',
-        displayName: 'Alpha',
-        avatarUrl: null,
-        level: 4,
-        xp: 900,
-        messages: 40,
-      },
-    ]),
+    createMany: vi.fn(async () => ({ count: 1 })),
+    update: vi.fn(async () => td2Directives[0]),
+    deleteMany: vi.fn(async () => ({ count: 1 })),
   },
-  user: {
-    findUnique: vi.fn(),
-    upsert: vi.fn(),
-    findMany: vi.fn(async () => [] as object[]),
-    updateMany: vi.fn(async () => ({ count: 1 })),
+  guildDelegate: {
+    // Les accès d'un membre (listDelegationsOf) ou ceux d'un serveur (listGuildDelegates)
+    findMany: vi.fn(async ({ where }: { where: { userId?: string; guildId?: string } }) =>
+      where.userId === DELEGATE || where.guildId === MANAGED ? [delegateRow] : [],
+    ),
+    upsert: vi.fn(async ({ create }: { create: object }) => ({ ...delegateRow, ...create })),
+    deleteMany: vi.fn(async () => ({ count: 1 })),
   },
-  td2Event: { findMany: vi.fn(async () => [td2Event]), count: vi.fn(async () => 2) },
   td2Activity: {
     findMany: vi.fn(async () => [td2Activity]),
     findUnique: vi.fn(async () => td2Activity as object | null),
@@ -393,22 +394,58 @@ const db = {
     findMany: vi.fn(async () => [{ key: 'forum/a.webp' }]),
     updateMany: vi.fn(async () => ({ count: 0 })),
   },
+  ticket: {
+    count: vi.fn(async () => 25),
+    findMany: vi.fn(async () => [ticket]),
+    findUnique: vi.fn(async () => ticket as typeof ticket | null),
+  },
+  ticketPanel: {
+    findUnique: vi.fn(async () => ticketPanel as typeof ticketPanel | null),
+    upsert: vi.fn(async ({ update }: { update: object }) => ({ ...ticketPanel, ...update })),
+  },
+  guild: {
+    findMany: vi.fn(async () => [{ id: MANAGED }, { id: NOT_MANAGED }]),
+    findUnique: vi.fn(async () => publicGuild),
+    // findPublicTd2Guild : un serveur qui montre ses sorties, et son salon TD2
+    findFirst: vi.fn(
+      async () =>
+        ({ id: MANAGED, name: 'Les Agents', config: { td2ChannelId: CHANNEL } }) as object | null,
+    ),
+  },
+  guildConfig: {
+    findUnique: vi.fn(async () => null as object | null),
+    upsert: vi.fn(async (args: { update: object }) => ({ ...config, ...args.update })),
+    update: vi.fn(async ({ data }: { data: object }) => ({ ...config, ...data })),
+  },
+  rolePanel: {
+    count: vi.fn(async () => 0),
+    findUnique: vi.fn(async () => panel),
+    findMany: vi.fn(async () => [panel]),
+    create: vi.fn(async () => ({ ...panel, messageId: null })),
+    update: vi.fn(async () => panel),
+    delete: vi.fn(async () => panel),
+  },
+  memberLevel: {
+    count: vi.fn(async () => 1),
+    findMany: vi.fn(async () => [
+      {
+        userId: '500000000000000001',
+        displayName: 'Alpha',
+        avatarUrl: null,
+        level: 4,
+        xp: 900,
+        messages: 40,
+      },
+    ]),
+  },
+  user: {
+    findUnique: vi.fn(),
+    upsert: vi.fn(),
+    findMany: vi.fn(async () => [] as object[]),
+    updateMany: vi.fn(async () => ({ count: 1 })),
+  },
   $queryRaw: vi.fn(async () => [1]),
   $disconnect: vi.fn(),
-};
-
-/** Un panel déjà publié dans CHANNEL. */
-const panel = {
-  id: 7,
-  guildId: MANAGED,
-  channelId: CHANNEL,
-  messageId: '700000000000000001',
-  title: 'Tes jeux',
-  description: null,
-  mode: 'MULTIPLE',
-  publishedAt: new Date(),
-  publishError: null,
-  options: [{ roleId: GAMER_ROLE, label: 'Gamer', emoji: null, position: 0 }],
 };
 
 const discord = {
@@ -444,7 +481,29 @@ const discord = {
     },
   ]),
   getBotMember: vi.fn(async () => ({ roles: [BOT_ROLE] })),
+  searchGuildMembers: vi.fn(async () => [
+    { nick: null, user: { id: DELEGATE, username: 'faye', global_name: 'Faye', avatar: null } },
+    { nick: null, user: { id: '700000000000000010', username: 'fbot', avatar: null, bot: true } },
+  ]),
+  getGuildMember: vi.fn(
+    async () =>
+      ({ user: { id: DELEGATE, username: 'faye', avatar: 'f00d' } }) as {
+        user: { id: string; username: string; avatar: string | null; bot?: boolean };
+      } | null,
+  ),
+  createInvite: vi.fn(async () => 'agents'),
 };
+
+/** L'erreur que Discord renvoie quand le bot n'a pas une permission. */
+const missingPermissions = () =>
+  new DiscordAPIError(
+    { code: 50013, message: 'Missing Permissions' },
+    50013,
+    403,
+    'POST',
+    '/channels/x/invites',
+    { body: undefined, files: undefined },
+  );
 
 let app: NestExpressApplication;
 const cookie = `sid=${SESSION_ID}`;
@@ -457,14 +516,14 @@ beforeAll(async () => {
     .useValue(redis)
     .overrideProvider(DiscordService)
     .useValue(discord)
-    .overrideProvider(GIVEAWAY_QUEUE)
-    .useValue(giveawayQueue)
     .overrideProvider(TRANSCRIPTS)
     .useValue(transcripts)
     .overrideProvider(EVIDENCE)
     .useValue(evidence)
     .overrideProvider(MEDIA)
     .useValue(media)
+    .overrideProvider(GIVEAWAY_QUEUE)
+    .useValue(giveawayQueue)
     .compile();
   app = moduleRef.createNestApplication<NestExpressApplication>();
   configureApp(app);
@@ -481,6 +540,10 @@ beforeEach(() => {
   store.set(
     `session:${OWNER_SESSION_ID}`,
     JSON.stringify({ userId: '900000000000000001', accessToken: 'tok' }),
+  );
+  store.set(
+    `session:${DELEGATE_SESSION_ID}`,
+    JSON.stringify({ userId: DELEGATE, accessToken: 'tok-faye' }),
   );
   vi.clearAllMocks();
 });
@@ -919,6 +982,7 @@ describe('TD2', () => {
   const url = `/api/guilds/${MANAGED}/td2`;
   const settings = {
     channelId: CHANNEL,
+    publicListing: false,
     reportChannelId: OTHER_CHANNEL,
     reportViewerRoleIds: [GAMER_ROLE],
     reportFeedChannelId: null,
@@ -931,6 +995,7 @@ describe('TD2', () => {
 
     expect(response.body).toEqual({
       channelId: null,
+      publicListing: false,
       reportChannelId: null,
       reportViewerRoleIds: [],
       reportFeedChannelId: null,
@@ -948,6 +1013,7 @@ describe('TD2', () => {
       expect.objectContaining({
         update: {
           td2ChannelId: CHANNEL,
+          td2PublicListing: false,
           td2ReportChannelId: OTHER_CHANNEL,
           td2ReportViewerRoleIds: [GAMER_ROLE],
           td2ReportFeedChannelId: null,
@@ -985,6 +1051,8 @@ describe('TD2', () => {
         kind: 'RAID',
         activity: 'Dark Hours',
         mode: 'Normal',
+        difficulty: null,
+        directives: [],
         scheduledAt: '2026-11-14T20:00:00.000Z',
         channelId: CHANNEL,
         confirmed: 3,
@@ -995,6 +1063,302 @@ describe('TD2', () => {
     expect(db.td2Event.findMany).toHaveBeenCalledWith(
       expect.objectContaining({ orderBy: { scheduledAt: 'asc' } }),
     );
+  });
+
+  it('une mission : son nom, sa difficulté et ses directives, sans mode', async () => {
+    db.td2Event.findMany.mockResolvedValueOnce([
+      {
+        ...td2Event,
+        mode: null,
+        missionName: 'Capitole',
+        difficulty: 'HEROIC',
+        directives: ['Brouillard de guerre'],
+        slots: [{ count: 4 }],
+      },
+    ]);
+
+    const response = await request(app.getHttpServer()).get(`${url}/events`).set('Cookie', cookie);
+
+    expect(response.body[0]).toMatchObject({
+      kind: 'MISSION',
+      activity: 'Capitole',
+      mode: null,
+      difficulty: 'HEROIC',
+      directives: ['Brouillard de guerre'],
+      capacity: 4,
+    });
+  });
+
+  it('montrer le serveur sur la page publique demande le salon des sorties', async () => {
+    const response = await put({ channelId: null, publicListing: true });
+
+    expect(response.status).toBe(400);
+    expect(response.body.message).toEqual([
+      'publicListing: Choisis d’abord le salon des sorties : l’invitation y mène',
+    ]);
+  });
+
+  it('à l’activation, crée l’invitation tout de suite et rafraîchit la page publique', async () => {
+    store.set('td2-public-events', '[]');
+
+    const response = await put({ publicListing: true });
+
+    expect(response.status).toBe(200);
+    expect(response.body.publicListing).toBe(true);
+    expect(discord.createInvite).toHaveBeenCalledWith(CHANNEL, 7 * 24 * 3600);
+    expect(JSON.parse(store.get(`td2-invite:${MANAGED}`) ?? '{}')).toEqual({
+      channelId: CHANNEL,
+      code: 'agents',
+    });
+    expect(store.has('td2-public-events')).toBe(false);
+  });
+
+  it('sans la permission « Créer une invitation », l’admin l’apprend et rien n’est enregistré', async () => {
+    discord.createInvite.mockRejectedValueOnce(missingPermissions());
+
+    const response = await put({ publicListing: true });
+
+    expect(response.status).toBe(400);
+    expect(response.body.message).toContain('« Créer une invitation »');
+    expect(db.guildConfig.upsert).toHaveBeenCalledTimes(1); // la lecture, pas l'écriture
+  });
+});
+
+describe('page publique des sorties', () => {
+  const publicEvent = {
+    ...td2Event,
+    guild: { id: MANAGED, name: 'Les Agents', icon: 'abc' },
+  };
+
+  it('se lit sans connexion, sans les salons, et sert le cache ensuite', async () => {
+    db.td2Event.findMany.mockResolvedValueOnce([publicEvent]);
+
+    const first = await request(app.getHttpServer()).get('/api/td2/public/events');
+    const second = await request(app.getHttpServer()).get('/api/td2/public/events');
+
+    expect(first.status).toBe(200);
+    expect(first.body).toEqual([
+      {
+        id: 12,
+        kind: 'RAID',
+        activity: 'Dark Hours',
+        mode: 'Normal',
+        difficulty: null,
+        directives: [],
+        scheduledAt: '2026-11-14T20:00:00.000Z',
+        confirmed: 3,
+        capacity: 8,
+        reserve: 1,
+        guild: {
+          id: MANAGED,
+          name: 'Les Agents',
+          iconUrl: `https://cdn.discordapp.com/icons/${MANAGED}/abc.png?size=128`,
+        },
+      },
+    ]);
+    expect(second.body).toEqual(first.body);
+    expect(db.td2Event.findMany).toHaveBeenCalledTimes(1);
+  });
+
+  const join = (guildId = MANAGED) =>
+    request(app.getHttpServer()).get(`/api/td2/public/guilds/${guildId}/join`);
+
+  it('« Rejoindre » redirige vers l’invitation, créée une fois puis reprise du cache', async () => {
+    const first = await join();
+    const second = await join();
+
+    expect(first.status).toBe(302);
+    expect(first.headers.location).toBe('https://discord.gg/agents');
+    expect(second.headers.location).toBe('https://discord.gg/agents');
+    expect(discord.createInvite).toHaveBeenCalledTimes(1);
+  });
+
+  it('serveur caché ou Discord qui refuse : retour à la page, sans réessayer à chaque clic', async () => {
+    db.guild.findFirst.mockResolvedValueOnce(null);
+    const hidden = await join();
+    expect(hidden.headers.location).toBe('http://localhost:5173/sorties?invitation=indisponible');
+    expect(discord.createInvite).not.toHaveBeenCalled();
+
+    discord.createInvite.mockRejectedValueOnce(missingPermissions());
+    const refused = await join();
+    const again = await join();
+    expect(refused.headers.location).toBe('http://localhost:5173/sorties?invitation=indisponible');
+    expect(again.headers.location).toBe('http://localhost:5173/sorties?invitation=indisponible');
+    expect(discord.createInvite).toHaveBeenCalledTimes(1);
+
+    const garbage = await join('pas-un-id');
+    expect(garbage.headers.location).toBe('http://localhost:5173/sorties?invitation=indisponible');
+  });
+});
+
+const faye = `sid=${DELEGATE_SESSION_ID}`;
+/** Une page d'un serveur, demandée par Faye, la déléguée. */
+const asFaye = (path: string) =>
+  request(app.getHttpServer()).get(`/api/guilds/${MANAGED}${path}`).set('Cookie', faye);
+
+describe('accès délégués', () => {
+  /** Faye est sur MANAGED sans « Gérer le serveur » ; elle n'est pas sur NOT_MANAGED. */
+  const fayeGuilds = () =>
+    discord.getCurrentUserGuilds.mockResolvedValueOnce([
+      { id: MANAGED, name: 'Les Agents', icon: null, owner: false, permissions: '0' },
+    ]);
+
+  it('un délégué voit le serveur avec ses seuls onglets', async () => {
+    fayeGuilds();
+
+    const response = await request(app.getHttpServer()).get('/api/guilds').set('Cookie', faye);
+
+    expect(response.body).toEqual([
+      {
+        id: MANAGED,
+        name: 'Les Agents',
+        iconUrl: null,
+        botPresent: true,
+        access: 'delegate',
+        modules: ['TD2'],
+      },
+    ]);
+  });
+
+  it('un administrateur a tous les onglets', async () => {
+    const response = await request(app.getHttpServer()).get('/api/guilds').set('Cookie', cookie);
+
+    expect(response.body[0]).toMatchObject({
+      id: MANAGED,
+      access: 'admin',
+      modules: ['GENERAL', 'LEVELING', 'ROLES', 'TICKETS', 'GIVEAWAYS', 'TD2'],
+    });
+  });
+
+  it('il entre dans l’onglet reçu et lit salons et rôles, rien d’autre', async () => {
+    fayeGuilds();
+
+    expect((await asFaye('/td2/settings')).status).toBe(200);
+    expect((await asFaye('/channels')).status).toBe(200);
+    const general = await asFaye('/config');
+    expect(general.status).toBe(403);
+    expect(general.body.message).toBe('Cet onglet ne t’a pas été ouvert sur ce serveur');
+    const delegates = await asFaye('/delegates');
+    expect(delegates.status).toBe(403);
+    expect(delegates.body.message).toBe('Réservé aux administrateurs du serveur');
+  });
+
+  it('un accès ne vaut plus rien hors du serveur', async () => {
+    discord.getCurrentUserGuilds.mockResolvedValueOnce([]);
+
+    const list = await request(app.getHttpServer()).get('/api/guilds').set('Cookie', faye);
+    const td2 = await request(app.getHttpServer())
+      .get(`/api/guilds/${MANAGED}/td2/settings`)
+      .set('Cookie', faye);
+
+    expect(list.body).toEqual([]);
+    expect(td2.status).toBe(403);
+  });
+
+  const url = `/api/guilds/${MANAGED}`;
+
+  it('l’administrateur liste les accès donnés', async () => {
+    const response = await request(app.getHttpServer())
+      .get(`${url}/delegates`)
+      .set('Cookie', cookie);
+
+    expect(response.body).toEqual([
+      {
+        userId: DELEGATE,
+        username: 'faye',
+        avatarUrl: expect.stringMatching(/^https:\/\/cdn\.discordapp\.com\/embed\/avatars\//),
+        modules: ['TD2'],
+        grantedById: '1',
+        updatedAt: '2026-11-10T12:00:00.000Z',
+      },
+    ]);
+  });
+
+  it('cherche un membre par pseudo, sans les bots, et garde la réponse 30 s', async () => {
+    const search = () =>
+      request(app.getHttpServer()).get(`${url}/members?q=Fa`).set('Cookie', cookie);
+
+    const first = await search();
+    await search();
+    const short = await request(app.getHttpServer())
+      .get(`${url}/members?q=f`)
+      .set('Cookie', cookie);
+
+    expect(first.body).toEqual([
+      {
+        id: DELEGATE,
+        username: 'faye',
+        displayName: 'Faye',
+        avatarUrl: expect.any(String),
+      },
+    ]);
+    expect(discord.searchGuildMembers).toHaveBeenCalledTimes(1);
+    expect(discord.searchGuildMembers).toHaveBeenCalledWith(MANAGED, 'Fa', 10);
+    expect(short.status).toBe(400);
+  });
+
+  const grant = (userId: string, modules: string[]) =>
+    request(app.getHttpServer())
+      .put(`${url}/delegates/${userId}`)
+      .set('Cookie', cookie)
+      .send({ modules });
+
+  it('ouvre des onglets à un membre, relu chez Discord', async () => {
+    const response = await grant(DELEGATE, ['TICKETS', 'TD2', 'TICKETS']);
+
+    expect(response.status).toBe(200);
+    expect(response.body).toMatchObject({ userId: DELEGATE, modules: ['TICKETS', 'TD2'] });
+    expect(discord.getGuildMember).toHaveBeenCalledWith(MANAGED, DELEGATE);
+    expect(db.guildDelegate.upsert).toHaveBeenCalledWith(
+      expect.objectContaining({
+        create: expect.objectContaining({
+          guildId: MANAGED,
+          userId: DELEGATE,
+          username: 'faye',
+          avatar: 'f00d',
+          modules: ['TICKETS', 'TD2'],
+          grantedById: '1',
+        }),
+      }),
+    );
+  });
+
+  it('refuse aucun onglet, un ID illisible, soi-même, un absent du serveur, un bot', async () => {
+    const none = await grant(DELEGATE, []);
+    const garbage = await grant('abc', ['TD2']);
+    // Le propriétaire du bot gère aussi MANAGED : il ne se délègue rien
+    const self = await request(app.getHttpServer())
+      .put(`${url}/delegates/900000000000000001`)
+      .set('Cookie', `sid=${OWNER_SESSION_ID}`)
+      .send({ modules: ['TD2'] });
+    discord.getGuildMember.mockResolvedValueOnce(null);
+    const absent = await grant(DELEGATE, ['TD2']);
+    discord.getGuildMember.mockResolvedValueOnce({
+      user: { id: DELEGATE, username: 'robot', avatar: null, bot: true },
+    });
+    const bot = await grant(DELEGATE, ['TD2']);
+
+    expect(none.body.message).toEqual(['modules: Coche au moins un onglet']);
+    expect(garbage.status).toBe(404);
+    expect(self.status).toBe(400);
+    expect(self.body.message).toBe('Tu as déjà accès à tous les onglets de ce serveur');
+    expect(absent.status).toBe(404);
+    expect(absent.body.message).toBe("Ce membre n'est pas sur le serveur");
+    expect(bot.status).toBe(400);
+    expect(db.guildDelegate.upsert).not.toHaveBeenCalled();
+  });
+
+  it('retire un accès ; un second retrait répond 404', async () => {
+    const removed = await request(app.getHttpServer())
+      .delete(`${url}/delegates/${DELEGATE}`)
+      .set('Cookie', cookie);
+    db.guildDelegate.deleteMany.mockResolvedValueOnce({ count: 0 });
+    const again = await request(app.getHttpServer())
+      .delete(`${url}/delegates/${DELEGATE}`)
+      .set('Cookie', cookie);
+
+    expect(removed.status).toBe(204);
+    expect(again.status).toBe(404);
   });
 });
 
@@ -1072,6 +1436,47 @@ describe('administration', () => {
 
     expect(response.status).toBe(400);
     expect(response.body.message).toEqual(['slots: Entre 1 et 8 joueurs au total']);
+  });
+
+  it('gère les directives des missions, 25 actives au plus', async () => {
+    const list = await request(app.getHttpServer())
+      .get('/api/admin/td2/directives')
+      .set('Cookie', owner);
+    const created = await request(app.getHttpServer())
+      .post('/api/admin/td2/directives')
+      .set('Cookie', owner)
+      .send({ name: '  Chrono ', description: '' });
+    db.td2Directive.count.mockResolvedValueOnce(25);
+    const full = await request(app.getHttpServer())
+      .post('/api/admin/td2/directives')
+      .set('Cookie', owner)
+      .send({ name: 'Une de trop', description: null });
+    db.td2Directive.deleteMany.mockResolvedValueOnce({ count: 0 });
+    const missing = await request(app.getHttpServer())
+      .delete('/api/admin/td2/directives/99')
+      .set('Cookie', owner);
+
+    expect(list.body).toEqual(td2Directives);
+    expect(created.status).toBe(201);
+    expect(db.td2Directive.createMany).toHaveBeenCalledWith({
+      data: [{ name: 'Chrono', description: null }],
+      skipDuplicates: true,
+    });
+    expect(full.status).toBe(409);
+    expect(full.body.message).toContain('25 directives actives au plus');
+    expect(missing.status).toBe(404);
+  });
+
+  it('réactiver une directive compte aussi dans la limite', async () => {
+    db.td2Directive.count.mockResolvedValueOnce(25);
+
+    const response = await request(app.getHttpServer())
+      .patch('/api/admin/td2/directives/2')
+      .set('Cookie', owner)
+      .send({ active: true });
+
+    expect(response.status).toBe(409);
+    expect(db.td2Directive.update).not.toHaveBeenCalled();
   });
 
   it('liste les signalements du réseau, sans l’auteur', async () => {
@@ -1428,5 +1833,19 @@ describe('santé', () => {
   it('répond ok quand la base et Valkey répondent', async () => {
     const response = await request(app.getHttpServer()).get('/api/health');
     expect(response.body).toEqual({ status: 'ok' });
+  });
+
+  it('le bot : ok tant que son battement de cœur est là, 503 sinon', async () => {
+    const heartbeat = { at: '2026-11-11T09:00:00.000Z', guilds: 12, ping: 42 };
+    store.set('bot:heartbeat', JSON.stringify(heartbeat));
+    const alive = await server().get('/api/health/bot');
+    store.set('bot:heartbeat', 'pas du JSON');
+    const corrupt = await server().get('/api/health/bot');
+    store.delete('bot:heartbeat');
+    const absent = await server().get('/api/health/bot');
+
+    expect(alive.body).toEqual({ status: 'ok', ...heartbeat });
+    expect([corrupt.status, absent.status]).toEqual([503, 503]);
+    expect(absent.body.message).toBe('Le bot ne donne plus signe de vie');
   });
 });

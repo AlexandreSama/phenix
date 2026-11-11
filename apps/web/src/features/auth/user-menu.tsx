@@ -77,8 +77,9 @@ export function UserMenu() {
 
   if (!user) {
     return (
-      <a href={LOGIN_URL} className={buttonClass('ghost')}>
-        Se connecter avec Discord
+      <a href={LOGIN_URL} className={buttonClass('ghost', 'whitespace-nowrap')}>
+        {/* Sur téléphone, l'en-tête garde ses liens sur une ligne : « Se connecter » suffit */}
+        Se connecter <span className="max-sm:hidden">avec Discord</span>
       </a>
     );
   }

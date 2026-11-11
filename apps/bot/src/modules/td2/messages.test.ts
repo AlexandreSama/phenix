@@ -1,7 +1,14 @@
 import { ButtonStyle } from 'discord.js';
 import { describe, expect, it } from 'vitest';
-import { promotionMessage, reminderMessage, reservePosition, td2EventMessage } from './messages.js';
-import { incursionEvent, raidEvent, signup } from './test-fixtures.js';
+import {
+  directivesMenu,
+  manageMenu,
+  promotionMessage,
+  reminderMessage,
+  reservePosition,
+  td2EventMessage,
+} from './messages.js';
+import { incursionEvent, missionEvent, raidEvent, signup } from './test-fixtures.js';
 
 const BEFORE = new Date('2026-11-14T12:00:00Z');
 
@@ -104,5 +111,82 @@ describe('réserve et annonces', () => {
 
     expect(message.content).toContain('<@7>, une place de Tank s’est libérée');
     expect(message.allowedMentions).toEqual({ users: ['7'] });
+  });
+});
+
+describe('missions', () => {
+  const DIRECTIVES = [
+    { id: 1, name: 'Brouillard de guerre', description: 'Mini-carte vide.' },
+    { id: 2, name: 'Sans régénération', description: null },
+  ];
+
+  it('le nom et la difficulté en titre, les directives, une seule équipe sans rôle', () => {
+    const event = missionEvent({
+      directives: ['Brouillard de guerre', 'Sans régénération'],
+      signups: [
+        signup('1', 'PLAYER'),
+        signup('2', 'PLAYER'),
+        signup('3', 'PLAYER'),
+        signup('4', 'PLAYER'),
+        signup('5', 'PLAYER', 'RESERVE'),
+      ],
+    });
+
+    const { embed, buttons } = render(event);
+
+    expect(embed?.title).toBe('🎯 Mission Capitole · Héroïque');
+    expect(embed?.description).toContain('👥 4/4 joueurs · 1 en réserve');
+    expect(embed?.description).toContain(
+      '🧩 Directives : Brouillard de guerre · Sans régénération',
+    );
+    expect(embed?.fields?.map((field) => [field.name, field.value])).toEqual([
+      ['Équipe (4/4)', '<@1> <@2> <@3> <@4>'],
+      ['Réserve', '<@5>'],
+    ]);
+    expect(buttons[0]?.map((button) => [button.label, button.style])).toEqual([
+      ['Rejoindre 4/4', ButtonStyle.Secondary],
+    ]);
+  });
+
+  it('sans directive, pas de ligne vide', () => {
+    const { embed } = render(missionEvent());
+
+    expect(embed?.description).not.toContain('Directives');
+    expect(embed?.description?.split('\n')).toHaveLength(3);
+  });
+
+  it('le menu des directives coche celles déjà retenues ; aucun menu sans directive', () => {
+    const row = directivesMenu(missionEvent({ directives: ['Sans régénération'] }), DIRECTIVES);
+    const menu = row?.toJSON().components[0] as {
+      custom_id: string;
+      min_values: number;
+      max_values: number;
+      options: { label: string; value: string; description?: string; default: boolean }[];
+    };
+
+    expect(menu).toMatchObject({ custom_id: 'td2:directives:12', min_values: 0, max_values: 2 });
+    expect(menu.options).toEqual([
+      {
+        label: 'Brouillard de guerre',
+        value: '1',
+        description: 'Mini-carte vide.',
+        default: false,
+      },
+      { label: 'Sans régénération', value: '2', default: true },
+    ]);
+    expect(directivesMenu(missionEvent(), [])).toBeNull();
+  });
+
+  it('« Gérer » propose les directives à une mission, pas à un raid', () => {
+    expect(manageMenu(missionEvent(), DIRECTIVES).components).toHaveLength(2);
+    expect(manageMenu(raidEvent(), DIRECTIVES).components).toHaveLength(1);
+  });
+
+  it('la montée de la réserve d’une mission ne parle pas de rôle', () => {
+    const message = promotionMessage(missionEvent(), [{ userId: '7', role: 'PLAYER' }]);
+
+    expect(message.content).toBe(
+      '🎉 <@7>, une place s’est libérée : tu passes dans l’équipe de **🎯 Mission Capitole · Héroïque** !',
+    );
   });
 });

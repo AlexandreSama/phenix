@@ -6,11 +6,12 @@ import {
   type Td2SettingsInput,
 } from '@phenix/shared';
 import { AuthGuard } from '../../common/guards/auth.guard.js';
-import { GuildAdminGuard } from '../../common/guards/guild-admin.guard.js';
+import { GuildAccessGuard, GuildModule } from '../../common/guards/guild-access.guard.js';
 import { Td2Service } from './td2.service.js';
 
 @Controller('guilds/:guildId/td2')
-@UseGuards(AuthGuard, GuildAdminGuard)
+@UseGuards(AuthGuard, GuildAccessGuard)
+@GuildModule('TD2')
 export class Td2Controller {
   constructor(private readonly td2: Td2Service) {}
 

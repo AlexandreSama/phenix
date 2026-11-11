@@ -1,11 +1,15 @@
 import { Controller, Get, Param, UseGuards } from '@nestjs/common';
-import type { GuildChannelSummary, GuildRoleSummary, ManageableGuild } from '@phenix/shared';
+import type {
+  GuildCategorySummary,
+  GuildChannelSummary,
+  GuildRoleSummary,
+  ManageableGuild,
+} from '@phenix/shared';
 import { CurrentSession } from '../../common/decorators/current-session.decorator.js';
 import { AuthGuard } from '../../common/guards/auth.guard.js';
-import { GuildAdminGuard } from '../../common/guards/guild-admin.guard.js';
+import { GuildAccessGuard, GuildModule } from '../../common/guards/guild-access.guard.js';
 import type { Session } from '../auth/session.service.js';
 import { GuildsService } from './guilds.service.js';
-import type { GuildCategorySummary } from '@phenix/shared';
 
 @Controller('guilds')
 @UseGuards(AuthGuard)
@@ -17,21 +21,25 @@ export class GuildsController {
     return this.guilds.listManageable(session);
   }
 
+  // Salons, catégories et rôles : chaque onglet en a besoin pour ses listes
   @Get(':guildId/channels')
-  @UseGuards(GuildAdminGuard)
+  @UseGuards(GuildAccessGuard)
+  @GuildModule('ANY')
   channels(@Param('guildId') guildId: string): Promise<GuildChannelSummary[]> {
     return this.guilds.channels(guildId);
   }
 
-  @Get(':guildId/roles')
-  @UseGuards(GuildAdminGuard)
-  roles(@Param('guildId') guildId: string): Promise<GuildRoleSummary[]> {
-    return this.guilds.roles(guildId);
-  }
-
   @Get(':guildId/categories')
-  @UseGuards(GuildAdminGuard)
+  @UseGuards(GuildAccessGuard)
+  @GuildModule('ANY')
   categories(@Param('guildId') guildId: string): Promise<GuildCategorySummary[]> {
     return this.guilds.categories(guildId);
+  }
+
+  @Get(':guildId/roles')
+  @UseGuards(GuildAccessGuard)
+  @GuildModule('ANY')
+  roles(@Param('guildId') guildId: string): Promise<GuildRoleSummary[]> {
+    return this.guilds.roles(guildId);
   }
 }

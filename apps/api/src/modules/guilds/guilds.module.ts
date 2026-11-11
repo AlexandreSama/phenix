@@ -1,11 +1,13 @@
 import { Module } from '@nestjs/common';
-import { GuildAdminGuard } from '../../common/guards/guild-admin.guard.js';
+import { GuildAccessGuard } from '../../common/guards/guild-access.guard.js';
+import { DelegatesController } from './delegates.controller.js';
+import { DelegatesService } from './delegates.service.js';
 import { GuildsController } from './guilds.controller.js';
 import { GuildsService } from './guilds.service.js';
 
 @Module({
-  controllers: [GuildsController],
-  providers: [GuildsService, GuildAdminGuard],
-  exports: [GuildsService, GuildAdminGuard],
+  controllers: [GuildsController, DelegatesController],
+  providers: [GuildsService, DelegatesService, GuildAccessGuard],
+  exports: [GuildsService, GuildAccessGuard],
 })
 export class GuildsModule {}

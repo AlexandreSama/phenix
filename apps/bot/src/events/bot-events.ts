@@ -11,10 +11,10 @@ interface Deps {
   ticketPanels: TicketPanelPublisher;
   /** Retire l'embed d'un signalement supprimé depuis la page d'administration */
   removeTd2Report(event: { guildId: string; messageId: string }): Promise<void>;
-  logger: Pick<Logger, 'info' | 'warn' | 'debug'>;
+  logger: Pick<Logger, 'info' | 'warn'>;
 }
 
-// Giveaways, panel de tickets : leurs modules arrivent dans les phases 6.2 et 6.3
+/** Applique un message reçu de l'API. Un message mal formé est ignoré, jamais fatal. */
 export function handleBotEvent(
   raw: string,
   { configs, rolePanels, ticketPanels, removeTd2Report, logger }: Deps,
@@ -30,6 +30,7 @@ export function handleBotEvent(
       configs.invalidate(event.guildId);
       logger.info({ guildId: event.guildId }, 'Config du serveur mise à jour depuis le site');
       return;
+    // Les publications passent par Discord : on ne les attend pas, et une erreur reste dans les logs
     case 'rolePanel.publish':
       rolePanels.publish(event.panelId).catch((err: unknown) => {
         logger.warn({ err, panelId: event.panelId }, 'Publication du panel en échec');
@@ -40,7 +41,6 @@ export function handleBotEvent(
         logger.warn({ err, messageId: event.messageId }, 'Retrait du panel en échec');
       });
       return;
-    // Les publications passent par Discord : on ne les attend pas, et une erreur reste dans les logs
     case 'ticketPanel.publish':
       ticketPanels.publish(event.guildId).catch((err: unknown) => {
         logger.warn({ err, guildId: event.guildId }, 'Publication du panel de tickets en échec');

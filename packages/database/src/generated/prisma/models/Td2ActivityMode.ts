@@ -345,6 +345,11 @@ export type Td2ActivityModeScalarRelationFilter = {
   isNot?: Prisma.Td2ActivityModeWhereInput
 }
 
+export type Td2ActivityModeNullableScalarRelationFilter = {
+  is?: Prisma.Td2ActivityModeWhereInput | null
+  isNot?: Prisma.Td2ActivityModeWhereInput | null
+}
+
 export type Td2ActivityModeCreateNestedManyWithoutActivityInput = {
   create?: Prisma.XOR<Prisma.Td2ActivityModeCreateWithoutActivityInput, Prisma.Td2ActivityModeUncheckedCreateWithoutActivityInput> | Prisma.Td2ActivityModeCreateWithoutActivityInput[] | Prisma.Td2ActivityModeUncheckedCreateWithoutActivityInput[]
   connectOrCreate?: Prisma.Td2ActivityModeCreateOrConnectWithoutActivityInput | Prisma.Td2ActivityModeCreateOrConnectWithoutActivityInput[]
@@ -407,10 +412,12 @@ export type Td2ActivityModeCreateNestedOneWithoutEventsInput = {
   connect?: Prisma.Td2ActivityModeWhereUniqueInput
 }
 
-export type Td2ActivityModeUpdateOneRequiredWithoutEventsNestedInput = {
+export type Td2ActivityModeUpdateOneWithoutEventsNestedInput = {
   create?: Prisma.XOR<Prisma.Td2ActivityModeCreateWithoutEventsInput, Prisma.Td2ActivityModeUncheckedCreateWithoutEventsInput>
   connectOrCreate?: Prisma.Td2ActivityModeCreateOrConnectWithoutEventsInput
   upsert?: Prisma.Td2ActivityModeUpsertWithoutEventsInput
+  disconnect?: Prisma.Td2ActivityModeWhereInput | boolean
+  delete?: Prisma.Td2ActivityModeWhereInput | boolean
   connect?: Prisma.Td2ActivityModeWhereUniqueInput
   update?: Prisma.XOR<Prisma.XOR<Prisma.Td2ActivityModeUpdateToOneWithWhereWithoutEventsInput, Prisma.Td2ActivityModeUpdateWithoutEventsInput>, Prisma.Td2ActivityModeUncheckedUpdateWithoutEventsInput>
 }

@@ -57,6 +57,11 @@ export type Guild = Prisma.GuildModel
  */
 export type GuildConfig = Prisma.GuildConfigModel
 /**
+ * Model GuildDelegate
+ * 
+ */
+export type GuildDelegate = Prisma.GuildDelegateModel
+/**
  * Model Case
  * 
  */
@@ -122,6 +127,11 @@ export type Td2ActivityMode = Prisma.Td2ActivityModeModel
  * 
  */
 export type Td2ModeSlot = Prisma.Td2ModeSlotModel
+/**
+ * Model Td2Directive
+ * 
+ */
+export type Td2Directive = Prisma.Td2DirectiveModel
 /**
  * Model Td2Event
  * 

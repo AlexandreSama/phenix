@@ -1,13 +1,15 @@
 import type { AutocompleteInteraction, ChatInputCommandInteraction } from 'discord.js';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import type { BotContext } from '../../../core/context.js';
-import { CHANNEL, GUILD, ORGANIZER, raidEvent } from '../test-fixtures.js';
+import { CHANNEL, GUILD, missionEvent, ORGANIZER, raidEvent } from '../test-fixtures.js';
 import { compositionText, td2, TD2_COMMAND_REPLIES } from './td2.js';
 
 const database = vi.hoisted(() => ({
   createTd2Event: vi.fn(),
+  createTd2Mission: vi.fn(),
   deleteTd2Event: vi.fn(),
   listTd2Activities: vi.fn(),
+  listTd2Directives: vi.fn(),
   markTd2EventPublished: vi.fn(),
 }));
 vi.mock('@phenix/database', () => database);
@@ -53,6 +55,7 @@ const PARADIS_PERDU = {
 function setup({
   subcommand = 'raid',
   strings = {} as Record<string, string>,
+  integers = {} as Record<string, number>,
   writable = true,
   send = vi.fn(async () => ({ id: '900000000000000001' })),
 } = {}) {
@@ -74,6 +77,7 @@ function setup({
     options: {
       getSubcommand: () => subcommand,
       getString: (name: string) => strings[name] ?? null,
+      getInteger: (name: string) => integers[name] ?? null,
     },
     reply: vi.fn(async () => {}),
   };
@@ -91,7 +95,9 @@ function setup({
     return (interaction.reply.mock.calls[0] as unknown as [{ content: string }] | undefined)?.[0]
       .content;
   };
-  return { channel, td2Scheduler, run, context };
+  const replied = () =>
+    (interaction.reply.mock.calls[0] as unknown as [{ components: { toJSON(): unknown }[] }])[0];
+  return { channel, td2Scheduler, run, context, replied };
 }
 
 beforeEach(() => {
@@ -105,7 +111,7 @@ afterEach(() => vi.useRealTimers());
 
 describe('/td2 raid', () => {
   it('crée la sortie, la poste dans le salon des sorties et planifie ses tâches', async () => {
-    const event = raidEvent();
+    const event = raidEvent({ channelId: TD2_CHANNEL });
     database.createTd2Event.mockResolvedValue(event);
     const { channel, td2Scheduler, run } = setup({
       strings: { activité: '1', mode: '4', date: 'samedi 21h' },
@@ -202,6 +208,102 @@ describe('/td2 incursion', () => {
   });
 });
 
+describe('/td2 mission', () => {
+  const DIRECTIVES = [
+    { id: 1, name: 'Brouillard de guerre', description: 'Mini-carte vide.', active: true },
+    { id: 2, name: 'Sans régénération', description: null, active: true },
+  ];
+
+  it('crée la mission (4 places par défaut, nom rogné), puis propose les directives', async () => {
+    const event = missionEvent({ channelId: TD2_CHANNEL });
+    database.createTd2Mission.mockResolvedValue(event);
+    database.listTd2Directives.mockResolvedValue(DIRECTIVES);
+    const { channel, td2Scheduler, run, replied } = setup({
+      subcommand: 'mission',
+      strings: { nom: '  Capitole  ', difficulté: 'HEROIC', date: 'samedi 21h' },
+    });
+
+    const reply = await run();
+
+    expect(database.createTd2Mission).toHaveBeenCalledWith(
+      {},
+      {
+        guildId: GUILD,
+        missionName: 'Capitole',
+        difficulty: 'HEROIC',
+        players: 4,
+        scheduledAt: new Date('2026-11-14T20:00:00Z'),
+        channelId: TD2_CHANNEL,
+        organizerId: ORGANIZER,
+      },
+    );
+    expect(channel.send).toHaveBeenCalledOnce();
+    expect(td2Scheduler.schedule).toHaveBeenCalledWith(12, event.scheduledAt);
+    expect(database.listTd2Directives).toHaveBeenCalledWith({}, { activeOnly: true });
+    expect(reply).toBe(
+      `${TD2_COMMAND_REPLIES.posted(event)}\n${TD2_COMMAND_REPLIES.pickDirectives}`,
+    );
+    const [menu] = replied().components.map((row) => row.toJSON()) as {
+      components: { custom_id: string; max_values: number; options: { label: string }[] }[];
+    }[];
+    expect(menu?.components[0]).toMatchObject({
+      custom_id: 'td2:directives:12',
+      max_values: 2,
+      options: [{ label: 'Brouillard de guerre' }, { label: 'Sans régénération' }],
+    });
+  });
+
+  it('prend le nombre de places choisi ; sans directive active, pas de menu', async () => {
+    database.createTd2Mission.mockResolvedValue(missionEvent());
+    database.listTd2Directives.mockResolvedValue([]);
+    const { run, replied } = setup({
+      subcommand: 'mission',
+      strings: { nom: 'Pentagone', difficulté: 'LEGENDARY', date: 'demain 21h' },
+      integers: { joueurs: 2 },
+    });
+
+    const reply = await run();
+
+    expect(database.createTd2Mission).toHaveBeenCalledWith(
+      {},
+      expect.objectContaining({ players: 2, difficulty: 'LEGENDARY' }),
+    );
+    expect(reply).not.toContain(TD2_COMMAND_REPLIES.pickDirectives);
+    expect(replied().components).toEqual([]);
+  });
+
+  it('refuse une difficulté inconnue, sans rien créer', async () => {
+    const { run } = setup({
+      subcommand: 'mission',
+      strings: { nom: 'Capitole', difficulté: 'FACILE', date: 'samedi 21h' },
+    });
+
+    expect(await run()).toBe(TD2_COMMAND_REPLIES.unknownDifficulty);
+    expect(database.createTd2Mission).not.toHaveBeenCalled();
+  });
+
+  it('déclare ses options dans l’ordre de Discord : obligatoires d’abord', () => {
+    const json = td2.data.toJSON();
+    const mission = json.options?.find((option) => option.name === 'mission') as {
+      options: { name: string; required?: boolean; choices?: { name: string }[] }[];
+    };
+
+    expect(mission.options.map((option) => [option.name, option.required ?? false])).toEqual([
+      ['nom', true],
+      ['difficulté', true],
+      ['date', true],
+      ['joueurs', false],
+    ]);
+    expect(mission.options[1]?.choices?.map((choice) => choice.name)).toEqual([
+      'Normal',
+      'Difficile',
+      'Exigeant',
+      'Héroïque',
+      'Légendaire',
+    ]);
+  });
+});
+
 describe('autocomplétion', () => {
   it('propose les modes de l’activité choisie, avec leur composition', async () => {
     const { context } = setup();
@@ -220,10 +322,6 @@ describe('autocomplétion', () => {
     expect(respond).toHaveBeenCalledWith([
       { name: 'Semi-Speed — 5 DPS · 1 Heal · 2 Tank', value: '4' },
     ]);
-  });
-
-  it('écrit la composition dans l’ordre des boutons', () => {
-    expect(compositionText(PARADIS_PERDU.modes[0] as never)).toBe('3 DPS · 1 Heal/Tank');
   });
 
   it('le pseudo est cherché auprès du service de stats, quelle que soit la sous-commande', async () => {
@@ -246,5 +344,9 @@ describe('autocomplétion', () => {
     expect(search).toHaveBeenCalledWith('PSN', 'agent');
     expect(respond).toHaveBeenCalledWith([{ name: 'Agent47', value: 'Agent47' }]);
     expect(database.listTd2Activities).not.toHaveBeenCalled();
+  });
+
+  it('écrit la composition dans l’ordre des boutons', () => {
+    expect(compositionText(PARADIS_PERDU.modes[0] as never)).toBe('3 DPS · 1 Heal/Tank');
   });
 });

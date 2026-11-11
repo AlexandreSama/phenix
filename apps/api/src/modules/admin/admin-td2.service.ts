@@ -1,22 +1,30 @@
 import { ConflictException, Inject, Injectable, Logger, NotFoundException } from '@nestjs/common';
 import {
   createTd2Activity,
+  createTd2Directive,
   createTd2Mode,
+  deleteTd2Directive,
   deleteTd2Mode,
   deleteTd2Report,
   findTd2Report,
   listTd2Catalogue,
+  listTd2Directives,
   listTd2ReportsForAdmin,
   PrismaClient,
   updateTd2Activity,
+  updateTd2Directive,
   updateTd2Mode,
   type CatalogueWrite,
 } from '@phenix/database';
 import {
+  TD2_DIRECTIVE_LIMITS,
   TD2_EVIDENCE_LIMITS,
   type Td2ActivityInput,
   type Td2ActivityPatch,
   type Td2CatalogueActivity,
+  type Td2Directive,
+  type Td2DirectiveInput,
+  type Td2DirectivePatch,
   type Td2ModeInput,
   type Td2ReportAdminPage,
   type Td2ReportQuery,
@@ -81,6 +89,50 @@ export class AdminTd2Service {
       );
     }
     return this.catalogue();
+  }
+
+  // ---------- Directives des missions ----------
+
+  directives(): Promise<Td2Directive[]> {
+    return listTd2Directives(this.db);
+  }
+
+  /** Le menu du bot ne prend que 25 choix : au-delà, une directive de plus ne s'active pas. */
+  private async assertActiveRoom(): Promise<void> {
+    const active = await this.db.td2Directive.count({ where: { active: true } });
+    if (active >= TD2_DIRECTIVE_LIMITS.maxActive) {
+      throw new ConflictException(
+        `${TD2_DIRECTIVE_LIMITS.maxActive} directives actives au plus : le menu de Discord n’en prend pas davantage. Désactives-en une d’abord.`,
+      );
+    }
+  }
+
+  async createDirective(input: Td2DirectiveInput): Promise<Td2Directive[]> {
+    await this.assertActiveRoom();
+    check(
+      await createTd2Directive(this.db, {
+        name: input.name,
+        description: input.description ?? null,
+      }),
+      'Directive introuvable',
+    );
+    return this.directives();
+  }
+
+  async updateDirective(id: number, patch: Td2DirectivePatch): Promise<Td2Directive[]> {
+    if (patch.active) {
+      const current = await this.db.td2Directive.findUnique({ where: { id } });
+      if (current && !current.active) await this.assertActiveRoom();
+    }
+    check(await updateTd2Directive(this.db, id, patch), 'Directive introuvable');
+    return this.directives();
+  }
+
+  async deleteDirective(id: number): Promise<Td2Directive[]> {
+    if (!(await deleteTd2Directive(this.db, id))) {
+      throw new NotFoundException('Directive introuvable');
+    }
+    return this.directives();
   }
 
   async reports(query: Td2ReportQuery): Promise<Td2ReportAdminPage> {

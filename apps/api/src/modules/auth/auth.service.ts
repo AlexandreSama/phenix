@@ -1,10 +1,10 @@
+import { Inject, Injectable } from '@nestjs/common';
 import { PrismaClient } from '@phenix/database';
 import type { CurrentUser } from '@phenix/shared';
-import { DiscordService } from '../../discord/discord.service.js';
-import { SessionService } from './session.service.js';
-import { Inject, Injectable } from '@nestjs/common';
 import { ENV } from '../../core/tokens.js';
+import { DiscordService } from '../../discord/discord.service.js';
 import type { Env } from '../../env.js';
+import { SessionService } from './session.service.js';
 
 /** Une session dure au plus 7 jours, comme le token Discord qu'elle contient. */
 const MAX_SESSION_SECONDS = 7 * 24 * 3600;

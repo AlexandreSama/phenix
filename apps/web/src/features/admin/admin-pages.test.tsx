@@ -57,6 +57,10 @@ const API: Record<string, unknown> = {
       lastActivityAt: null,
     },
   ],
+  '/api/admin/td2/directives': [
+    { id: 1, name: 'Brouillard de guerre', description: 'Mini-carte vide.', active: true },
+    { id: 2, name: 'Ancienne', description: null, active: false },
+  ],
   '/api/admin/forum/staff': [
     { id: '2', username: 'Rook', avatarUrl: '/logo.png', role: 'MODERATOR' },
   ],
@@ -110,6 +114,29 @@ describe('pages d’administration', () => {
       within(incursion).getByRole<HTMLInputElement>('switch', { name: 'Proposée dans /td2' })
         .checked,
     ).toBe(false);
+  });
+
+  it('le catalogue gère aussi les directives des missions', async () => {
+    open('/admin');
+
+    const list = await screen.findByRole('list', { name: 'Directives' });
+    expect(within(list).getByText('Mini-carte vide.')).toBeTruthy();
+    expect(within(list).getByText('Masquée')).toBeTruthy();
+    expect(screen.getByText('1/25 actives')).toBeTruthy();
+
+    const form = screen.getByRole('form', { name: 'Nouvelle directive' });
+    fireEvent.change(within(form).getByLabelText('Nom'), { target: { value: ' Chrono ' } });
+    fireEvent.click(within(form).getByRole('button', { name: 'Ajouter la directive' }));
+
+    await vi.waitFor(() =>
+      expect(globalThis.fetch).toHaveBeenCalledWith(
+        '/api/admin/td2/directives',
+        expect.objectContaining({
+          method: 'POST',
+          body: JSON.stringify({ name: 'Chrono', description: null }),
+        }),
+      ),
+    );
   });
 
   it('les signalements se filtrent par statut, dans l’adresse', async () => {

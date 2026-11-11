@@ -102,10 +102,10 @@ describe('panel de tickets', () => {
     };
 
     await saveTicketPanel(prisma, guildId, panel);
-    await markTicketPanelPublished(prisma, guildId, `900000000000000009`);
+    await markTicketPanelPublished(prisma, guildId, '900000000000000009');
     const kept = await saveTicketPanel(prisma, guildId, { ...panel, title: 'Support' });
     expect(publicationStatus(kept)).toBe('pending');
-    expect(kept.messageId).toBe(`900000000000000009`);
+    expect(kept.messageId).toBe('900000000000000009');
 
     const moved = await saveTicketPanel(prisma, guildId, panel, { forgetMessage: true });
     expect(moved.messageId).toBe(null);

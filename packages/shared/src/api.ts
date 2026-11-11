@@ -1,40 +1,18 @@
-/** Formes des réponses de l'API, partagées avec le site. */
-import type { RolePanelInput, RolePanelMode } from './schemas/role-panel.js';
-import type { TicketSettingsInput } from './schemas/tickets.js';
 import type {
+  DashboardModuleKey,
   ForumRoleKey,
+  Td2DifficultyKey,
+  Td2EventKindKey,
   Td2KindKey,
   Td2PlatformKey,
   Td2ReportReasonKey,
   Td2ReportStatusKey,
   Td2RoleKey,
 } from './constants.js';
-/** Où en est la publication d'un panel : le bot la confirme après coup, par la base. */
-export type PublicationStatus = 'published' | 'pending' | 'error';
+import type { RolePanelInput, RolePanelMode } from './schemas/role-panel.js';
+import type { TicketSettingsInput } from './schemas/tickets.js';
 
-// Td2Settings remplace l'ancienne version :
-export interface Td2Settings {
-  /** Salon des sorties ; null = celui où la commande est lancée */
-  channelId: string | null;
-  /** Salon du staff qui reçoit les signalements ; null = signalements fermés sur ce serveur */
-  reportChannelId: string | null;
-  reportViewerRoleIds: string[];
-  /** Salon du fil des signalements confirmés du réseau ; null = aucun */
-  reportFeedChannelId: string | null;
-}
-
-export interface Td2EventSummary {
-  id: number;
-  kind: Td2KindKey;
-  activity: string;
-  mode: string;
-  scheduledAt: string;
-  channelId: string;
-  /** Inscrits confirmés, places au total, joueurs en réserve */
-  confirmed: number;
-  capacity: number;
-  reserve: number;
-}
+/** Formes des réponses de l'API, partagées avec le site. */
 
 export interface CurrentUser {
   id: string;
@@ -46,13 +24,40 @@ export interface CurrentUser {
   forumRole: ForumRoleKey;
 }
 
-/** Un serveur que l'utilisateur a le droit de gérer (« Gérer le serveur » ou propriétaire). */
+/**
+ * Un serveur que l'utilisateur peut régler : il le gère (« Gérer le serveur » ou propriétaire),
+ * ou un administrateur lui a ouvert certains onglets.
+ */
 export interface ManageableGuild {
   id: string;
   name: string;
   iconUrl: string | null;
   /** Le bot est-il sur ce serveur ? Sinon, le site propose de l'inviter. */
   botPresent: boolean;
+  /** 'admin' : tous les onglets, et la gestion des accès ; 'delegate' : ceux qu'on lui a ouverts */
+  access: 'admin' | 'delegate';
+  /** Les onglets qu'il peut ouvrir : tous pour un administrateur */
+  modules: DashboardModuleKey[];
+}
+
+/** Un membre à qui un administrateur a ouvert des onglets du tableau de bord. */
+export interface GuildDelegate {
+  userId: string;
+  username: string;
+  avatarUrl: string;
+  modules: DashboardModuleKey[];
+  /** L'administrateur qui a donné (ou changé en dernier) l'accès */
+  grantedById: string;
+  updatedAt: string;
+}
+
+/** Un membre trouvé par la recherche, à qui on peut ouvrir des onglets. */
+export interface GuildMemberResult {
+  id: string;
+  username: string;
+  /** Son nom affiché sur ce serveur (surnom, sinon nom global), s'il diffère du pseudo */
+  displayName: string | null;
+  avatarUrl: string;
 }
 
 export interface GuildChannelSummary {
@@ -105,6 +110,9 @@ export interface LeaderboardPage {
   /** Membres ayant au moins 1 XP */
   totalMembers: number;
 }
+
+/** Où en est la publication d'un panel : le bot la confirme après coup, par la base. */
+export type PublicationStatus = 'published' | 'pending' | 'error';
 
 export interface RolePanelSummary {
   id: number;
@@ -185,6 +193,50 @@ export interface GiveawayPage {
   page: number;
   pageCount: number;
   total: number;
+}
+
+export interface Td2Settings {
+  /** Salon des sorties ; null = celui où la commande est lancée */
+  channelId: string | null;
+  /** Sorties affichées sur la page publique /sorties */
+  publicListing: boolean;
+  /** Salon du staff qui reçoit les signalements ; null = signalements fermés sur ce serveur */
+  reportChannelId: string | null;
+  reportViewerRoleIds: string[];
+  /** Salon du fil des signalements confirmés du réseau ; null = aucun */
+  reportFeedChannelId: string | null;
+}
+
+export interface Td2EventSummary {
+  id: number;
+  kind: Td2EventKindKey;
+  /** L'activité (« Dark Hours »), ou le nom donné à la mission */
+  activity: string;
+  /** Le mode de l'activité ; null pour une mission */
+  mode: string | null;
+  /** Mission : sa difficulté et ses directives (null et [] sinon) */
+  difficulty: Td2DifficultyKey | null;
+  directives: string[];
+  scheduledAt: string;
+  channelId: string;
+  /** Inscrits confirmés, places au total, joueurs en réserve */
+  confirmed: number;
+  capacity: number;
+  reserve: number;
+}
+
+/** Une sortie sur la page publique : celles des serveurs qui ont choisi de se montrer. */
+export interface PublicTd2Event extends Omit<Td2EventSummary, 'channelId'> {
+  guild: { id: string; name: string; iconUrl: string | null };
+}
+
+/** Une directive de mission, gérée par les propriétaires du bot. */
+export interface Td2Directive {
+  id: number;
+  name: string;
+  description: string | null;
+  /** Désactivée, le bot ne la propose plus ; les missions qui l'ont gardent son nom */
+  active: boolean;
 }
 
 /** Un mode du catalogue, avec le nombre de sorties qui l'utilisent (un mode utilisé ne se supprime pas). */

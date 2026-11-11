@@ -21,7 +21,7 @@ import {
 } from '@phenix/shared';
 import { CurrentSession } from '../../common/decorators/current-session.decorator.js';
 import { AuthGuard } from '../../common/guards/auth.guard.js';
-import { GuildAdminGuard } from '../../common/guards/guild-admin.guard.js';
+import { GuildAccessGuard, GuildModule } from '../../common/guards/guild-access.guard.js';
 import type { Session } from '../auth/session.service.js';
 import { GiveawaysService } from './giveaways.service.js';
 
@@ -30,7 +30,8 @@ const GiveawayId = new ParseIntPipe({
 });
 
 @Controller('guilds/:guildId/giveaways')
-@UseGuards(AuthGuard, GuildAdminGuard)
+@UseGuards(AuthGuard, GuildAccessGuard)
+@GuildModule('GIVEAWAYS')
 export class GiveawaysController {
   constructor(private readonly giveaways: GiveawaysService) {}
 
