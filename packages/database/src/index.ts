@@ -12,3 +12,5 @@ export * from './leveling.js';
 export * from './role-panels.js';
 export * from './generated/prisma/client.js';
 export * from './publication.js';
+export * from './forum.js';
+export * from './forum-admin.js';

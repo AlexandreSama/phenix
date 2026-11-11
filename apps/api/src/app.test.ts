@@ -9,7 +9,8 @@ import { AppModule } from './app.module.js';
 import { configureApp } from './app.setup.js';
 import { DiscordService } from './discord/discord.service.js';
 import type { Env } from './env.js';
-import { EVIDENCE, GIVEAWAY_QUEUE, TRANSCRIPTS } from './core/tokens.js';
+import { EVIDENCE, GIVEAWAY_QUEUE, MEDIA, TRANSCRIPTS } from './core/tokens.js';
+import sharp from 'sharp';
 
 const env: Env = {
   NODE_ENV: 'test',
@@ -27,6 +28,7 @@ const env: Env = {
   S3_SECRET_ACCESS_KEY: 'secret',
   S3_TRANSCRIPTS_BUCKET: 'transcripts',
   S3_EVIDENCE_BUCKET: 'evidence',
+  S3_MEDIA_BUCKET: 'media',
   BOT_OWNER_IDS: ['900000000000000001'],
 };
 
@@ -51,6 +53,13 @@ const redis = {
   publish: vi.fn(async (_channel: string, _message: string) => 1),
   ping: vi.fn(async () => 'PONG'),
   quit: vi.fn(async () => 'OK'),
+  // Les limites de débit du forum : un compteur par clé
+  incr: vi.fn(async (key: string) => {
+    const count = Number(store.get(key) ?? 0) + 1;
+    store.set(key, String(count));
+    return count;
+  }),
+  expire: vi.fn(async () => 1),
 };
 
 const config = {
@@ -200,6 +209,73 @@ const transcripts = {
   getText: vi.fn(async (_key: string): Promise<string | null> => '<!doctype html><p>Bonjour</p>'),
 };
 
+/** Le forum : une catégorie, un sujet de deux messages, deux auteurs. */
+const FORUM_MEMBER = '1';
+const FORUM_OTHER = '700000000000000002';
+const FORUM_MODERATOR = '700000000000000003';
+const MOD_SESSION_ID = 'm'.repeat(43);
+const forumUsers: Record<string, { id: string; role: 'MEMBER' | 'MODERATOR' | 'ADMIN' }> = {
+  [FORUM_MEMBER]: { id: FORUM_MEMBER, role: 'MEMBER' },
+  [FORUM_OTHER]: { id: FORUM_OTHER, role: 'MEMBER' },
+  [FORUM_MODERATOR]: { id: FORUM_MODERATOR, role: 'MODERATOR' },
+  '900000000000000001': { id: '900000000000000001', role: 'MEMBER' },
+};
+const forumAuthor = (id: string, username: string) => ({
+  id,
+  username,
+  avatar: null,
+  role: 'MEMBER',
+});
+const forumCategory = {
+  id: 2,
+  slug: 'entraide',
+  name: 'Entraide',
+  description: 'Builds et conseils',
+  position: 0,
+};
+const forumThread = {
+  id: 10,
+  categoryId: 2,
+  authorId: FORUM_MEMBER,
+  title: 'Build tank pour Dark Hours',
+  pinned: false,
+  locked: false,
+  createdAt: new Date('2026-11-10T12:00:00Z'),
+  updatedAt: new Date('2026-11-10T13:00:00Z'),
+  category: { id: 2, slug: 'entraide', name: 'Entraide' },
+  author: forumAuthor(FORUM_MEMBER, 'Agent'),
+  _count: { posts: 2 },
+};
+const forumPosts = [
+  {
+    id: 100,
+    threadId: 10,
+    authorId: FORUM_MEMBER,
+    content: 'Quel set ? <script>alert(1)</script>',
+    editedAt: null,
+    createdAt: new Date('2026-11-10T12:00:00Z'),
+    author: forumAuthor(FORUM_MEMBER, 'Agent'),
+  },
+  {
+    id: 101,
+    threadId: 10,
+    authorId: FORUM_OTHER,
+    content: 'Le **Foundry**, sans hésiter.',
+    editedAt: null,
+    createdAt: new Date('2026-11-10T13:00:00Z'),
+    author: forumAuthor(FORUM_OTHER, 'Faye'),
+  },
+];
+const media = {
+  put: vi.fn(async () => {}),
+  getText: vi.fn(),
+  getBytes: vi.fn(async (_key: string) => ({
+    body: Uint8Array.from([0x52, 0x49, 0x46, 0x46]),
+    contentType: 'image/webp' as string | null,
+  })),
+  delete: vi.fn(async (_keys: readonly string[]) => {}),
+};
+
 const db = {
   $transaction: vi.fn(async (run: (tx: unknown) => Promise<unknown>) => run(db)),
   giveaway: {
@@ -255,7 +331,12 @@ const db = {
       },
     ]),
   },
-  user: { findUnique: vi.fn(), upsert: vi.fn() },
+  user: {
+    findUnique: vi.fn(),
+    upsert: vi.fn(),
+    findMany: vi.fn(async () => [] as object[]),
+    updateMany: vi.fn(async () => ({ count: 1 })),
+  },
   td2Event: { findMany: vi.fn(async () => [td2Event]), count: vi.fn(async () => 2) },
   td2Activity: {
     findMany: vi.fn(async () => [td2Activity]),
@@ -274,6 +355,43 @@ const db = {
     findMany: vi.fn(async () => [td2Report]),
     findUnique: vi.fn(async () => td2Report as typeof td2Report | null),
     deleteMany: vi.fn(async () => ({ count: 1 })),
+  },
+  forumCategory: {
+    findMany: vi.fn(async () => [{ ...forumCategory, _count: { threads: 1 } }]),
+    findUnique: vi.fn(async ({ where }: { where: { slug?: string; id?: number } }) =>
+      where.slug === 'entraide' || where.id === 2 ? forumCategory : null,
+    ),
+    findFirst: vi.fn(async () => null as object | null),
+    createMany: vi.fn(async () => ({ count: 1 })),
+    updateMany: vi.fn(async () => ({ count: 1 })),
+    delete: vi.fn(async () => forumCategory),
+  },
+  forumThread: {
+    groupBy: vi.fn(async () => [{ categoryId: 2, _max: { updatedAt: forumThread.updatedAt } }]),
+    findMany: vi.fn(async () => [forumThread]),
+    count: vi.fn(async () => 1),
+    findUnique: vi.fn(async () => forumThread as typeof forumThread | null),
+    create: vi.fn(async () => ({ id: 11, posts: [{ id: 110 }] })),
+    update: vi.fn(async () => forumThread),
+    deleteMany: vi.fn(async () => ({ count: 1 })),
+  },
+  forumPost: {
+    findMany: vi.fn(async () => forumPosts),
+    count: vi.fn(async () => 2),
+    findFirst: vi.fn(async () => ({ id: 100 })),
+    findUnique: vi.fn(async ({ where }: { where: { id: number } }) => {
+      const post = forumPosts.find((entry) => entry.id === where.id);
+      return post ? { ...post, thread: { id: 10, locked: forumThread.locked } } : null;
+    }),
+    create: vi.fn(async () => ({ id: 102 })),
+    update: vi.fn(async () => forumPosts[0]),
+    deleteMany: vi.fn(async () => ({ count: 1 })),
+  },
+  forumAttachment: {
+    create: vi.fn(async ({ data }: { data: object }) => data),
+    findUnique: vi.fn(async () => ({ key: 'forum/image.webp' }) as { key: string } | null),
+    findMany: vi.fn(async () => [{ key: 'forum/a.webp' }]),
+    updateMany: vi.fn(async () => ({ count: 0 })),
   },
   $queryRaw: vi.fn(async () => [1]),
   $disconnect: vi.fn(),
@@ -345,6 +463,8 @@ beforeAll(async () => {
     .useValue(transcripts)
     .overrideProvider(EVIDENCE)
     .useValue(evidence)
+    .overrideProvider(MEDIA)
+    .useValue(media)
     .compile();
   app = moduleRef.createNestApplication<NestExpressApplication>();
   configureApp(app);
@@ -1017,6 +1137,290 @@ describe('administration', () => {
         messageId: '700000000000000007',
       }),
     );
+  });
+});
+
+/** Les requêtes du forum, sur l'application démarrée par beforeAll. */
+function server() {
+  return request(app.getHttpServer());
+}
+
+describe('forum', () => {
+  const member = cookie;
+  const moderator = `sid=${MOD_SESSION_ID}`;
+
+  beforeEach(() => {
+    store.set(
+      `session:${MOD_SESSION_ID}`,
+      JSON.stringify({ userId: FORUM_MODERATOR, accessToken: 'tok' }),
+    );
+    db.user.findUnique.mockImplementation(
+      async ({ where }: { where: { id: string } }) => forumUsers[where.id] ?? null,
+    );
+    forumThread.locked = false;
+  });
+
+  it('se lit sans être connecté : catégories, sujets, messages', async () => {
+    const categories = await server().get('/api/forum/categories');
+    const page = await server().get('/api/forum/categories/entraide?page=abc');
+    const missing = await server().get('/api/forum/categories/inconnue');
+
+    expect(categories.body).toEqual([
+      {
+        id: 2,
+        slug: 'entraide',
+        name: 'Entraide',
+        description: 'Builds et conseils',
+        position: 0,
+        threadCount: 1,
+        lastActivityAt: '2026-11-10T13:00:00.000Z',
+      },
+    ]);
+    expect(page.body).toMatchObject({
+      category: { slug: 'entraide' },
+      threads: [{ id: 10, title: 'Build tank pour Dark Hours', replyCount: 1 }],
+      page: 1,
+      pageCount: 1,
+      canPost: false,
+    });
+    expect(missing.status).toBe(404);
+  });
+
+  it('rend le Markdown sans laisser passer de HTML, et dit à chacun ce qu’il peut faire', async () => {
+    const visitor = await server().get('/api/forum/threads/10');
+    const author = await server().get('/api/forum/threads/10').set('Cookie', member);
+    const mod = await server().get('/api/forum/threads/10').set('Cookie', moderator);
+
+    expect(visitor.body.posts[0].html).toContain('&lt;script&gt;');
+    expect(visitor.body.posts[1].html).toContain('<strong>Foundry</strong>');
+    expect(visitor.body).toMatchObject({ canReply: false, canModerate: false });
+    // L'auteur modifie son message ; le premier ne se supprime qu'avec le sujet
+    expect(author.body.posts.map((post: { canEdit: boolean }) => post.canEdit)).toEqual([
+      true,
+      false,
+    ]);
+    expect(author.body.posts[0].canDelete).toBe(false);
+    expect(mod.body).toMatchObject({ canReply: true, canModerate: true });
+    expect(mod.body.posts[1]).toMatchObject({ canEdit: false, canDelete: true });
+  });
+
+  it('écrire demande une connexion, et un message valide', async () => {
+    const anonymous = await server()
+      .post('/api/forum/threads')
+      .send({ categoryId: 2, title: 'Salut', content: 'Hello' });
+    const invalid = await server()
+      .post('/api/forum/threads')
+      .set('Cookie', member)
+      .send({ categoryId: 2, title: 'ok', content: 'Hello' });
+
+    expect(anonymous.status).toBe(401);
+    expect(invalid.status).toBe(400);
+    expect(invalid.body.message).toEqual(['title: Un titre de 3 caractères au moins']);
+  });
+
+  it('ouvre un sujet, et rattache les images citées', async () => {
+    const image = '123e4567-e89b-12d3-a456-426614174000';
+    const response = await server()
+      .post('/api/forum/threads')
+      .set('Cookie', member)
+      .send({ categoryId: 2, title: 'Build tank', content: `Voilà ![build](/api/media/${image})` });
+
+    expect(response.body).toEqual({ threadId: 11, postId: 110, page: 1 });
+    expect(db.forumAttachment.updateMany).toHaveBeenCalledWith({
+      where: { id: { in: [image] }, uploaderId: FORUM_MEMBER, postId: null },
+      data: { postId: 110 },
+    });
+  });
+
+  it('un sujet verrouillé refuse les réponses, sauf à la modération', async () => {
+    forumThread.locked = true;
+
+    const refused = await server()
+      .post('/api/forum/threads/10/posts')
+      .set('Cookie', member)
+      .send({ content: 'Encore moi' });
+    const accepted = await server()
+      .post('/api/forum/threads/10/posts')
+      .set('Cookie', moderator)
+      .send({ content: 'Sujet clos.' });
+
+    expect(refused.status).toBe(403);
+    expect(refused.body.message).toBe('Ce sujet est verrouillé : plus de réponse possible.');
+    expect(accepted.body).toEqual({ threadId: 10, postId: 102, page: 1 });
+  });
+
+  it('on ne modifie que ses messages ; le premier ne se supprime pas seul', async () => {
+    const notMine = await server()
+      .patch('/api/forum/posts/101')
+      .set('Cookie', member)
+      .send({ content: 'Corrigé' });
+    const first = await server().delete('/api/forum/posts/100').set('Cookie', member);
+    const mine = await server()
+      .patch('/api/forum/posts/100')
+      .set('Cookie', member)
+      .send({ content: 'Quel set pour un tank ?' });
+
+    expect(notMine.status).toBe(403);
+    expect(first.status).toBe(400);
+    expect(first.body.message).toBe('Le premier message ne se supprime qu’avec le sujet.');
+    expect(mine.status).toBe(204);
+    expect(db.forumPost.update).toHaveBeenCalledWith({
+      where: { id: 100 },
+      data: { content: 'Quel set pour un tank ?', editedAt: expect.any(Date) },
+    });
+  });
+
+  it('la modération épingle, verrouille et supprime ; un membre non', async () => {
+    const asMember = await server()
+      .patch('/api/forum/threads/10')
+      .set('Cookie', member)
+      .send({ pinned: true });
+    const pinned = await server()
+      .patch('/api/forum/threads/10')
+      .set('Cookie', moderator)
+      .send({ pinned: true });
+    const deleted = await server().delete('/api/forum/threads/10').set('Cookie', moderator);
+
+    expect(asMember.status).toBe(403);
+    expect(pinned.status).toBe(204);
+    expect(db.forumThread.update).toHaveBeenCalledWith({
+      where: { id: 10 },
+      data: { pinned: true, updatedAt: forumThread.updatedAt },
+    });
+    expect(deleted.body).toEqual({ categorySlug: 'entraide' });
+    expect(media.delete).toHaveBeenCalledWith(['forum/a.webp']);
+  });
+
+  it('limite le débit par compte', async () => {
+    store.set(`ratelimit:forum:posts:${FORUM_MEMBER}`, '6');
+
+    const response = await server()
+      .post('/api/forum/threads/10/posts')
+      .set('Cookie', member)
+      .send({ content: 'Un de trop' });
+
+    expect(response.status).toBe(429);
+    expect(response.body.message).toBe('Doucement : 6 messages par minute au plus.');
+    expect(db.forumPost.create).not.toHaveBeenCalled();
+  });
+});
+
+describe('images du forum', () => {
+  // Un SVG peut contenir du script : refusé, quel que soit le nom du fichier
+  const SVG = '<svg xmlns="http://www.w3.org/2000/svg" width="10" height="10"/>';
+
+  beforeEach(() => {
+    db.user.findUnique.mockImplementation(
+      async ({ where }: { where: { id: string } }) => forumUsers[where.id] ?? null,
+    );
+  });
+
+  it('ré-encode l’image en WebP, la range dans le bucket, et rend son adresse', async () => {
+    const png = await sharp({
+      create: { width: 3000, height: 1500, channels: 3, background: '#e85d04' },
+    })
+      .png()
+      .toBuffer();
+
+    const response = await server()
+      .post('/api/forum/images')
+      .set('Cookie', cookie)
+      .attach('image', png, { filename: 'capture.png', contentType: 'image/png' });
+
+    expect(response.status).toBe(201);
+    expect(response.body).toMatchObject({ width: 2048, height: 1024 });
+    expect(response.body.url).toBe(`/api/media/${response.body.id}`);
+    const [key, body, type] = media.put.mock.calls[0] as unknown as [string, Buffer, string];
+    expect([key, type]).toEqual([`forum/${response.body.id}.webp`, 'image/webp']);
+    expect((await sharp(body).metadata()).format).toBe('webp');
+  });
+
+  it('refuse ce qui n’est pas une image, même nommé .png, et ce qui est trop lourd', async () => {
+    const svg = await server()
+      .post('/api/forum/images')
+      .set('Cookie', cookie)
+      .attach('image', Buffer.from(SVG), 'logo.png');
+    const heavy = await server()
+      .post('/api/forum/images')
+      .set('Cookie', cookie)
+      .attach('image', Buffer.alloc(8 * 1024 * 1024 + 1), 'enorme.png');
+
+    expect(svg.status).toBe(400);
+    expect(svg.body.message).toBe('Formats acceptés : PNG, JPEG, WebP et GIF.');
+    expect(heavy.status).toBe(413);
+    expect(heavy.body.message).toBe('Image trop lourde : 8 Mo au plus.');
+    expect(media.put).not.toHaveBeenCalled();
+  });
+
+  it('sert une image à tout le monde, avec un cache d’un an', async () => {
+    const response = await server().get('/api/media/123e4567-e89b-12d3-a456-426614174000');
+    const invalid = await server().get('/api/media/pas-un-id');
+
+    expect(response.headers['content-type']).toBe('image/webp');
+    expect(response.headers['cache-control']).toBe('public, max-age=31536000, immutable');
+    expect(response.headers['x-content-type-options']).toBe('nosniff');
+    expect(media.getBytes).toHaveBeenCalledWith('forum/image.webp');
+    expect(invalid.status).toBe(404);
+  });
+});
+
+describe('administration du forum', () => {
+  const owner = `sid=${OWNER_SESSION_ID}`;
+
+  it('réservée aux propriétaires du bot', async () => {
+    const response = await server().get('/api/admin/forum/categories').set('Cookie', cookie);
+
+    expect(response.status).toBe(403);
+  });
+
+  it('refuse un slug déjà pris et une catégorie qui a des sujets', async () => {
+    db.forumCategory.createMany.mockResolvedValueOnce({ count: 0 });
+    db.forumCategory.findUnique.mockResolvedValueOnce({ _count: { threads: 3 } } as never);
+
+    const duplicate = await server()
+      .post('/api/admin/forum/categories')
+      .set('Cookie', owner)
+      .send({ slug: 'Entraide', name: 'Entraide', description: '', position: 0 });
+    const inUse = await server().delete('/api/admin/forum/categories/2').set('Cookie', owner);
+
+    expect(duplicate.status).toBe(409);
+    expect(duplicate.body.message).toBe('Ce slug est déjà pris');
+    expect(db.forumCategory.createMany).toHaveBeenCalledWith({
+      data: [{ slug: 'entraide', name: 'Entraide', description: null, position: 0 }],
+      skipDuplicates: true,
+    });
+    expect(inUse.status).toBe(409);
+    expect(inUse.body.message).toBe('La catégorie contient 3 sujets : supprime-les d’abord.');
+  });
+
+  it('nomme un modérateur, et refuse un membre qui ne s’est jamais connecté', async () => {
+    db.user.findMany.mockResolvedValueOnce([
+      { id: FORUM_OTHER, username: 'Faye', avatar: null, role: 'MODERATOR' },
+    ]);
+
+    const named = await server()
+      .put(`/api/admin/forum/members/${FORUM_OTHER}/role`)
+      .set('Cookie', owner)
+      .send({ role: 'MODERATOR' });
+    db.user.updateMany.mockResolvedValueOnce({ count: 0 });
+    const unknown = await server()
+      .put('/api/admin/forum/members/700000000000000099/role')
+      .set('Cookie', owner)
+      .send({ role: 'ADMIN' });
+
+    expect(named.body).toEqual([
+      {
+        id: FORUM_OTHER,
+        username: 'Faye',
+        avatarUrl: expect.stringContaining('cdn.discordapp.com'),
+        role: 'MODERATOR',
+      },
+    ]);
+    expect(db.user.updateMany).toHaveBeenCalledWith({
+      where: { id: FORUM_OTHER },
+      data: { role: 'MODERATOR' },
+    });
+    expect(unknown.status).toBe(404);
   });
 });
 

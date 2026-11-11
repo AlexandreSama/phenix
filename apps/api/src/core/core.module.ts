@@ -13,6 +13,7 @@ import { DiscordService } from '../discord/discord.service.js';
 import { SessionService } from '../modules/auth/session.service.js';
 import { BotEventsService } from './bot-events.service.js';
 import { CacheService } from './cache.service.js';
+import { RateLimitService } from './rate-limit.service.js';
 
 /** Ferme proprement la base et Valkey quand l'API s'arrête. */
 @Injectable()
@@ -43,6 +44,7 @@ export class CoreModule {
         DiscordService,
         SessionService,
         ConnectionsShutdown,
+        RateLimitService,
       ],
       exports: [
         ENV,
@@ -52,6 +54,7 @@ export class CoreModule {
         CacheService,
         DiscordService,
         SessionService,
+        RateLimitService,
       ],
     };
   }

@@ -12,10 +12,12 @@ export class ApiError extends Error {
 
 /** Appelle l'API. Le cookie de session part tout seul : le site et l'API ont la même origine. */
 export async function api<T>(path: string, init: RequestInit = {}): Promise<T> {
+  // Un envoi de fichier (FormData) laisse le navigateur écrire son propre Content-Type
+  const json = !(init.body instanceof FormData);
   const response = await fetch(`/api${path}`, {
     ...init,
     credentials: 'same-origin',
-    headers: { 'Content-Type': 'application/json', ...init.headers },
+    headers: { ...(json && { 'Content-Type': 'application/json' }), ...init.headers },
   });
 
   if (!response.ok) {

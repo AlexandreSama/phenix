@@ -6,7 +6,13 @@
     "suspicious": "warn"
   },
   "rules": {
-    "vitest/require-mock-type-parameters": "off"
+    "vitest/require-mock-type-parameters": "off",
+    "no-underscore-dangle": [
+      "warn",
+      {
+        "allow": ["_count", "_max"]
+      }
+    ]
   },
   "ignorePatterns": ["**/dist/**", "**/src/generated/**", "**/coverage/**"]
 }

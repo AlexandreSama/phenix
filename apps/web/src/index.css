@@ -14,3 +14,73 @@
 body {
   @apply bg-ink text-stone-100 antialiased;
 }
+
+/* Le HTML des messages du forum, rendu et assaini par l'API */
+.forum-content {
+  font-size: 0.875rem;
+  line-height: 1.65;
+  color: var(--color-stone-200);
+  overflow-wrap: anywhere;
+}
+.forum-content :where(p, ul, ol, blockquote, pre, table) {
+  margin-block: 0.75rem;
+}
+.forum-content > :first-child {
+  margin-top: 0;
+}
+.forum-content > :last-child {
+  margin-bottom: 0;
+}
+.forum-content :where(h1, h2, h3, h4, h5, h6) {
+  margin-block: 1rem 0.5rem;
+  font-weight: 600;
+  color: white;
+}
+.forum-content :where(h1) {
+  font-size: 1.25rem;
+}
+.forum-content :where(h2) {
+  font-size: 1.125rem;
+}
+.forum-content :where(a) {
+  color: var(--color-gold);
+  text-decoration: underline;
+}
+.forum-content :where(ul) {
+  list-style: disc;
+  padding-left: 1.5rem;
+}
+.forum-content :where(ol) {
+  list-style: decimal;
+  padding-left: 1.5rem;
+}
+.forum-content :where(blockquote) {
+  border-left: 2px solid var(--color-ember);
+  padding-left: 0.75rem;
+  color: var(--color-stone-400);
+}
+.forum-content :where(code) {
+  border-radius: 0.25rem;
+  background: color-mix(in srgb, var(--color-brown) 40%, transparent);
+  padding: 0.1rem 0.3rem;
+  font-family: var(--font-mono);
+  font-size: 0.8em;
+}
+.forum-content :where(pre) {
+  overflow-x: auto;
+  border-radius: 0.5rem;
+  background: color-mix(in srgb, var(--color-brown) 30%, transparent);
+  padding: 0.75rem;
+}
+.forum-content :where(pre code) {
+  background: none;
+  padding: 0;
+}
+.forum-content :where(img) {
+  display: block;
+  max-width: 100%;
+  max-height: 32rem;
+  height: auto;
+  border: 1px solid var(--color-brown);
+  border-radius: 0.5rem;
+}
