@@ -15,7 +15,7 @@ const database = vi.hoisted(() => ({
   linkTd2Profile: vi.fn(),
   unlinkTd2Profile: vi.fn(),
 }));
-vi.mock('@projet/database', () => database);
+vi.mock('@phenix/database', () => database);
 
 const USER = '500000000000000001';
 const MEMBER = '500000000000000002';

@@ -256,7 +256,7 @@ const db = {
     ]),
   },
   user: { findUnique: vi.fn(), upsert: vi.fn() },
-  td2Event: { findMany: vi.fn(async () => [td2Event]) },
+  td2Event: { findMany: vi.fn(async () => [td2Event]), count: vi.fn(async () => 2) },
   td2Activity: {
     findMany: vi.fn(async () => [td2Activity]),
     findUnique: vi.fn(async () => td2Activity as object | null),

@@ -30,7 +30,7 @@ export function Td2Page() {
         <h2 className="mb-4 text-lg font-semibold text-white">Réglages</h2>
         {error && <p role="alert">{error.message}</p>}
         {!error && (!settings.data || !channels.data || !roles.data) && <p>Chargement…</p>}
-        {settings.data && channels.data && (
+        {settings.data && channels.data && roles.data && (
           <Td2SettingsForm
             settings={settings.data}
             channels={channels.data}

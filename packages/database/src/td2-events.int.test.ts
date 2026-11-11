@@ -1,6 +1,6 @@
 import { afterAll, beforeAll, describe, expect, inject, it } from 'vitest';
 import { createPrismaClient } from './client.js';
-import { seedTd2Catalogue } from './td2-catalogue.js';
+import { seedTd2Catalogue, TD2_CATALOGUE } from './td2-catalogue.js';
 import {
   cancelTd2Event,
   createTd2Event,
@@ -54,7 +54,11 @@ const join = (eventId: number, userId: string, role: 'DPS' | 'HEAL' | 'TANK' | '
 
 describe('catalogue et création', () => {
   it('propose les activités par type, et copie la composition du mode dans la sortie', async () => {
-    const raids = await listTd2Activities(prisma, 'RAID');
+    // Le catalogue est partagé : d'autres fichiers de test y ajoutent leurs activités
+    const seeded = TD2_CATALOGUE.map(({ name }) => name);
+    const raids = (await listTd2Activities(prisma, 'RAID')).filter(({ name }) =>
+      seeded.includes(name),
+    );
     expect(raids.map((activity) => activity.name)).toEqual(['Dark Hours', 'Iron Horse']);
     expect(raids[0]?.modes.map((mode) => mode.name)).toEqual(['Normal', 'Semi-Speed']);
 

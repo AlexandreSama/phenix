@@ -3,8 +3,7 @@ import type { Td2EventSummary, Td2Settings, Td2SettingsInput } from '@phenix/sha
 import { BotEventsService } from '../../core/bot-events.service.js';
 import { newGuildConfig } from '../guild-config/guild-config.service.js';
 import { GuildsService } from '../guilds/guilds.service.js';
-import type { PrismaClient } from '@phenix/database';
-import { listUpcomingTd2Events } from '@phenix/database';
+import { listUpcomingTd2Events, PrismaClient } from '@phenix/database';
 
 const SETTINGS_SELECT = {
   td2ChannelId: true,
