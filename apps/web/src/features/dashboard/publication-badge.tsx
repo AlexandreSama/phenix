@@ -1,13 +1,18 @@
 import type { PublicationStatus } from '@phenix/shared';
+import { Badge, type BadgeTone } from '../../components/ui/badge';
 
-const STATUS: Record<PublicationStatus, { label: string; className: string }> = {
-  published: { label: 'Publié', className: 'border-gold/60 text-gold' },
-  pending: { label: 'Publication…', className: 'border-stone-500 text-stone-300' },
-  error: { label: 'Erreur', className: 'border-flame text-flame' },
+const STATUS: Record<PublicationStatus, { label: string; tone: BadgeTone }> = {
+  published: { label: 'Publié', tone: 'gold' },
+  pending: { label: 'Publication…', tone: 'neutral' },
+  error: { label: 'Erreur', tone: 'flame' },
 };
 
 /** L'état d'un message que le bot publie pour le site : panels de rôles, panel de tickets… */
 export function PublicationBadge({ status }: { status: PublicationStatus }) {
-  const { label, className } = STATUS[status];
-  return <span className={`rounded-full border px-2 py-0.5 text-xs ${className}`}>{label}</span>;
+  const { label, tone } = STATUS[status];
+  return (
+    <Badge tone={tone} pulse={status === 'pending'}>
+      {label}
+    </Badge>
+  );
 }

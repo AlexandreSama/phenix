@@ -1,14 +1,18 @@
 import { TD2_KIND_LABELS, type Td2KindKey } from '@phenix/shared';
 import { useQuery } from '@tanstack/react-query';
 import { useState } from 'react';
+import { Icon } from '../../../components/icon';
 import { Button } from '../../../components/ui/button';
-import { inputClass } from '../../../components/ui/field';
+import { EmptyState } from '../../../components/ui/empty-state';
+import { Field, inputClass } from '../../../components/ui/field';
+import { PageHeader, Panel } from '../../../components/ui/panel';
+import { LoadError, PageSkeleton } from '../../dashboard/query-state';
 import { catalogueQuery, useCreateActivity } from '../api';
 import { ActivityCard } from './activity-card';
 
-const SECTIONS: { kind: Td2KindKey; title: string }[] = [
-  { kind: 'RAID', title: 'Raids' },
-  { kind: 'INCURSION', title: 'Incursions' },
+const SECTIONS: { kind: Td2KindKey; title: string; empty: string }[] = [
+  { kind: 'RAID', title: 'Raids', empty: 'Aucun raid pour l’instant' },
+  { kind: 'INCURSION', title: 'Incursions', empty: 'Aucune incursion pour l’instant' },
 ];
 
 function NewActivityForm() {
@@ -20,7 +24,7 @@ function NewActivityForm() {
   return (
     <form
       aria-label="Nouvelle activité"
-      className="flex flex-col gap-2"
+      className="flex flex-col gap-3"
       onSubmit={async (event) => {
         event.preventDefault();
         setError(null);
@@ -32,10 +36,10 @@ function NewActivityForm() {
         }
       }}
     >
-      <div className="flex flex-wrap items-end gap-3">
-        <label className="flex flex-col gap-1 text-xs text-stone-400">
-          Type
+      <div className="grid gap-4 sm:grid-cols-[10rem_minmax(0,1fr)_auto] sm:items-end">
+        <Field id="new-activity-kind" label="Type">
           <select
+            id="new-activity-kind"
             className={inputClass}
             value={kind}
             onChange={(event) => setKind(event.target.value as Td2KindKey)}
@@ -46,23 +50,28 @@ function NewActivityForm() {
               </option>
             ))}
           </select>
-        </label>
-        <label className="flex min-w-48 flex-1 flex-col gap-1 text-xs text-stone-400">
-          Nom de l’activité
+        </Field>
+        <Field id="new-activity-name" label="Nom de l’activité">
           <input
+            id="new-activity-name"
             className={inputClass}
             value={name}
             maxLength={40}
             placeholder="Dark Hours, Paradis Perdu…"
             onChange={(event) => setName(event.target.value)}
           />
-        </label>
-        <Button type="submit" disabled={create.isPending || name.trim() === ''}>
+        </Field>
+        <Button
+          type="submit"
+          className="min-h-11"
+          disabled={create.isPending || name.trim() === ''}
+        >
+          <Icon name="plus" className="size-4" />
           Ajouter
         </Button>
       </div>
       {error && (
-        <p role="alert" className="text-xs text-flame">
+        <p role="alert" className="text-[13px] text-flame">
           {error}
         </p>
       )}
@@ -75,21 +84,47 @@ function NewActivityForm() {
  * celles déjà créées gardent la leur.
  */
 export function CataloguePage() {
-  const { data: catalogue, error } = useQuery(catalogueQuery);
+  const { data: catalogue, error, refetch } = useQuery(catalogueQuery);
 
   return (
     <div className="flex flex-col gap-8">
-      <NewActivityForm />
-      {error && <p role="alert">{error.message}</p>}
-      {!error && !catalogue && <p>Chargement…</p>}
+      <PageHeader
+        title="Catalogue The Division 2"
+        description="Les activités et leurs modes, proposés par /td2 sur tous les serveurs. Une composition modifiée vaut pour les prochaines sorties : celles déjà créées gardent la leur."
+      />
+
+      <Panel
+        icon="plus"
+        title="Nouvelle activité"
+        description="Donne-lui ensuite au moins un mode : c’est lui qui fixe la composition."
+      >
+        <NewActivityForm />
+      </Panel>
+
+      {error && <LoadError error={error} onRetry={() => void refetch()} />}
+      {!error && !catalogue && <PageSkeleton label="Chargement du catalogue…" panels={2} />}
       {catalogue &&
         SECTIONS.map((section) => {
           const activities = catalogue.filter((activity) => activity.kind === section.kind);
           return (
-            <section key={section.kind} className="flex flex-col gap-3">
-              <h2 className="text-lg font-semibold text-white">{section.title}</h2>
+            <section
+              key={section.kind}
+              aria-labelledby={`catalogue-${section.kind}`}
+              className="flex flex-col gap-4"
+            >
+              <h3
+                id={`catalogue-${section.kind}`}
+                className="flex items-center gap-2.5 font-display text-lg font-semibold text-white"
+              >
+                {section.title}
+                <span className="rounded-full bg-white/8 px-2 py-0.5 font-sans text-xs font-medium text-stone-300">
+                  {activities.length}
+                </span>
+              </h3>
               {activities.length === 0 && (
-                <p className="text-sm text-stone-400">Aucune pour l’instant.</p>
+                <EmptyState icon="crosshair" title={section.empty}>
+                  Ajoute-la avec le formulaire du dessus, puis donne-lui au moins un mode.
+                </EmptyState>
               )}
               {activities.map((activity) => (
                 <ActivityCard key={activity.id} activity={activity} />

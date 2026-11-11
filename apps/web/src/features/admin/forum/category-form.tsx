@@ -6,7 +6,8 @@ import {
   type ForumCategorySummary,
 } from '@phenix/shared';
 import { useState } from 'react';
-import { useForm } from 'react-hook-form';
+import { useForm, useWatch } from 'react-hook-form';
+import { Icon } from '../../../components/icon';
 import { Button } from '../../../components/ui/button';
 import { inputClass } from '../../../components/ui/field';
 
@@ -19,6 +20,7 @@ interface Props {
 }
 
 const EMPTY: ForumCategoryInput = { slug: '', name: '', description: '', position: 0 };
+const labelClass = 'flex flex-col gap-1.5 text-[13px] font-medium text-stone-300';
 
 /** Une catégorie : son adresse, son nom, sa description et sa place dans la liste. */
 export function CategoryForm({ category, nextPosition = 0, onSubmit, onDelete }: Props) {
@@ -28,6 +30,7 @@ export function CategoryForm({ category, nextPosition = 0, onSubmit, onDelete }:
     handleSubmit,
     reset,
     setError,
+    control,
     formState: { errors, isSubmitting, isDirty },
   } = useForm<ForumCategoryInput, unknown, ForumCategoryData>({
     resolver: zodResolver(forumCategoryInputSchema),
@@ -35,6 +38,7 @@ export function CategoryForm({ category, nextPosition = 0, onSubmit, onDelete }:
       ? { ...category, description: category.description ?? '' }
       : { ...EMPTY, position: nextPosition },
   });
+  const slug = useWatch({ control, name: 'slug' });
 
   const fail = (err: unknown) =>
     setError('root.server', { message: err instanceof Error ? err.message : 'Échec' });
@@ -65,28 +69,41 @@ export function CategoryForm({ category, nextPosition = 0, onSubmit, onDelete }:
       onSubmit={handleSubmit(save)}
       noValidate
       aria-label={label}
-      className="flex flex-col gap-2 border-t border-brown py-3 first:border-t-0"
+      className={`flex flex-col gap-4 rounded-xl border p-4 ${
+        confirming
+          ? 'border-flame/50'
+          : category
+            ? 'border-white/8 bg-ink/40'
+            : 'border-dashed border-white/15'
+      }`}
     >
-      <div className="grid gap-2 sm:grid-cols-[1fr_1fr_5rem]">
-        <label className="flex flex-col gap-1 text-xs text-stone-400">
+      {!category && (
+        <p className="flex items-center gap-2 text-sm font-semibold text-white">
+          <Icon name="plus" className="size-4 text-flame" />
+          Nouvelle catégorie
+        </p>
+      )}
+      <div className="grid gap-3 sm:grid-cols-[minmax(0,1fr)_minmax(0,1fr)_5.5rem]">
+        <label className={labelClass}>
           Nom
           <input className={inputClass} placeholder="Entraide" {...register('name')} />
         </label>
-        <label className="flex flex-col gap-1 text-xs text-stone-400">
+        <label className={labelClass}>
           Adresse
           <input className={inputClass} placeholder="entraide" {...register('slug')} />
         </label>
-        <label className="flex flex-col gap-1 text-xs text-stone-400">
+        <label className={labelClass}>
           Ordre
           <input
             type="number"
+            inputMode="numeric"
             min={0}
-            className={inputClass}
+            className={`${inputClass} text-center tabular-nums`}
             {...register('position', { valueAsNumber: true })}
           />
         </label>
       </div>
-      <label className="flex flex-col gap-1 text-xs text-stone-400">
+      <label className={labelClass}>
         Description
         <input
           className={inputClass}
@@ -94,7 +111,8 @@ export function CategoryForm({ category, nextPosition = 0, onSubmit, onDelete }:
           {...register('description')}
         />
       </label>
-      <div className="flex flex-wrap items-center gap-2">
+
+      <div className="flex flex-wrap items-center gap-x-3 gap-y-2">
         <Button
           type="submit"
           variant={category ? 'ghost' : 'primary'}
@@ -114,6 +132,7 @@ export function CategoryForm({ category, nextPosition = 0, onSubmit, onDelete }:
                 : undefined
             }
           >
+            <Icon name="trash" className="size-4" />
             Supprimer
           </Button>
         )}
@@ -134,14 +153,18 @@ export function CategoryForm({ category, nextPosition = 0, onSubmit, onDelete }:
             </Button>
           </>
         )}
-        {category && (
-          <span className="text-xs text-stone-400">
-            {category.threadCount} sujet{category.threadCount > 1 ? 's' : ''}
-          </span>
-        )}
+        {/* À droite : où mène la catégorie, et combien de sujets elle range */}
+        <span className="ml-auto flex flex-wrap items-center gap-x-3 gap-y-1 text-[13px] text-stone-400">
+          <span className="font-mono">/forum/{slug || '…'}</span>
+          {category && (
+            <span>
+              {category.threadCount} sujet{category.threadCount > 1 ? 's' : ''}
+            </span>
+          )}
+        </span>
       </div>
       {message && (
-        <p role="alert" className="text-xs text-flame">
+        <p role="alert" className="text-[13px] text-flame">
           {message}
         </p>
       )}

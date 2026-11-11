@@ -1,41 +1,69 @@
 import { Link, Outlet } from '@tanstack/react-router';
-import type { ReactNode } from 'react';
+import { Icon, type IconName } from '../../components/icon';
+import {
+  sideAsideClass,
+  sideGridClass,
+  sideLayoutClass,
+  sideNavClass,
+  sideTabActiveClass,
+  sideTabClass,
+  sideTabIconClass,
+  useActiveTabInView,
+} from '../../components/ui/side-nav';
 
-function Tab({
-  to,
-  children,
-}: {
+const TABS: {
   to: '/admin' | '/admin/signalements' | '/admin/forum';
-  children: ReactNode;
-}) {
-  return (
-    <Link
-      to={to}
-      activeOptions={{ exact: true, includeSearch: false }}
-      className="shrink-0 border-b-2 border-transparent px-3 py-2 text-sm font-semibold whitespace-nowrap sm:px-4 text-stone-400 hover:text-white"
-      activeProps={{ className: 'border-flame! text-white!' }}
-    >
-      {children}
-    </Link>
-  );
-}
+  label: string;
+  icon: IconName;
+}[] = [
+  { to: '/admin', label: 'Catalogue TD2', icon: 'crosshair' },
+  { to: '/admin/signalements', label: 'Signalements', icon: 'flag' },
+  { to: '/admin/forum', label: 'Forum', icon: 'forum' },
+];
 
 /** La page des propriétaires du bot : ce qui vaut pour tous les serveurs à la fois. */
 export function AdminLayout() {
+  const nav = useActiveTabInView();
+
   return (
-    <section className="flex flex-col gap-6">
-      <div className="flex flex-col gap-1">
-        <h1 className="text-2xl font-bold text-white">Administration</h1>
-        <p className="text-sm text-stone-400">
-          Réservé aux propriétaires du bot. Tout ce qui change ici vaut pour tous les serveurs.
-        </p>
+    <div className={sideLayoutClass}>
+      <div className={sideGridClass}>
+        <aside className={sideAsideClass}>
+          <div className="flex min-w-0 items-start gap-3">
+            <span className="flex size-12 shrink-0 items-center justify-center rounded-2xl bg-flame/12 text-flame">
+              <Icon name="shield" className="size-6" />
+            </span>
+            <div className="flex min-w-0 flex-col">
+              <span className="text-xs font-semibold tracking-widest text-flame uppercase">
+                Propriétaires du bot
+              </span>
+              <h1 className="font-display text-xl leading-tight font-semibold text-white">
+                Administration
+              </h1>
+            </div>
+          </div>
+          <p className="text-sm text-stone-400">
+            Tout ce qui change ici vaut pour tous les serveurs à la fois.
+          </p>
+          <nav ref={nav} aria-label="Administration" className={sideNavClass}>
+            {TABS.map((tab) => (
+              <Link
+                key={tab.to}
+                to={tab.to}
+                activeOptions={{ exact: true, includeSearch: false }}
+                className={sideTabClass}
+                activeProps={{ className: sideTabActiveClass }}
+              >
+                <Icon name={tab.icon} className={sideTabIconClass} />
+                {tab.label}
+              </Link>
+            ))}
+          </nav>
+        </aside>
+        <div className="min-w-0">
+          <Outlet />
+        </div>
       </div>
-      <nav aria-label="Administration" className="flex overflow-x-auto border-b border-brown">
-        <Tab to="/admin">Catalogue TD2</Tab>
-        <Tab to="/admin/signalements">Signalements</Tab>
-        <Tab to="/admin/forum">Forum</Tab>
-      </nav>
-      <Outlet />
-    </section>
+    </div>
   );
 }

@@ -1,7 +1,8 @@
 import type { GiveawaySummary, GuildChannelSummary } from '@phenix/shared';
 import { useState } from 'react';
+import { Icon } from '../../../components/icon';
+import { Badge } from '../../../components/ui/badge';
 import { Button } from '../../../components/ui/button';
-import { Card } from '../../../components/ui/card';
 import type { GiveawayAction } from '../api';
 import { PublicationBadge } from '../publication-badge';
 
@@ -47,6 +48,19 @@ export function giveawayState(giveaway: GiveawaySummary, now = Date.now()): Give
   return { line: `${line} · annonce en cours…`, actions: [] };
 }
 
+/** L'étape en un mot, pour le badge à côté du lot. */
+function StepBadge({ giveaway }: { giveaway: GiveawaySummary }) {
+  if (giveaway.endedAt) return <Badge tone="muted">Terminé</Badge>;
+  if (Date.parse(giveaway.endsAt) <= Date.now()) {
+    return (
+      <Badge tone="neutral" pulse>
+        Tirage…
+      </Badge>
+    );
+  }
+  return <Badge tone="gold">En cours</Badge>;
+}
+
 interface Props {
   giveaway: GiveawaySummary;
   channel: GuildChannelSummary | undefined;
@@ -59,6 +73,7 @@ export function GiveawayCard({ giveaway, channel, onAction }: Props) {
     null,
   );
   const { line, actions } = giveawayState(giveaway);
+  const active = !giveaway.endedAt;
 
   const run = (action: GiveawayAction) => {
     setConfirming(null);
@@ -66,18 +81,32 @@ export function GiveawayCard({ giveaway, channel, onAction }: Props) {
   };
 
   return (
-    <Card className="flex flex-col gap-3 sm:flex-row sm:items-center">
-      <div className="min-w-0 flex-1">
+    <article
+      className={`flex flex-col gap-4 rounded-2xl border bg-surface p-5 transition sm:flex-row sm:items-center ${
+        confirming ? 'border-flame/50' : 'border-white/8'
+      }`}
+    >
+      <span
+        className={`flex size-11 shrink-0 items-center justify-center rounded-xl max-sm:hidden ${
+          active ? 'bg-flame/12 text-flame' : 'bg-white/6 text-stone-400'
+        }`}
+      >
+        <Icon name={active ? 'gift' : 'trophy'} className="size-5" />
+      </span>
+      <div className="flex min-w-0 flex-1 flex-col gap-1">
         <div className="flex flex-wrap items-center gap-2">
-          <span className="font-mono text-sm text-flame tabular-nums">#{giveaway.id}</span>
-          <h2 className="truncate font-semibold text-white">{giveaway.prize}</h2>
-          {!giveaway.endedAt && <PublicationBadge status={giveaway.publication} />}
+          <h3 className="truncate font-semibold text-white">{giveaway.prize}</h3>
+          <span className="font-mono text-xs text-stone-500 tabular-nums">#{giveaway.id}</span>
+          <StepBadge giveaway={giveaway} />
+          {active && giveaway.publication !== 'published' && (
+            <PublicationBadge status={giveaway.publication} />
+          )}
         </div>
         <p className="text-sm text-stone-400">
-          #{channel?.name ?? 'salon supprimé'} · {line}
+          <span className="text-stone-300">#{channel?.name ?? 'salon supprimé'}</span> · {line}
         </p>
         {giveaway.publishError && (
-          <p role="alert" className="mt-1 text-sm text-flame">
+          <p role="alert" className="text-sm text-flame">
             {giveaway.publishError}
           </p>
         )}
@@ -110,6 +139,6 @@ export function GiveawayCard({ giveaway, channel, onAction }: Props) {
           </>
         )}
       </div>
-    </Card>
+    </article>
   );
 }

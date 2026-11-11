@@ -61,10 +61,11 @@ describe('GiveawayForm', () => {
     submit();
 
     await screen.findByText('Le lot est obligatoire');
+    // Dans l'ordre de la page : le lot et ses gagnants, puis le salon et la fin
     expect(screen.getAllByRole('alert').map((alert) => alert.textContent)).toEqual([
       'Le lot est obligatoire',
-      'Choisis un salon',
       'Un gagnant au moins',
+      'Choisis un salon',
       'La fin doit être dans une minute au moins',
     ]);
     expect(onSubmit).not.toHaveBeenCalled();

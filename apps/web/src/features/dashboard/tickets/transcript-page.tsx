@@ -1,5 +1,7 @@
 import { Link, useParams } from '@tanstack/react-router';
+import { Icon } from '../../../components/icon';
 import { buttonClass } from '../../../components/ui/button';
+import { PageHeader } from '../../../components/ui/panel';
 import { transcriptUrl } from '../api';
 
 /**
@@ -11,32 +13,44 @@ export function TranscriptPage() {
   const url = transcriptUrl(guildId, Number(ticketId));
 
   return (
-    <section className="flex flex-col gap-4">
+    <div className="flex flex-col gap-6">
       <Link
         to="/dashboard/$guildId/tickets"
         params={{ guildId }}
         search={{ status: 'closed' }}
-        className="text-sm text-stone-400 hover:text-white"
+        className="inline-flex items-center gap-2 self-start text-sm text-stone-400 transition hover:text-white"
       >
-        ← Tickets fermés
+        <Icon name="arrowLeft" className="size-4" />
+        Tickets fermés
       </Link>
-      <div className="flex flex-wrap items-center justify-between gap-3">
-        <h2 className="text-lg font-semibold text-white">Transcript</h2>
-        <div className="flex gap-2">
-          <a href={url} target="_blank" rel="noreferrer" className={buttonClass('ghost')}>
-            Ouvrir dans un onglet
-          </a>
-          <a href={url} download className={buttonClass('ghost')}>
-            Télécharger
-          </a>
-        </div>
-      </div>
-      <iframe
-        title="Transcript du ticket"
-        src={url}
-        sandbox="allow-popups allow-popups-to-escape-sandbox"
-        className="h-[75vh] w-full rounded-xl border border-brown bg-ink"
+      <PageHeader
+        title="Transcript"
+        description="Les messages du ticket, tels qu’ils ont été archivés à sa fermeture."
+        actions={
+          <>
+            <a href={url} target="_blank" rel="noreferrer" className={buttonClass('ghost')}>
+              <Icon name="external" className="size-4" />
+              Ouvrir dans un onglet
+            </a>
+            <a href={url} download className={buttonClass('ghost')}>
+              <Icon name="download" className="size-4" />
+              Télécharger
+            </a>
+          </>
+        }
       />
-    </section>
+      <figure className="flex flex-col gap-2.5">
+        <iframe
+          title="Transcript du ticket"
+          src={url}
+          sandbox="allow-popups allow-popups-to-escape-sandbox"
+          className="h-[72vh] min-h-96 w-full rounded-2xl border border-white/8 bg-ink"
+        />
+        <figcaption className="flex items-center gap-2 text-[13px] text-stone-400">
+          <Icon name="lock" className="size-3.5" />
+          Affiché sans script ni accès au reste du site, par sécurité.
+        </figcaption>
+      </figure>
+    </div>
   );
 }

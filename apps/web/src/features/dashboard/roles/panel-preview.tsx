@@ -17,11 +17,15 @@ export function PanelPreview({ values, roles }: Props) {
   const buttons = values.options.filter((option) => option.roleId || option.label);
 
   return (
-    <figure aria-label="Aperçu du message sur Discord" className="flex flex-col gap-2">
+    <figure
+      aria-label="Aperçu du message sur Discord"
+      className="flex flex-col gap-3 rounded-2xl border border-white/8 bg-surface p-4"
+    >
       <figcaption className="text-xs font-semibold tracking-widest text-stone-400 uppercase">
         Aperçu sur Discord
       </figcaption>
-      <div className="rounded-lg bg-[#313338] p-4 text-[#dbdee1]">
+      {/* Les couleurs de Discord en thème sombre : l'aperçu ressemble au vrai message */}
+      <div className="rounded-xl bg-[#313338] p-4 text-[#dbdee1]">
         <div className="rounded border-l-4 border-flame bg-[#2b2d31] p-3">
           <p className="font-semibold text-white">{values.title || 'Titre du panel'}</p>
           {typeof values.description === 'string' && values.description && (

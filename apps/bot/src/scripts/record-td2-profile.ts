@@ -11,13 +11,13 @@ import {
  * Enregistre la vraie réponse de l'API pour un joueur, puis dit lesquelles des clés attendues
  * par le bot (TRACKER_STAT_KEYS) elle contient.
  *
- *   pnpm --filter @projet/bot td2:record PSN Agent47
+ *   pnpm --filter @phenix/bot td2:record PSN Agent47
  */
 const [platformArg = '', ...nameParts] = process.argv.slice(2);
 const platform = platformArg.toUpperCase() as Td2PlatformKey;
 const playerName = nameParts.join(' ').trim();
 if (!(platform in TD2_PLATFORM_LABELS) || !playerName) {
-  console.error('Usage : pnpm --filter @projet/bot td2:record <UBI|PSN|XBL> <pseudo>');
+  console.error('Usage : pnpm --filter @phenix/bot td2:record <UBI|PSN|XBL> <pseudo>');
   process.exit(1);
 }
 const apiKey = process.env.TRN_API_KEY;
