@@ -1,9 +1,8 @@
 # Politique qualité du projet
 
-Fichier **identique** dans `.claude/` de l'espace de travail et de chaque dépôt (importé par
-`CLAUDE.md`). Une politique dit **pourquoi** et **quelle direction** ; elle est courte et change
+Importé par `CLAUDE.md`. Une politique dit **pourquoi** et **quelle direction** ; elle est courte et change
 rarement. Le détail vit plus bas dans la hiérarchie. Propriétaire : l'équipe du projet ;
-toute modification passe par une MR relue.
+toute modification passe par une PR relue.
 
 ## Engagement
 
@@ -61,10 +60,10 @@ Fonctionnalités, qualité, échéance, coût, personnel : pour chaque jalon, ch
 
 | Niveau | Répond à | Chez nous |
 |---|---|---|
-| Politique | pourquoi, quelle direction | ce fichier ; règles communes de `../CLAUDE.md` |
-| Processus | quoi, qui, quand | les **skills** (`/feature`, `/bug`, `/module`, `/mr`, `/provisionner`…) : but, résultats attendus, étapes, rôles (agents), début et fin |
+| Politique | pourquoi, quelle direction | ce fichier ; règles communes de `CLAUDE.md` |
+| Processus | quoi, qui, quand | les **skills** (`/orchestrer`, `/inspection`, `/release`, `/maj-versions`, `/nouveau-paquet`…) : but, résultats attendus, étapes, rôles (agents), début et fin |
 | Procédures | comment, avec quoi | étapes détaillées des skills, listes de vérification et gabarits (`docs/qualite/`) |
-| Enregistrements | preuves que c'est fait | issues, MR et leurs relectures, logs de CI, rapports d'audit et d'inspection, rétrospectives (`docs/qualite/`) |
+| Enregistrements | preuves que c'est fait | issues et PR GitHub et leurs relectures, exécutions GitHub Actions, rapports d'audit et d'inspection, rétrospectives (`docs/qualite/`) |
 
 - Un processus (skill) appuie au moins un principe de cette politique ; il a un but clair, des
   résultats observables, des rôles, des entrées et sorties, un début et une fin, et se mesure.

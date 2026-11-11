@@ -1,7 +1,6 @@
 # Routage des modèles et de l'effort (orchestration)
 
-Fichier **identique** dans `.claude/` de l'espace de travail et de chaque dépôt (importé par
-`CLAUDE.md`). Le modifier dans l'espace de travail puis le recopier dans chaque dépôt.
+Importé par `CLAUDE.md`. Vient du harness https://gitlab.com/TedBarbier/harness, adapté à ce monorepo.
 
 La session principale est l'**orchestrateur** : elle découpe le travail, confie chaque étape à
 l'agent adapté et **choisit le modèle et l'effort** de chaque appel selon ce barème. Ce fichier
@@ -38,7 +37,7 @@ Effort : `low` < `medium` < `high` (tous les modèles) < `xhigh` < `max` (`opus`
 | `aql-revues`      | `opus`   | `medium` | inspections et audits : jugement contre les sources |
 | `aql-ia`          | `opus`   | `medium` | sécurité des artefacts générés par l'IA          |
 | `nommage`         | `sonnet` | `medium` | application de règles écrites, recherche de cohérence |
-| `versions`        | `sonnet` | `medium` | lecture de changelogs, verdict sur les MR de dépendances, préparation de release (plancher `opus` si sécurité / production) |
+| `versions`        | `sonnet` | `medium` | lecture de changelogs, verdict sur les mises à jour de dépendances, préparation de release (plancher `opus` si sécurité / production) |
 | `stratege`        | `opus`   | `medium` | SWOT, coût / valeur : jugement et hypothèses     |
 
 ## Barème par type de tâche (surcharge à l'appel)
@@ -49,17 +48,17 @@ Effort : `low` < `medium` < `high` (tous les modèles) < `xhigh` < `max` (`opus`
 | Mécanique : renommage, ligne de CHANGELOG, reformatage, copie de fichiers | `haiku`  | `medium` |
 | Documentation                                                      | `sonnet` | `low`    |
 | Planification en issues, point d'avancement (`/planifier`, `/point-projet`) | `sonnet` | `medium` |
-| Diagnostic de pipeline CI (`/pipeline`)                            | `sonnet` | `medium` |
+| Diagnostic de CI GitHub Actions (`gh run view --log-failed`)       | `sonnet` | `medium` |
 | Tests (phase rouge) et code minimal (phase verte) selon un plan validé | `sonnet` | `medium`/`high` |
-| Manifests, rôles Ansible, OpenTofu sans impact production          | `sonnet` | `high`   |
+| Workflow CI, `docker-compose.dev.yml`, migration Prisma non destructive | `sonnet` | `high`   |
 | Plan d'une fonctionnalité, d'un module, d'un composant             | `opus`   | `high`   |
 | Revue de diff (gros diff ou zone sensible : `high`)                | `opus`   | `medium` |
 | Sécurité, secrets, RGPD, données personnelles                      | `opus`   | `high`   |
 | Audit qualité (`/qualite`) ; feu vert de mise en production : effort `high` | `opus` | `medium` |
 | Inspection formelle d'un artefact critique (`/inspection`)          | `opus`   | `high`   |
 | SWOT, plus / moins, coût / valeur (`/priorites`) | `opus` | `medium` |
-| Changement touchant la production réelle (réseau, stockage, accès, migration destructive, plan de `tofu apply` / playbook) | `opus` | `high` |
-| Incident de production (`/incident`)                               | `opus`   | `high`   |
+| Changement touchant la production réelle (données réelles, stockage Garage, accès, migration Prisma destructive, `prisma migrate deploy`) | `opus` | `high` |
+| Incident de production                                             | `opus`   | `high`   |
 | Décision d'architecture transverse et difficile à défaire, ou problème toujours non résolu après `opus` `xhigh` | `fable` | `high` |
 
 ## Règles
