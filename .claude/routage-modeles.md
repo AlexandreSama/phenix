@@ -9,57 +9,57 @@ raison de s'en écarter, elle laisse les valeurs par défaut de l'agent (son en-
 
 ## Modèles (novembre 2026, prix par million de jetons entrée / sortie)
 
-| Modèle   | Pour quoi                                                      | Prix          |
-|----------|----------------------------------------------------------------|---------------|
-| `haiku`  | lecture, recherche, tri, tâches mécaniques — le plus rapide    | dès 0,10 / 0,50 $ |
-| `sonnet` | implémentation et tests selon un plan clair — meilleur rapport vitesse/qualité | 2 / 10 $ |
-| `opus`   | plan, revue, sécurité, RGPD, infra de production — défaut des tâches délicates | 4 / 20 $ |
-| `fable`  | raisonnement le plus exigeant, problèmes longs non résolus par `opus` | 10 / 50 $ |
+| Modèle   | Pour quoi                                                                      | Prix              |
+| -------- | ------------------------------------------------------------------------------ | ----------------- |
+| `haiku`  | lecture, recherche, tri, tâches mécaniques — le plus rapide                    | dès 0,10 / 0,50 $ |
+| `sonnet` | implémentation et tests selon un plan clair — meilleur rapport vitesse/qualité | 2 / 10 $          |
+| `opus`   | plan, revue, sécurité, RGPD, infra de production — défaut des tâches délicates | 4 / 20 $          |
+| `fable`  | raisonnement le plus exigeant, problèmes longs non résolus par `opus`          | 10 / 50 $         |
 
 Effort : `low` < `medium` < `high` (tous les modèles) < `xhigh` < `max` (`opus` et `fable` seulement).
 
 ## Valeurs par défaut des agents
 
-| Agent             | Modèle   | Effort   | Pourquoi                                         |
-|-------------------|----------|----------|--------------------------------------------------|
-| `architecte`      | `opus`   | `high`   | un mauvais plan coûte plus cher que le plan      |
-| `developpeur`     | `sonnet` | `high`   | code minimal guidé par des tests déjà écrits     |
-| `testeur`         | `sonnet` | `medium` | tests à partir d'un plan qui les liste           |
-| `base-de-donnees` | `sonnet` | `high`   | schéma et migrations : précision requise         |
-| `devops`          | `sonnet` | `high`   | manifests, rôles, CI suivant des règles écrites  |
-| `observabilite`   | `sonnet` | `medium` | métriques, règles d'alerte, tableaux de bord     |
-| `documentaliste`  | `sonnet` | `low`    | rédaction à partir du diff                       |
-| `chef-de-projet`  | `sonnet` | `medium` | découpage en issues, suivi d'avancement          |
-| `relecteur`       | `opus`   | `medium` | trouver les vrais bugs sans faux positifs        |
-| `securite`        | `opus`   | `high`   | une faille manquée coûte cher                    |
-| `qualite`         | `opus`   | `medium` | pilotage AQL, indicateurs, feu vert de production |
-| `aql-tests`       | `sonnet` | `high`   | analyse méthodique de l'adéquation des tests     |
-| `aql-revues`      | `opus`   | `medium` | inspections et audits : jugement contre les sources |
-| `aql-ia`          | `opus`   | `medium` | sécurité des artefacts générés par l'IA          |
-| `nommage`         | `sonnet` | `medium` | application de règles écrites, recherche de cohérence |
+| Agent             | Modèle   | Effort   | Pourquoi                                                                                                                              |
+| ----------------- | -------- | -------- | ------------------------------------------------------------------------------------------------------------------------------------- |
+| `architecte`      | `opus`   | `high`   | un mauvais plan coûte plus cher que le plan                                                                                           |
+| `developpeur`     | `sonnet` | `high`   | code minimal guidé par des tests déjà écrits                                                                                          |
+| `testeur`         | `sonnet` | `medium` | tests à partir d'un plan qui les liste                                                                                                |
+| `base-de-donnees` | `sonnet` | `high`   | schéma et migrations : précision requise                                                                                              |
+| `devops`          | `sonnet` | `high`   | manifests, rôles, CI suivant des règles écrites                                                                                       |
+| `observabilite`   | `sonnet` | `medium` | métriques, règles d'alerte, tableaux de bord                                                                                          |
+| `documentaliste`  | `sonnet` | `low`    | rédaction à partir du diff                                                                                                            |
+| `chef-de-projet`  | `sonnet` | `medium` | découpage en issues, suivi d'avancement                                                                                               |
+| `relecteur`       | `opus`   | `medium` | trouver les vrais bugs sans faux positifs                                                                                             |
+| `securite`        | `opus`   | `high`   | une faille manquée coûte cher                                                                                                         |
+| `qualite`         | `opus`   | `medium` | pilotage AQL, indicateurs, feu vert de production                                                                                     |
+| `aql-tests`       | `sonnet` | `high`   | analyse méthodique de l'adéquation des tests                                                                                          |
+| `aql-revues`      | `opus`   | `medium` | inspections et audits : jugement contre les sources                                                                                   |
+| `aql-ia`          | `opus`   | `medium` | sécurité des artefacts générés par l'IA                                                                                               |
+| `nommage`         | `sonnet` | `medium` | application de règles écrites, recherche de cohérence                                                                                 |
 | `versions`        | `sonnet` | `medium` | lecture de changelogs, verdict sur les mises à jour de dépendances, préparation de release (plancher `opus` si sécurité / production) |
-| `stratege`        | `opus`   | `medium` | SWOT, coût / valeur : jugement et hypothèses     |
+| `stratege`        | `opus`   | `medium` | SWOT, coût / valeur : jugement et hypothèses                                                                                          |
 
 ## Barème par type de tâche (surcharge à l'appel)
 
-| Tâche                                                              | Modèle   | Effort   |
-|--------------------------------------------------------------------|----------|----------|
-| Explorer, chercher, lister, résumer des logs (agent `Explore` ou autre) | `haiku`  | `low`    |
-| Mécanique : renommage, ligne de CHANGELOG, reformatage, copie de fichiers | `haiku`  | `medium` |
-| Documentation                                                      | `sonnet` | `low`    |
-| Planification en issues, point d'avancement (`/planifier`, `/point-projet`) | `sonnet` | `medium` |
-| Diagnostic de CI GitHub Actions (`gh run view --log-failed`)       | `sonnet` | `medium` |
-| Tests (phase rouge) et code minimal (phase verte) selon un plan validé | `sonnet` | `medium`/`high` |
-| Workflow CI, `docker-compose.dev.yml`, migration Prisma non destructive | `sonnet` | `high`   |
-| Plan d'une fonctionnalité, d'un module, d'un composant             | `opus`   | `high`   |
-| Revue de diff (gros diff ou zone sensible : `high`)                | `opus`   | `medium` |
-| Sécurité, secrets, RGPD, données personnelles                      | `opus`   | `high`   |
-| Audit qualité (`/qualite`) ; feu vert de mise en production : effort `high` | `opus` | `medium` |
-| Inspection formelle d'un artefact critique (`/inspection`)          | `opus`   | `high`   |
-| SWOT, plus / moins, coût / valeur (`/priorites`) | `opus` | `medium` |
-| Changement touchant la production réelle (données réelles, stockage Garage, accès, migration Prisma destructive, `prisma migrate deploy`) | `opus` | `high` |
-| Incident de production                                             | `opus`   | `high`   |
-| Décision d'architecture transverse et difficile à défaire, ou problème toujours non résolu après `opus` `xhigh` | `fable` | `high` |
+| Tâche                                                                                                                                     | Modèle   | Effort          |
+| ----------------------------------------------------------------------------------------------------------------------------------------- | -------- | --------------- |
+| Explorer, chercher, lister, résumer des logs (agent `Explore` ou autre)                                                                   | `haiku`  | `low`           |
+| Mécanique : renommage, ligne de CHANGELOG, reformatage, copie de fichiers                                                                 | `haiku`  | `medium`        |
+| Documentation                                                                                                                             | `sonnet` | `low`           |
+| Planification en issues, point d'avancement (`/planifier`, `/point-projet`)                                                               | `sonnet` | `medium`        |
+| Diagnostic de CI GitHub Actions (`gh run view --log-failed`)                                                                              | `sonnet` | `medium`        |
+| Tests (phase rouge) et code minimal (phase verte) selon un plan validé                                                                    | `sonnet` | `medium`/`high` |
+| Workflow CI, `docker-compose.dev.yml`, migration Prisma non destructive                                                                   | `sonnet` | `high`          |
+| Plan d'une fonctionnalité, d'un module, d'un composant                                                                                    | `opus`   | `high`          |
+| Revue de diff (gros diff ou zone sensible : `high`)                                                                                       | `opus`   | `medium`        |
+| Sécurité, secrets, RGPD, données personnelles                                                                                             | `opus`   | `high`          |
+| Audit qualité (`/qualite`) ; feu vert de mise en production : effort `high`                                                               | `opus`   | `medium`        |
+| Inspection formelle d'un artefact critique (`/inspection`)                                                                                | `opus`   | `high`          |
+| SWOT, plus / moins, coût / valeur (`/priorites`)                                                                                          | `opus`   | `medium`        |
+| Changement touchant la production réelle (données réelles, stockage Garage, accès, migration Prisma destructive, `prisma migrate deploy`) | `opus`   | `high`          |
+| Incident de production                                                                                                                    | `opus`   | `high`          |
+| Décision d'architecture transverse et difficile à défaire, ou problème toujours non résolu après `opus` `xhigh`                           | `fable`  | `high`          |
 
 ## Règles
 

@@ -13,6 +13,7 @@ qui en révèlent.
 ## Techniques à appliquer
 
 **Boîte noire (à partir du comportement attendu)**
+
 - Classes d'équivalence : une valeur par classe valide et par classe invalide (ex. un pourcentage
   borné 50–90 → en dessous, dedans, au-dessus, et le type invalide ; schémas zod de
   `packages/shared`).
@@ -23,6 +24,7 @@ qui en révèlent.
   module ; propriétaire du bot × administrateur de serveur × accès délégué).
 
 **Boîte blanche (à partir de la structure)**
+
 - **Complexité cyclomatique** V(G) = arêtes − nœuds + 2 (= décisions binaires + 1) : nombre de
   chemins de base, donc borne du nombre de tests pour couvrir toutes les branches. Fonction au-delà
   de 10 → la signaler (à découper : difficile à tester et à maintenir).
@@ -38,6 +40,7 @@ qui en révèlent.
   avec les critères d'acceptation et les classes d'équivalence.
 
 **Mutation** (proposée, pas encore en place dans le projet)
+
 - Stryker-JS avec le runner vitest sur le code concerné : un mutant qui survit = un comportement
   que les tests ne protègent pas. Score de mutation et liste des survivants ; mutants équivalents à
   écarter en le justifiant. Coûteux : cibler les modules d'intégrité élevée et le code nouveau

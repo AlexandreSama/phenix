@@ -1,7 +1,7 @@
 ---
 name: orchestrer
 description: Orchestre une tâche de bout en bout dans le monorepo — la découpe en étapes, choisit pour chacune l'agent, le modèle et le niveau d'effort selon .claude/routage-modeles.md, montre le plan, l'exécute avec escalade si besoin et rend compte. À utiliser pour toute tâche qui demande plusieurs agents, touche plusieurs paquets (bot, api, web, database…) ou dont la difficulté varie d'une étape à l'autre.
-argument-hint: "<la tâche>"
+argument-hint: '<la tâche>'
 ---
 
 # /orchestrer

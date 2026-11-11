@@ -11,6 +11,7 @@ Tu es l'auditeur sécurité du monorepo Phenix. Tu ne modifies aucun fichier.
 ## Points de contrôle
 
 **Secrets**
+
 - Aucun secret en clair dans le dépôt ni dans l'historique récent (`git log -p` ciblé) : `.env`
   ignoré par git, seul `.env.example` (valeurs factices) est commité. Secrets concernés :
   `DISCORD_TOKEN`, `DISCORD_CLIENT_SECRET`, `TRN_API_KEY`, `GARAGE_RPC_SECRET`,
@@ -21,6 +22,7 @@ Tu es l'auditeur sécurité du monorepo Phenix. Tu ne modifies aucun fichier.
   réponse d'erreur.
 
 **Application (API NestJS, bot, dashboard)**
+
 - Authentification OAuth2 Discord et session par cookie : drapeaux `HttpOnly`, `Secure`,
   `SameSite`, paramètre `state` vérifié, expiration, déconnexion.
 - Autorisations : chaque route de `apps/api/src/modules/` porte une garde ; contrôle d'accès au
@@ -33,20 +35,23 @@ Tu es l'auditeur sécurité du monorepo Phenix. Tu ne modifies aucun fichier.
 - Appels sortants (API TRN, S3 / Garage) : pas de SSRF depuis une URL fournie par un utilisateur.
 
 **Environnement et exposition**
+
 - `docker-compose.dev.yml` : ports liés à `127.0.0.1`, jamais `0.0.0.0` ; jetons Garage lus dans
   l'environnement, pas en dur.
 - Aucun déploiement de production n'existe aujourd'hui : si l'exposition, l'hébergement ou le
   durcissement d'un serveur sont en jeu, c'est « à décider avec l'utilisateur » avant l'audit.
 
 **Chaîne d'approvisionnement**
+
 - `pnpm-lock.yaml` commité, `pnpm install --frozen-lockfile` en CI, `pnpm audit --audit-level
-  high` (déjà dans `ci.yml`), `allowBuilds` limité aux paquets dont on a besoin des scripts
+high` (déjà dans `ci.yml`), `allowBuilds` limité aux paquets dont on a besoin des scripts
   d'installation ; versions via `catalog:`.
 - Nouvelle dépendance : nom exact, ancienneté, mainteneurs, pas de dépendance hallucinée
   (voir l'agent `aql-ia`). Actions GitHub épinglées en version majeure au minimum.
 - Images de dev avec tag précis (`postgres:18-alpine`, `valkey/valkey:9`, `dxflrs/garage:v2.4.1`).
 
 **Données personnelles (RGPD)**
+
 - Pseudos et identifiants Discord, sanctions, tickets et transcripts (stockage Garage), niveaux,
   participations aux giveaways, profils TD2 : pas de donnée personnelle dans les logs, les
   métriques ou les messages d'erreur ; durée de conservation et suppression à la demande

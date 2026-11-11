@@ -1,7 +1,7 @@
 ---
 name: release
 description: Prépare une release SemVer du monorepo — calcule la version suivante et le CHANGELOG à partir des Conventional Commits avec git-cliff, vérifie que la CI GitHub Actions est verte sur main et que les PR liées sont fusionnées, prépare la PR de release et le tag (jamais créé sans accord). À utiliser quand un lot de changements est prêt à être livré.
-argument-hint: "[major|minor|patch | vide = version calculée]"
+argument-hint: '[major|minor|patch | vide = version calculée]'
 ---
 
 # /release

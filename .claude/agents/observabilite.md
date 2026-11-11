@@ -16,22 +16,22 @@ ci-dessous est « proposé, pas encore en place » et ne se décide qu'avec l'ut
 
 ## Où vit quoi
 
-| Emplacement | Ce que tu y touches |
-|-------------|---------------------|
-| `packages/metrics` | battement de cœur, mesure du processus (`live.ts`, `process-meter.ts`), leurs tests |
-| `apps/bot/src/modules/metrics` | collecte et traitement des relevés (processor) |
-| `apps/api` | exposition des relevés au dashboard (module `admin`), jamais publique |
-| `apps/web` | page « Métriques » |
-| `apps/*` (modules métier) | compteurs d'actions agrégés (commandes, tickets, giveaways…) |
+| Emplacement                    | Ce que tu y touches                                                                 |
+| ------------------------------ | ----------------------------------------------------------------------------------- |
+| `packages/metrics`             | battement de cœur, mesure du processus (`live.ts`, `process-meter.ts`), leurs tests |
+| `apps/bot/src/modules/metrics` | collecte et traitement des relevés (processor)                                      |
+| `apps/api`                     | exposition des relevés au dashboard (module `admin`), jamais publique               |
+| `apps/web`                     | page « Métriques »                                                                  |
+| `apps/*` (modules métier)      | compteurs d'actions agrégés (commandes, tickets, giveaways…)                        |
 
 Avant de modifier, lis `CLAUDE.md` : ses règles priment.
 
 ## Règles
 
 - **Deux niveaux** :
-  - *techniques* : CPU, RAM, disque, retard de boucle, redémarrages, latences, erreurs,
+  - _techniques_ : CPU, RAM, disque, retard de boucle, redémarrages, latences, erreurs,
     volume des buckets Garage, mémoire Valkey, état de la base ;
-  - *métier* : totaux par module et par action (commandes, traitements, refus…), détail par
+  - _métier_ : totaux par module et par action (commandes, traitements, refus…), détail par
     jour **agrégé**, en base.
 - **Cardinalité bornée** : nom de module, de commande, d'action, résultat. **Jamais**
   d'identifiant ni de pseudo Discord (RGPD et explosion des séries).
@@ -46,8 +46,8 @@ Avant de modifier, lis `CLAUDE.md` : ses règles priment.
 
 ## Quoi mesurer
 
-- **Services** (bot, API) — méthode **RED** : débit (*Rate*), erreurs (*Errors*), durée
-  (*Duration*, en histogramme) ; trois des quatre **signaux clés** du SRE de Google (latence,
+- **Services** (bot, API) — méthode **RED** : débit (_Rate_), erreurs (_Errors_), durée
+  (_Duration_, en histogramme) ; trois des quatre **signaux clés** du SRE de Google (latence,
   trafic, erreurs, **saturation**).
 - **Ressources** (processus, PostgreSQL, Valkey, Garage) — méthode **USE** : utilisation,
   saturation, erreurs.
@@ -55,10 +55,10 @@ Avant de modifier, lis `CLAUDE.md` : ses règles priment.
 
 ## Objectifs de service (SLO) — à décider avec l'équipe (valeurs d'exemple)
 
-| Service | Indicateur (SLI) = bons événements ÷ total | Objectif sur 4 semaines glissantes | Budget d'erreur |
-|---|---|---|---|
-| Bot | commandes traitées sans erreur ; connecté à Discord | **99,5 %** | ≈ 3 h 22 par 4 semaines |
-| API / dashboard | requêtes HTTP non 5xx et servies en moins de 1 s (p95) | **99 %** | ≈ 6 h 43 par 4 semaines |
+| Service         | Indicateur (SLI) = bons événements ÷ total             | Objectif sur 4 semaines glissantes | Budget d'erreur         |
+| --------------- | ------------------------------------------------------ | ---------------------------------- | ----------------------- |
+| Bot             | commandes traitées sans erreur ; connecté à Discord    | **99,5 %**                         | ≈ 3 h 22 par 4 semaines |
+| API / dashboard | requêtes HTTP non 5xx et servies en moins de 1 s (p95) | **99 %**                           | ≈ 6 h 43 par 4 semaines |
 
 - SLI mesuré au plus près de l'utilisateur possible (l'API pour le dashboard, les compteurs du bot).
 - **Politique de budget d'erreur** (à écrire, par exemple `docs/exploitation/slo.md`, document
@@ -73,14 +73,15 @@ Si l'utilisateur décide de mettre en place une alerte :
 - **Alertes sur les SLO par taux de consommation du budget, sur deux fenêtres** (une longue et
   une courte, la courte valant 1/12 de la longue) :
 
-  | Sévérité | Fenêtre longue | Fenêtre courte | Taux de consommation | Budget consommé |
-  |---|---|---|---|---|
-  | `critical` (prévenir tout de suite) | 1 h | 5 min | 13,4 | 2 % |
-  | `critical` | 6 h | 30 min | 5,6 | 5 % |
-  | `warning` (traiter dans la journée) | 3 jours | 6 h | 1 | ≈ 10,7 % |
+  | Sévérité                            | Fenêtre longue | Fenêtre courte | Taux de consommation | Budget consommé |
+  | ----------------------------------- | -------------- | -------------- | -------------------- | --------------- |
+  | `critical` (prévenir tout de suite) | 1 h            | 5 min          | 13,4                 | 2 %             |
+  | `critical`                          | 6 h            | 30 min         | 5,6                  | 5 %             |
+  | `warning` (traiter dans la journée) | 3 jours        | 6 h            | 1                    | ≈ 10,7 %        |
 
   (Valeurs recalculées pour 28 jours ; les 14,4 / 6 / 1 du SRE Workbook sont pour 30 jours. Un
   taux inférieur à 1 ne se déclenche jamais.)
+
 - **Alertes de cause**, en complément : bot hors ligne (clé de battement expirée), API injoignable,
   disque > 85 % (`warning`) et > 95 % (`critical`), base ou Valkey injoignable, bucket Garage
   presque plein, pic anormal d'actions sensibles.

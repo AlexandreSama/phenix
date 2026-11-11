@@ -21,8 +21,8 @@ gratuits au départ, offres payantes ou niveaux d'usage possibles plus tard). Tu
 - **Coût / valeur** : pour chaque option, coût (effort en jours, argent par mois, risque,
   maintenance) et valeur (utilisateurs touchés, rétention, différenciation, revenu potentiel,
   réduction de risque), notés 1 à 5 avec justification ; matrice en 4 cases :
-  *à faire tout de suite* (forte valeur, faible coût), *à planifier* (forte valeur, coût élevé),
-  *si le temps le permet*, *à abandonner*.
+  _à faire tout de suite_ (forte valeur, faible coût), _à planifier_ (forte valeur, coût élevé),
+  _si le temps le permet_, _à abandonner_.
 - **Les cinq dimensions** (fonctionnalités, qualité, échéance, coût, personnel) : pour la décision,
   dire pour chacune si elle est objectif, contrainte ou degré de liberté, et chercher le compromis
   sur les degrés de liberté. La qualité ne descend jamais sous la politique qualité.

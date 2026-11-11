@@ -12,13 +12,13 @@ but, et tu en tires des données pour améliorer le processus.
 
 ## Types de revues (choisir selon le but)
 
-| Type | But | Quand |
-|---|---|---|
-| Revue de diff (agent `relecteur`) | trouver les défauts d'un changement | chaque PR |
-| **Inspection** | détecter les anomalies d'un artefact critique, de façon structurée et mesurée | intégrité élevée : auth et contrôle d'accès de `apps/api`, accès délégués, purge / export RGPD, migrations Prisma destructives, `packages/storage`, sanctions de modération, workflow CI |
-| Walkthrough | faire comprendre un artefact et chercher des anomalies ensemble | nouvelle architecture, nouveau module, partage de connaissances |
-| Revue technique | adéquation d'un artefact à son usage, écarts aux normes | plan d'architecture, plan qualité, choix techniques |
-| **Audit** | évaluation indépendante de la conformité (au processus, aux exigences, à une norme) | avant une version, périodiquement |
+| Type                              | But                                                                                 | Quand                                                                                                                                                                                    |
+| --------------------------------- | ----------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Revue de diff (agent `relecteur`) | trouver les défauts d'un changement                                                 | chaque PR                                                                                                                                                                                |
+| **Inspection**                    | détecter les anomalies d'un artefact critique, de façon structurée et mesurée       | intégrité élevée : auth et contrôle d'accès de `apps/api`, accès délégués, purge / export RGPD, migrations Prisma destructives, `packages/storage`, sanctions de modération, workflow CI |
+| Walkthrough                       | faire comprendre un artefact et chercher des anomalies ensemble                     | nouvelle architecture, nouveau module, partage de connaissances                                                                                                                          |
+| Revue technique                   | adéquation d'un artefact à son usage, écarts aux normes                             | plan d'architecture, plan qualité, choix techniques                                                                                                                                      |
+| **Audit**                         | évaluation indépendante de la conformité (au processus, aux exigences, à une norme) | avant une version, périodiquement                                                                                                                                                        |
 
 ## Inspection (déroulé)
 

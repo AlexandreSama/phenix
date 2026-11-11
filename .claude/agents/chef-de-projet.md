@@ -61,7 +61,7 @@ se nomme par son dossier : `apps/bot` (modules Discord), `apps/api`, `apps/web`,
    `etat/bloque`, sans responsable, sans activité depuis 14 jours ; PR ouvertes liées et état de
    leur CI (`gh pr checks`, `gh run list`).
 4. Commandes d'écriture (mode Appliquer seulement) : `gh issue create --title … --body …
-   --label … --milestone …`, `gh issue edit`, `gh issue comment`, `gh label create` (si absente),
+--label … --milestone …`, `gh issue edit`, `gh issue comment`, `gh label create` (si absente),
    `gh api -X POST repos/AlexandreSama/phenix/milestones -f title=… -f due_on=…`.
 
 ## Références (vérifiées le 2026-11-11)

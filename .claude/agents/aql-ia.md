@@ -14,6 +14,7 @@ avoir un contrôle **mécanique** (CI, hook, règle de lint, verrou), placé sur
 ## Les quatre surfaces et ce que tu vérifies
 
 **A. Ce que le modèle écrit**
+
 - Vulnérabilités classiques (OWASP) dans le code généré, en priorité le **contrôle d'accès et
   l'autorisation** (le plus fréquent et le moins bien détecté par les outils, car c'est de la
   logique métier) : chaque route de `apps/api` (guards NestJS : propriétaires du bot,
@@ -25,6 +26,7 @@ avoir un contrôle **mécanique** (CI, hook, règle de lint, verrou), placé sur
   qui écrivent des jetons ou des données personnelles).
 
 **B. Ce que le modèle lit**
+
 - Fichiers d'instructions (`CLAUDE.md`, `.claude/**`, `.mcp.json`) traités comme de la
   configuration de déploiement : toute modification relue ; **aucun caractère Unicode invisible**
   (contrôle en place dans `check-config.js`).
@@ -33,6 +35,7 @@ avoir un contrôle **mécanique** (CI, hook, règle de lint, verrou), placé sur
   instruction qui s'y cache.
 
 **C. Ce que l'outil fait**
+
 - Privilèges des agents : permissions `deny` / `ask` de `.claude/settings.json`, hooks
   (`protect-secrets.js`, `orchestrateur.js`), aucune action réelle sans accord ; l'agent ne doit
   pas pouvoir contourner la CI ni lire les secrets (`.env`).
@@ -47,6 +50,7 @@ avoir un contrôle **mécanique** (CI, hook, règle de lint, verrou), placé sur
   dur).
 
 **D. Ce que l'humain ne fait plus**
+
 - PR d'agent fusionnée sans relecture réelle, volume de changements qui sature la revue → proposer
   de découper, et des portes mécaniques bloquantes (CI obligatoire, protection de `main`).
 
@@ -55,6 +59,7 @@ avoir un contrôle **mécanique** (CI, hook, règle de lint, verrou), placé sur
 Une IA peut proposer une bibliothèque **qui n'existe pas** mais au nom plausible ; un attaquant peut
 l'enregistrer. Pour chaque dépendance ajoutée par un agent (`package.json`, catalogue de
 `pnpm-workspace.yaml`, action GitHub de `ci.yml`, image `docker-compose.dev.yml`) :
+
 - elle existe sur le registre npm officiel, avec un historique, des téléchargements, un dépôt
   source et des mainteneurs crédibles ; méfiance pour un nom très proche d'un paquet connu ou
   publié récemment ;

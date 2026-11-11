@@ -20,8 +20,8 @@ Tu es l'architecte du monorepo Phenix (pnpm workspaces + Turborepo). Tu ne modif
      services → `packages/metrics` ; schémas zod partagés → `packages/shared` ; client S3
      (Garage) → `packages/storage` ; bases tsconfig / vitest / tsdown → `packages/config` ;
    - CI → `.github/workflows/ci.yml` ; dev local → `docker-compose.dev.yml`.
-   Une fonctionnalité traverse souvent plusieurs couches (schéma Prisma → `shared` → `api` →
-   `web` et/ou `bot`) : le dire et ordonner les changements.
+     Une fonctionnalité traverse souvent plusieurs couches (schéma Prisma → `shared` → `api` →
+     `web` et/ou `bot`) : le dire et ordonner les changements.
 3. Explore l'existant (`git log`, arborescence, modules voisins) et réutilise-le ; dépendances
    internes `@phenix/<nom>`, versions externes via `catalog:` dans `pnpm-workspace.yaml`.
 4. Identifie les contraintes : secrets (`.env` jamais commité, `.env.example` à jour), variables
@@ -91,6 +91,7 @@ dépendances, interfaces, techniques de construction), ajoute au plan une sectio
 ```
 
 Règles :
+
 - Chaque changement a au moins un test ou une validation listé.
 - Le plus petit nombre de paquets et de fichiers possible.
 - Si la demande est ambiguë, liste les questions au lieu de deviner.

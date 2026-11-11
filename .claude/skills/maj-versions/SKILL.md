@@ -1,7 +1,7 @@
 ---
 name: maj-versions
 description: Traite les mises à jour de dépendances du monorepo pnpm — `pnpm outdated -r`, `pnpm audit`, catalogue de `pnpm-workspace.yaml`, images de `docker-compose.dev.yml`, actions GitHub de la CI, et PR de Dependabot / Renovate si l'un est activé — lit les changelogs, vérifie compatibilité et sécurité, et dit quoi monter, quoi reporter, par l'agent versions. À utiliser en début de semaine, quand `pnpm audit` signale une faille, ou avant une release.
-argument-hint: "[paquet @phenix/… | dépendance | vide = tout le monorepo]"
+argument-hint: '[paquet @phenix/… | dépendance | vide = tout le monorepo]'
 ---
 
 # /maj-versions
@@ -21,7 +21,7 @@ verdict écrit et les actions à faire sont listées.
    - images de `docker-compose.dev.yml` (`postgres`, `valkey`, `garage`) et actions de
      `.github/workflows/ci.yml` ; `packageManager` du `package.json` racine et `engines.node` ;
    - si Dependabot ou Renovate est activé : `gh pr list --label dependencies`.
-   Note ce qui est majeur, ce qui corrige une faille, ce qui casse la CI.
+     Note ce qui est majeur, ce qui corrige une faille, ce qui casse la CI.
 2. **Analyse** — agent `versions` (`sonnet`, `medium`) pour chaque mise à jour : changelog,
    ruptures, avis de sécurité, compatibilité entre paquets (ex. NestJS et ses modules,
    discord.js et `discord-api-types`, Prisma client / adapter / CLI au même niveau, React et

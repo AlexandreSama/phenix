@@ -1,7 +1,7 @@
 ---
 name: inspection
 description: Inspection formelle d'un artefact d'intégrité élevée (authentification OAuth2 Discord et sessions, contrôle d'accès propriétaires / administrateurs / accès délégués, export ou purge de données personnelles, migration Prisma destructive, stockage des transcripts et preuves, workflow CI) par l'agent aql-revues — planification, examen contre les sources et une liste de vérification, reprise, suivi et mesures. Plus rigoureuse qu'une simple revue de diff. À utiliser sur tout changement critique avant sa PR.
-argument-hint: "<fichier(s), paquet ou n° de PR à inspecter>"
+argument-hint: '<fichier(s), paquet ou n° de PR à inspecter>'
 ---
 
 # /inspection

@@ -8,17 +8,17 @@ Ce dossier est **un seul dépôt git** : le monorepo `phenix` (dépôt GitHub
 
 ## Carte du monorepo
 
-| Dossier              | Rôle                                                       |
-|----------------------|------------------------------------------------------------|
-| `apps/bot`           | Bot Discord (`@phenix/bot`)                                |
-| `apps/api`           | API (`@phenix/api`)                                        |
-| `apps/web`           | Interface web (`@phenix/web`)                              |
-| `packages/config`    | Lecture et validation de la configuration (zod)            |
-| `packages/database`  | Schéma, migrations et client Prisma (PostgreSQL)           |
-| `packages/jobs`      | Tâches asynchrones (BullMQ, Redis)                         |
-| `packages/metrics`   | Métriques                                                  |
-| `packages/shared`    | Code partagé                                               |
-| `packages/storage`   | Stockage de fichiers                                       |
+| Dossier             | Rôle                                             |
+| ------------------- | ------------------------------------------------ |
+| `apps/bot`          | Bot Discord (`@phenix/bot`)                      |
+| `apps/api`          | API (`@phenix/api`)                              |
+| `apps/web`          | Interface web (`@phenix/web`)                    |
+| `packages/config`   | Lecture et validation de la configuration (zod)  |
+| `packages/database` | Schéma, migrations et client Prisma (PostgreSQL) |
+| `packages/jobs`     | Tâches asynchrones (BullMQ, Redis)               |
+| `packages/metrics`  | Métriques                                        |
+| `packages/shared`   | Code partagé                                     |
+| `packages/storage`  | Stockage de fichiers                             |
 
 Commandes : `pnpm lint` (oxlint), `pnpm format:check` (prettier), `pnpm typecheck`,
 `pnpm test`, `pnpm test:integration` (Testcontainers, Docker requis), `pnpm build`.
@@ -99,30 +99,30 @@ Les fichiers de `.claude/` partent du harness https://gitlab.com/TedBarbier/harn
 adaptés à ce monorepo (GitHub, pnpm, TypeScript) : ce qui reste générique peut être remonté
 dans le harness.
 
-| Agent        | Rôle                                                                      | Écrit ?            |
-|--------------|---------------------------------------------------------------------------|--------------------|
-| `architecte` | Plan d'un changement : quels paquets (bot, api, web, database…), dans quel ordre, tests d'abord | Non |
-| `devops`     | CI GitHub Actions, pnpm / Turborepo, `docker-compose.dev.yml`, variables d'environnement | CI, outillage |
-| `securite`   | Audit : secrets, OAuth2 Discord et sessions, contrôle d'accès de l'API, données personnelles, chaîne d'approvisionnement npm | Non |
-| `relecteur`  | Relit les diffs et les PR                                                 | Non                |
-| `observabilite` | Battement de cœur et page « Métriques », logs pino, métriques métier   | Métriques          |
-| `chef-de-projet` | Planification et suivi dans les issues GitHub (jalons, étiquettes)    | Issues (après accord) |
-| `qualite` | Responsable AQL : plan qualité, exigences mesurables, indicateurs, actions correctives, risques, feu vert de production | Rien |
-| `aql-tests` | AQL : adéquation des tests (frontières, McCabe, MC/DC, flot de données, mutation) | Rien |
-| `aql-revues` | AQL : inspections, audits de configuration et de processus, rétrospectives | Rien |
-| `aql-ia` | AQL : sécurité des artefacts générés par l'IA, dépendances hallucinées, outillage IA | Rien |
-| `nommage` | Conventions de nommage, cohérence entre bot, API, web et base, glossaire | Glossaire |
-| `versions` | Mises à jour de dépendances pnpm (catalogue, `pnpm outdated`, `pnpm audit`) et releases SemVer : changelogs, compatibilité, verdict | Montées de version, CHANGELOG (après accord) |
-| `stratege` | SWOT, plus / moins, coût / valeur, ordre de priorité | Rien |
+| Agent            | Rôle                                                                                                                                | Écrit ?                                      |
+| ---------------- | ----------------------------------------------------------------------------------------------------------------------------------- | -------------------------------------------- |
+| `architecte`     | Plan d'un changement : quels paquets (bot, api, web, database…), dans quel ordre, tests d'abord                                     | Non                                          |
+| `devops`         | CI GitHub Actions, pnpm / Turborepo, `docker-compose.dev.yml`, variables d'environnement                                            | CI, outillage                                |
+| `securite`       | Audit : secrets, OAuth2 Discord et sessions, contrôle d'accès de l'API, données personnelles, chaîne d'approvisionnement npm        | Non                                          |
+| `relecteur`      | Relit les diffs et les PR                                                                                                           | Non                                          |
+| `observabilite`  | Battement de cœur et page « Métriques », logs pino, métriques métier                                                                | Métriques                                    |
+| `chef-de-projet` | Planification et suivi dans les issues GitHub (jalons, étiquettes)                                                                  | Issues (après accord)                        |
+| `qualite`        | Responsable AQL : plan qualité, exigences mesurables, indicateurs, actions correctives, risques, feu vert de production             | Rien                                         |
+| `aql-tests`      | AQL : adéquation des tests (frontières, McCabe, MC/DC, flot de données, mutation)                                                   | Rien                                         |
+| `aql-revues`     | AQL : inspections, audits de configuration et de processus, rétrospectives                                                          | Rien                                         |
+| `aql-ia`         | AQL : sécurité des artefacts générés par l'IA, dépendances hallucinées, outillage IA                                                | Rien                                         |
+| `nommage`        | Conventions de nommage, cohérence entre bot, API, web et base, glossaire                                                            | Glossaire                                    |
+| `versions`       | Mises à jour de dépendances pnpm (catalogue, `pnpm outdated`, `pnpm audit`) et releases SemVer : changelogs, compatibilité, verdict | Montées de version, CHANGELOG (après accord) |
+| `stratege`       | SWOT, plus / moins, coût / valeur, ordre de priorité                                                                                | Rien                                         |
 
-| Skill            | Quand l'utiliser                                                           |
-|------------------|----------------------------------------------------------------------------|
-| `/orchestrer`    | Tâche à plusieurs étapes : découpe, choix agent + modèle + effort, exécution, compte rendu |
-| `/planifier` | Objectif → issues GitHub, jalon, étiquettes, dépendances (après accord) |
-| `/point-projet` | Point d'avancement : jalons, PR, CI, retards, blocages, prochaines actions |
-| `/qualite` | Audit qualité, ou feu vert / rouge avant une mise en production |
-| `/inspection` | Inspection formelle d'un artefact critique avant sa PR |
-| `/priorites` | SWOT, plus / moins, coût / valeur pour décider quoi faire |
-| `/maj-versions` | Mises à jour de dépendances pnpm, images de dev, actions CI : changelogs, verdict, ordre |
-| `/release` | Préparer une release SemVer du monorepo : version et CHANGELOG (git-cliff), PR de release, tag après accord |
-| `/nouveau-paquet` | Ajouter une app (`apps/`) ou une bibliothèque `@phenix/*` (`packages/`) sur le modèle existant |
+| Skill             | Quand l'utiliser                                                                                            |
+| ----------------- | ----------------------------------------------------------------------------------------------------------- |
+| `/orchestrer`     | Tâche à plusieurs étapes : découpe, choix agent + modèle + effort, exécution, compte rendu                  |
+| `/planifier`      | Objectif → issues GitHub, jalon, étiquettes, dépendances (après accord)                                     |
+| `/point-projet`   | Point d'avancement : jalons, PR, CI, retards, blocages, prochaines actions                                  |
+| `/qualite`        | Audit qualité, ou feu vert / rouge avant une mise en production                                             |
+| `/inspection`     | Inspection formelle d'un artefact critique avant sa PR                                                      |
+| `/priorites`      | SWOT, plus / moins, coût / valeur pour décider quoi faire                                                   |
+| `/maj-versions`   | Mises à jour de dépendances pnpm, images de dev, actions CI : changelogs, verdict, ordre                    |
+| `/release`        | Préparer une release SemVer du monorepo : version et CHANGELOG (git-cliff), PR de release, tag après accord |
+| `/nouveau-paquet` | Ajouter une app (`apps/`) ou une bibliothèque `@phenix/*` (`packages/`) sur le modèle existant              |

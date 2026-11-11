@@ -1,7 +1,7 @@
 ---
 name: qualite
 description: Audit d'assurance qualité logicielle du monorepo (ou d'un paquet), ou feu vert / rouge avant une mise en production — l'agent qualite pilote, avec aql-tests (adéquation des tests vitest, couverture, mutation), aql-revues (audits de configuration et de processus sur les PR) et aql-ia (sécurité des artefacts générés par l'IA, dépendances hallucinées). À utiliser périodiquement, avant une version, ou après un bug revenu ou un incident.
-argument-hint: "[audit <paquet|tout> | prod <version ou branche>]"
+argument-hint: '[audit <paquet|tout> | prod <version ou branche>]'
 ---
 
 # /qualite

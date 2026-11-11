@@ -1,7 +1,7 @@
 ---
 name: nouveau-paquet
 description: Ajoute un paquet au monorepo pnpm — une app dans `apps/` ou une bibliothèque `@phenix/<nom>` dans `packages/` — sur le modèle des paquets existants (tsconfig, tsdown, vitest, scripts turbo), test d'abord, puis vérifie que lint, typecheck, test et build passent. À utiliser quand l'utilisateur veut créer une nouvelle app ou un nouveau paquet partagé.
-argument-hint: "<nom> [app|package] [rôle en une phrase]"
+argument-hint: '<nom> [app|package] [rôle en une phrase]'
 ---
 
 # /nouveau-paquet

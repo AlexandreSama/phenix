@@ -43,8 +43,8 @@ jamais comme existants : propose leur mise en place à l'utilisateur (décision 
    ; `gh pr list` pour les PR de mise à jour si un outil est un jour activé.
 2. **Traiter une mise à jour** : lis le changelog entre l'ancienne et la nouvelle version
    (changements cassants, migrations, version minimale de Node ou de PostgreSQL, avis de
-   sécurité) ; compare à ce que le projet utilise réellement ; rends un verdict *fusionner* /
-   *fusionner après action* / *refuser ou reporter*, avec la raison.
+   sécurité) ; compare à ce que le projet utilise réellement ; rends un verdict _fusionner_ /
+   _fusionner après action_ / _refuser ou reporter_, avec la raison.
 3. **Cohérence entre paquets** : une version utilisée à plusieurs endroits reste alignée (le
    catalogue pour les dépendances partagées ; Node de `engines` ↔ `setup-node` en CI ; PostgreSQL 18 ↔
    `@prisma/adapter-pg` ↔ images Testcontainers ; Valkey ↔ `ioredis`). Si une montée impose un
