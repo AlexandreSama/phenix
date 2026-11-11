@@ -1,4 +1,5 @@
 import type { Td2Directive, Td2EventDetails, Td2Promotion, Td2Role } from '@phenix/database';
+import { TD2_REMINDER_MS } from '@phenix/jobs';
 import {
   TD2_DIFFICULTY_LABELS,
   TD2_EVENT_KIND_LABELS,
@@ -60,12 +61,82 @@ export function eventTitle(event: TitleView): string {
   return `${KIND_ICONS[activity.kind]} ${TD2_EVENT_KIND_LABELS[activity.kind]} ${activity.name}${mode}`;
 }
 
+/** Un emoji par rôle : le même sur l'embed et sur les boutons. */
+export const ROLE_EMOJIS = {
+  DPS: '🗡️',
+  HEAL: '💉',
+  TANK: '🛡️',
+  HEAL_TANK: '⛑️',
+  PLAYER: '👥',
+} as const satisfies Record<Td2Role, string>;
+
+/** « ▰▰▰▰▰▱▱▱ » : une case par place, dix au plus. */
+export function progressBar(filled: number, total: number): string {
+  const width = Math.min(total, 10);
+  const full = total === 0 ? 0 : Math.min(width, Math.round((filled / total) * width));
+  return '▰'.repeat(full) + '▱'.repeat(width - full);
+}
+
+/** Discord refuse une valeur de champ de plus de 1024 caractères. */
+const FIELD_VALUE_LIMIT = 1024;
+
+/**
+ * Les lignes d'une valeur de champ, sans dépasser la limite de Discord : le surplus devient
+ * « … et N autres » ; `footer`, s'il y en a un, est toujours gardé en dernière ligne.
+ */
+export function fitLines(lines: string[], footer?: string): string {
+  const render = (shown: number) => {
+    const hidden = lines.length - shown;
+    return [
+      ...lines.slice(0, shown),
+      ...(hidden > 0 ? [`… et ${hidden} autre${hidden > 1 ? 's' : ''}`] : []),
+      ...(footer ? [footer] : []),
+    ].join('\n');
+  };
+  let shown = lines.length;
+  while (shown > 0 && render(shown).length > FIELD_VALUE_LIMIT) shown -= 1;
+  return render(shown);
+}
+
+const FREE_SLOT = '▫️ *libre*';
+
+/** Les joueurs d'un rôle, un par ligne, puis les places libres. */
+export const slotLines = (userIds: string[], count: number): string =>
+  [
+    ...userIds.map((id) => `<@${id}>`),
+    ...Array.from({ length: Math.max(0, count - userIds.length) }, () => FREE_SLOT),
+  ].join('\n');
+
 /** Le nom d'un rôle sur l'embed : la place unique d'une mission, c'est « l'équipe ». */
 const slotName = (role: Td2Role) => (role === 'PLAYER' ? 'Équipe' : TD2_SIGNUP_ROLE_LABELS[role]);
 
-/** Un joueur de la réserve, avec son rôle quand la sortie en a plusieurs. */
-const reserveLine = ({ userId, role }: { userId: string; role: Td2Role }) =>
-  role === 'PLAYER' ? `<@${userId}>` : `<@${userId}> (${TD2_SIGNUP_ROLE_LABELS[role]})`;
+/** Le nom de l'activité (ou de la mission), seul, pour le titre de l'embed. */
+const subjectName = (event: TitleView) =>
+  event.mode?.activity.name ?? event.missionName ?? TD2_EVENT_KIND_LABELS.MISSION;
+
+/** Le mode d'un raid, la difficulté d'une mission ; une incursion n'a ni l'un ni l'autre. */
+function subjectDetail(event: TitleView): string | null {
+  if (!event.mode) return event.difficulty ? TD2_DIFFICULTY_LABELS[event.difficulty] : null;
+  return event.mode.activity.kind === 'RAID' ? event.mode.name : null;
+}
+
+/** L'en-tête : « ⚔️ RAID · MODE NORMAL », « 🎯 MISSION · HÉROÏQUE », ou l'état s'il y en a un. */
+function eventHeader(event: TitleView, state?: string): string {
+  const kind = event.mode ? event.mode.activity.kind : 'MISSION';
+  const detail = subjectDetail(event);
+  const parts = [
+    `${KIND_ICONS[kind]} ${TD2_EVENT_KIND_LABELS[kind].toUpperCase()}`,
+    state ?? (detail && `${event.mode ? 'MODE ' : ''}${detail.toUpperCase()}`),
+  ];
+  return parts.filter(Boolean).join(' · ');
+}
+
+/** Un joueur de la réserve : sa place dans la file de son rôle, et le rôle quand il y en a plusieurs. */
+const reserveLine = (
+  event: Pick<EventView, 'signups'>,
+  { userId, role }: { userId: string; role: Td2Role },
+) =>
+  `${reservePosition(event, userId)}. <@${userId}>${role === 'PLAYER' ? '' : ` · ${TD2_SIGNUP_ROLE_LABELS[role]}`}`;
 
 const mentions = (userIds: string[]) => userIds.map((id) => `<@${id}>`).join(' ');
 const slotsInOrder = (event: Pick<EventView, 'slots'>) =>
@@ -102,41 +173,72 @@ export function td2EventMessage(
   const capacity = slots.reduce((total, slot) => total + slot.count, 0);
   const filled = slots.reduce((total, slot) => total + confirmed(slot.role).length, 0);
   const started = event.scheduledAt.getTime() <= now.getTime();
-  const when = `${time(event.scheduledAt, TimestampStyles.LongDateTime)} (${time(event.scheduledAt, TimestampStyles.RelativeTime)})`;
+  const date = time(event.scheduledAt, TimestampStyles.LongDateTime);
+  const relative = time(event.scheduledAt, TimestampStyles.RelativeTime);
+  const free = capacity - filled;
+  const places =
+    free > 0 ? `${free} place${free > 1 ? 's' : ''} libre${free > 1 ? 's' : ''}` : 'complet';
 
   const lines = event.cancelledAt
-    ? [`~~${time(event.scheduledAt, TimestampStyles.LongDateTime)}~~`, 'Sortie annulée.']
+    ? [`Prévue le ~~${date}~~`]
     : [
+        started ? `### Commencée ${relative}` : `### ${date}`,
         started
-          ? `📅 Commencée ${time(event.scheduledAt, TimestampStyles.RelativeTime)}`
-          : `📅 ${when}`,
-        `Organisée par <@${event.organizerId}>`,
-        `👥 ${filled}/${capacity} joueurs${reserve.length > 0 ? ` · ${reserve.length} en réserve` : ''}`,
-        // Les directives d'une mission : ce qui corse la partie
-        event.directives.length > 0 ? `🧩 Directives : ${event.directives.join(' · ')}` : '',
-      ].filter(Boolean);
+          ? `-# organisée par <@${event.organizerId}>`
+          : `-# ${relative} · organisée par <@${event.organizerId}>`,
+        '',
+        [
+          `\`${progressBar(filled, capacity)}\` **${filled}/${capacity}**`,
+          ...(started ? [] : [places]),
+          ...(reserve.length > 0 ? [`${reserve.length} en réserve`] : []),
+        ].join(' · '),
+      ];
 
-  const color = event.cancelledAt ? COLORS.danger : started ? COLORS.warning : COLORS.primary;
+  // La couleur dit l'état : orange ouverte, or commencée, rouge annulée
+  const color = event.cancelledAt ? COLORS.danger : started ? COLORS.soon : COLORS.primary;
+  const state = event.cancelledAt ? 'ANNULÉE' : started ? 'EN COURS' : undefined;
+  const name = subjectName(event);
+  // Le rappel n'est promis que s'il est encore à venir : le planificateur n'en envoie pas
+  // quand il reste 15 min ou moins avant le départ (packages/jobs/src/td2.ts)
+  const reminderPending =
+    !event.cancelledAt && event.scheduledAt.getTime() - now.getTime() > TD2_REMINDER_MS;
+  const reminder = reminderPending
+    ? ` · rappel ${TD2_REMINDER_MS / 60_000} min avant le départ`
+    : '';
   const embed = baseEmbed(color)
-    .setTitle(`${event.cancelledAt ? 'Annulée — ' : ''}${eventTitle(event)}`)
+    .setAuthor({ name: eventHeader(event, state) })
+    .setTitle(event.cancelledAt ? `~~${name}~~` : name)
     .setDescription(lines.join('\n'))
-    .setFooter({ text: `Sortie #${event.id}` });
+    .setFooter({ text: `Sortie #${event.id}${reminder}` })
+    .setTimestamp(event.scheduledAt);
 
   if (!event.cancelledAt) {
     embed.addFields(
       slots.map((slot) => {
         const players = confirmed(slot.role);
+        const level = players.length >= slot.count ? 'complet' : `${players.length}/${slot.count}`;
         return {
-          name: `${slotName(slot.role)} (${players.length}/${slot.count})`,
-          value: players.length > 0 ? mentions(players.map((signup) => signup.userId)) : '—',
+          name: `${ROLE_EMOJIS[slot.role]} ${slotName(slot.role)} · ${level}`,
+          value: slotLines(
+            players.map((signup) => signup.userId),
+            slot.count,
+          ),
           inline: true,
         };
       }),
     );
+    // Les directives d'une mission : ce qui corse la partie, une par ligne
+    if (event.directives.length > 0) {
+      embed.addFields({
+        name: '🧩 Directives',
+        value: event.directives.map((directive) => `• ${directive}`).join('\n'),
+        inline: true,
+      });
+    }
     if (reserve.length > 0) {
       embed.addFields({
-        name: 'Réserve',
-        value: reserve.map(reserveLine).join('\n'),
+        name: '⏳ Réserve',
+        value: fitLines(reserve.map((signup) => reserveLine(event, signup))),
       });
     }
   }
@@ -147,14 +249,17 @@ export function td2EventMessage(
   const roles = new ActionRowBuilder<ButtonBuilder>().addComponents(
     slots.map((slot) => {
       const count = confirmed(slot.role).length;
+      const full = count >= slot.count;
+      const isPlayer = slot.role === 'PLAYER';
+      const label = isPlayer ? 'Rejoindre' : TD2_SIGNUP_ROLE_LABELS[slot.role];
+      const counter = `${isPlayer ? ' · ' : ' '}${count}/${slot.count}`;
       return (
         new ButtonBuilder()
           .setCustomId(joinCustomId(event.id, slot.role))
-          .setLabel(
-            `${slot.role === 'PLAYER' ? 'Rejoindre' : TD2_SIGNUP_ROLE_LABELS[slot.role]} ${count}/${slot.count}`,
-          )
-          // Un rôle complet reste cliquable : on y entre en réserve
-          .setStyle(count < slot.count ? ButtonStyle.Primary : ButtonStyle.Secondary)
+          // Un rôle complet reste cliquable : le libellé dit qu'on y entre en réserve
+          .setLabel(`${label}${full ? ' · réserve' : counter}`)
+          .setEmoji(ROLE_EMOJIS[slot.role])
+          .setStyle(full ? ButtonStyle.Secondary : ButtonStyle.Primary)
       );
     }),
   );
@@ -162,7 +267,8 @@ export function td2EventMessage(
     new ButtonBuilder()
       .setCustomId(leaveCustomId(event.id))
       .setLabel('Se désinscrire')
-      .setStyle(ButtonStyle.Secondary),
+      .setEmoji('🚪')
+      .setStyle(ButtonStyle.Danger),
     new ButtonBuilder()
       .setCustomId(manageCustomId(event.id))
       .setLabel('Gérer')
@@ -189,16 +295,39 @@ export function reminderMessage(
   event: EventView & { messageId: string | null },
 ): MessageCreateOptions | null {
   if (event.signups.length === 0) return null;
-  const { reserve } = lineup(event);
-  const team = event.signups.filter((signup) => signup.status === 'CONFIRMED');
-  const lines = [
-    `⏰ **${eventTitle(event)}** commence ${time(event.scheduledAt, TimestampStyles.RelativeTime)} !`,
-    team.length > 0 ? `Équipe : ${mentions(team.map((signup) => signup.userId))}` : '',
-    reserve.length > 0
-      ? `Réserve, au cas où : ${mentions(reserve.map((signup) => signup.userId))}`
-      : '',
-  ].filter(Boolean);
-  return notice(lines.join('\n'), event.messageId, everyone(event));
+  const { confirmed, reserve } = lineup(event);
+  const slots = slotsInOrder(event);
+  const capacity = slots.reduce((total, slot) => total + slot.count, 0);
+  const team = slots.flatMap((slot) => confirmed(slot.role));
+  const detail = subjectDetail(event);
+
+  const embed = baseEmbed(COLORS.soon)
+    .setAuthor({ name: '⏰ RAPPEL · DÉPART IMMINENT' })
+    .setTitle(detail ? `${subjectName(event)} · ${detail}` : subjectName(event))
+    .setDescription(`### Départ ${time(event.scheduledAt, TimestampStyles.RelativeTime)}`)
+    .setFooter({ text: `Sortie #${event.id}` });
+  if (team.length > 0) {
+    embed.addFields({
+      name: `${ROLE_EMOJIS.PLAYER} Équipe · ${team.length}/${capacity}`,
+      value: team.map((signup) => `<@${signup.userId}>`).join('\n'),
+      inline: true,
+    });
+  }
+  if (reserve.length > 0) {
+    embed.addFields({
+      name: '⏳ Réserve',
+      value: fitLines(
+        reserve.map((signup) => reserveLine(event, signup)),
+        '-# Prêt à monter si une place se libère',
+      ),
+      inline: true,
+    });
+  }
+  // Un embed ne notifie personne : les mentions restent dans le contenu, en sous-texte
+  return {
+    ...notice(`-# ${mentions(everyone(event))}`, event.messageId, everyone(event)),
+    embeds: [embed],
+  };
 }
 
 /** Prévient ceux qui montent de la réserve. */
