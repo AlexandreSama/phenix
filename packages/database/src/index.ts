@@ -6,6 +6,7 @@ export * from './forum-admin.js';
 export * from './giveaways.js';
 export * from './guild-delegates.js';
 export * from './leveling.js';
+export * from './metrics.js';
 export * from './publication.js';
 export * from './role-panels.js';
 export * from './td2-catalogue-admin.js';

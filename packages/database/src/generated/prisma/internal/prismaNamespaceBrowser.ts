@@ -76,7 +76,9 @@ export const ModelName = {
   ForumCategory: 'ForumCategory',
   ForumThread: 'ForumThread',
   ForumAttachment: 'ForumAttachment',
-  ForumPost: 'ForumPost'
+  ForumPost: 'ForumPost',
+  CommandUsage: 'CommandUsage',
+  MetricSample: 'MetricSample'
 } as const
 
 export type ModelName = (typeof ModelName)[keyof typeof ModelName]
@@ -448,6 +450,27 @@ export const ForumPostScalarFieldEnum = {
 } as const
 
 export type ForumPostScalarFieldEnum = (typeof ForumPostScalarFieldEnum)[keyof typeof ForumPostScalarFieldEnum]
+
+
+export const CommandUsageScalarFieldEnum = {
+  hour: 'hour',
+  guildId: 'guildId',
+  command: 'command',
+  count: 'count',
+  errors: 'errors',
+  totalDurationMs: 'totalDurationMs'
+} as const
+
+export type CommandUsageScalarFieldEnum = (typeof CommandUsageScalarFieldEnum)[keyof typeof CommandUsageScalarFieldEnum]
+
+
+export const MetricSampleScalarFieldEnum = {
+  name: 'name',
+  takenAt: 'takenAt',
+  value: 'value'
+} as const
+
+export type MetricSampleScalarFieldEnum = (typeof MetricSampleScalarFieldEnum)[keyof typeof MetricSampleScalarFieldEnum]
 
 
 export const SortOrder = {

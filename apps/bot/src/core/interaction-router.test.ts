@@ -8,10 +8,18 @@ const logger = { error: vi.fn(), warn: vi.fn() };
 const context = { db: {}, logger } as unknown as BotContext;
 
 /** Fausse interaction de slash command, juste ce que le routeur lit. */
-function chatInput(commandName: string, state: { deferred?: boolean } = {}) {
+function chatInput(
+  commandName: string,
+  state: { deferred?: boolean; guildId?: string | null; subcommand?: string } = {},
+) {
   return {
     id: '1',
     commandName,
+    guildId: state.guildId === undefined ? '100000000000000001' : state.guildId,
+    options: {
+      getSubcommandGroup: () => null,
+      getSubcommand: () => state.subcommand ?? null,
+    },
     deferred: state.deferred ?? false,
     replied: false,
     isChatInputCommand: () => true,
@@ -105,5 +113,93 @@ describe('createInteractionHandler', () => {
 
     expect(interaction.followUp).toHaveBeenCalled();
     expect(interaction.reply).not.toHaveBeenCalled();
+  });
+
+  describe('compte des commandes', () => {
+    it('compte la commande, son serveur, sa durée et son succès', async () => {
+      const usage = { record: vi.fn() };
+      const handle = createInteractionHandler({
+        commands: new Map([['td2', command('td2', async () => {})]]),
+        components: new Map(),
+        context,
+        usage,
+      });
+
+      await handle(chatInput('td2', { subcommand: 'mission' }) as unknown as Interaction);
+
+      expect(usage.record).toHaveBeenCalledWith({
+        guildId: '100000000000000001',
+        command: 'td2 mission',
+        durationMs: expect.any(Number),
+        ok: true,
+      });
+    });
+
+    it('compte une erreur, hors serveur, et répond quand même le message d’erreur', async () => {
+      const usage = { record: vi.fn() };
+      const handle = createInteractionHandler({
+        commands: new Map([['ping', command('ping', () => Promise.reject(new Error('boom')))]]),
+        components: new Map(),
+        context,
+        usage,
+      });
+      const interaction = chatInput('ping', { guildId: null });
+
+      await handle(interaction as unknown as Interaction);
+
+      expect(usage.record).toHaveBeenCalledWith(
+        expect.objectContaining({ guildId: null, command: 'ping', ok: false }),
+      );
+      expect(interaction.reply).toHaveBeenCalledWith(
+        expect.objectContaining({ content: ERROR_MESSAGE }),
+      );
+    });
+
+    it('un compteur qui plante ne change rien pour la commande', async () => {
+      const usage = {
+        record: vi.fn(() => {
+          throw new Error('compteur cassé');
+        }),
+      };
+      const handle = createInteractionHandler({
+        commands: new Map([['ping', command('ping', async () => {})]]),
+        components: new Map(),
+        context,
+        usage,
+      });
+      const interaction = chatInput('ping');
+
+      await handle(interaction as unknown as Interaction);
+
+      expect(interaction.reply).not.toHaveBeenCalled();
+      expect(logger.warn).toHaveBeenCalledWith(
+        expect.anything(),
+        'Usage de la commande non compté',
+      );
+    });
+
+    it('ne compte ni l’autocomplétion, ni les boutons, ni une commande inconnue', async () => {
+      const usage = { record: vi.fn() };
+      const autocomplete = vi.fn();
+      const handle = createInteractionHandler({
+        commands: new Map([['td2', { ...command('td2', async () => {}), autocomplete }]]),
+        components: new Map([
+          ['giveaway:join', { prefix: 'giveaway:join', execute: vi.fn() } as ComponentHandler],
+        ]),
+        context,
+        usage,
+      });
+
+      await handle({
+        ...chatInput('td2'),
+        isChatInputCommand: () => false,
+        isAutocomplete: () => true,
+      } as unknown as Interaction);
+      await handle(button('giveaway:join:1') as unknown as Interaction);
+      await handle(chatInput('inconnue') as unknown as Interaction);
+
+      expect(autocomplete).toHaveBeenCalled();
+      expect(usage.record).not.toHaveBeenCalled();
+    });
   });
 });

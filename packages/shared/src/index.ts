@@ -4,7 +4,7 @@ export * from './constants.js';
 export * from './event-date.js';
 export * from './events.js';
 export * from './forum.js';
-export * from './heartbeat.js';
+export * from './metrics.js';
 export * from './levels.js';
 export * from './permissions.js';
 export * from './schemas/dashboard-access.js';

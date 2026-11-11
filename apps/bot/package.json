@@ -17,6 +17,7 @@
     "@phenix/shared": "workspace:*",
     "@phenix/storage": "workspace:*",
     "@phenix/jobs": "workspace:*",
+    "@phenix/metrics": "workspace:*",
     "discord.js": "^14.28.1",
     "ioredis": "^6.0.0",
     "pino": "^10.4.0",

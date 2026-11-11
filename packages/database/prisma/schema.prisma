@@ -479,3 +479,32 @@ model ForumPost {
   // Les messages d'un sujet, dans l'ordre
   @@index([threadId, createdAt])
 }
+
+// ---------- Métriques des propriétaires du bot (phase 11) ----------
+
+/// L'utilisation des commandes, heure par heure : la commande et le serveur, jamais le membre.
+model CommandUsage {
+  hour            DateTime // début de l'heure, en UTC
+  /// '' : hors serveur (message privé). Pas de clé étrangère : un serveur quitté garde son historique
+  guildId         String
+  /// Avec la sous-commande : « td2 mission »
+  command         String
+  count           Int      @default(0)
+  errors          Int      @default(0)
+  totalDurationMs Int      @default(0)
+
+  @@id([hour, guildId, command])
+  @@index([hour])
+}
+
+/// Un relevé (CPU, RAM, stockage) toutes les 5 minutes, effacé après 30 jours.
+model MetricSample {
+  /// bot.cpu, api.memory, postgres.bytes, garage.media.objects…
+  name    String
+  /// Aligné sur le créneau de 5 minutes : deux écritures du même créneau n'en font qu'une
+  takenAt DateTime
+  value   Float
+
+  @@id([name, takenAt])
+  @@index([takenAt])
+}

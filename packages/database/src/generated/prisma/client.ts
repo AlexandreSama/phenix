@@ -172,3 +172,13 @@ export type ForumAttachment = Prisma.ForumAttachmentModel
  * 
  */
 export type ForumPost = Prisma.ForumPostModel
+/**
+ * Model CommandUsage
+ * L'utilisation des commandes, heure par heure : la commande et le serveur, jamais le membre.
+ */
+export type CommandUsage = Prisma.CommandUsageModel
+/**
+ * Model MetricSample
+ * Un relevé (CPU, RAM, stockage) toutes les 5 minutes, effacé après 30 jours.
+ */
+export type MetricSample = Prisma.MetricSampleModel
