@@ -21,6 +21,8 @@ export const GIVEAWAY_REPLIES = {
   notWritable: (channelId: string) =>
     `Je ne peux pas poster dans <#${channelId}> : il me faut « Voir le salon », ` +
     '« Envoyer des messages » et « Intégrer des liens ».',
+  userCannotWrite: (channelId: string) =>
+    `Tu ne peux pas écrire dans <#${channelId}> : choisis un salon où tu as « Envoyer des messages ».`,
   unknown: (id: number) => `Aucun giveaway #${id} sur ce serveur.`,
   alreadyEnded: (id: number) => `Le giveaway #${id} est déjà terminé.`,
   notEnded: (id: number) => `Le giveaway #${id} n'est pas encore terminé.`,
@@ -59,6 +61,10 @@ async function create(interaction: ChatInputCommandInteraction<'cached'>, contex
   const me = interaction.guild.members.me;
   if (!channel?.isSendable() || !me || !channel.permissionsFor(me).has(POST_PERMISSIONS)) {
     return refuse(interaction, GIVEAWAY_REPLIES.notWritable(channel?.id ?? interaction.channelId));
+  }
+  // Le bot ne poste pas à la place de quelqu'un dans un salon où il n'a pas le droit d'écrire
+  if (!channel.permissionsFor(interaction.member).has(PermissionFlagsBits.SendMessages)) {
+    return refuse(interaction, GIVEAWAY_REPLIES.userCannotWrite(channel.id));
   }
 
   const giveaway = await createGiveaway(context.db, {
@@ -121,6 +127,7 @@ async function reroll(interaction: ChatInputCommandInteraction<'cached'>, contex
 
 export const giveaway: SlashCommand = {
   category: 'giveaways',
+  requiredPermissions: PermissionFlagsBits.ManageGuild,
   data: new SlashCommandBuilder()
     .setName('giveaway')
     .setDescription('Lance, termine ou relance un giveaway')

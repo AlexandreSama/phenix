@@ -26,8 +26,12 @@ export async function sendModLog(
   }
 }
 
-/** Embed de log pour une action sans case : /clear, /lock, /clearwarn. */
-export function actionEmbed(title: string, moderator: User, details: string): EmbedBuilder {
+/** Embed de log pour une action sans case : /clear, /lock, /clearwarn. Le modérateur : un membre, ou sa mention. */
+export function actionEmbed(
+  title: string,
+  moderator: User | string,
+  details: string,
+): EmbedBuilder {
   return baseEmbed(COLORS.primary)
     .setTitle(title)
     .setDescription(details)

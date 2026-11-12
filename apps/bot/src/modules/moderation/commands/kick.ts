@@ -6,6 +6,7 @@ import { applySanction } from '../sanction.js';
 
 export const kick: SlashCommand = {
   category: 'moderation',
+  requiredPermissions: PermissionFlagsBits.KickMembers,
   data: new SlashCommandBuilder()
     .setName('kick')
     .setDescription('Expulse un membre du serveur (il pourra revenir avec une invitation)')

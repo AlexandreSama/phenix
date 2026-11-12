@@ -6,6 +6,7 @@ import { actionEmbed, sendModLog } from '../modlog.js';
 
 export const clearwarn: SlashCommand = {
   category: 'moderation',
+  requiredPermissions: PermissionFlagsBits.ModerateMembers,
   data: new SlashCommandBuilder()
     .setName('clearwarn')
     .setDescription("Retire les avertissements d'un membre (ils restent dans l'historique)")
@@ -23,6 +24,13 @@ export const clearwarn: SlashCommand = {
     if (!interaction.inCachedGuild()) return;
     const user = interaction.options.getUser('membre', true);
     const number = interaction.options.getInteger('numéro') ?? undefined;
+    // Comme sur le site : personne ne retire ses propres avertissements
+    if (user.id === interaction.user.id) {
+      return refuse(
+        interaction,
+        'Tu ne peux pas retirer tes propres avertissements : demande à un autre modérateur.',
+      );
+    }
 
     const count = await revokeCases(context.db, {
       guildId: interaction.guildId,

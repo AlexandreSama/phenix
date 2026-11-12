@@ -12,6 +12,7 @@ import { unmute } from './commands/unmute.js';
 import { warn } from './commands/warn.js';
 
 export { startBanExpiry } from './ban-expiry.js';
+export { publishDashboardLog } from './dashboard-log.js';
 
 export const moderationCommands: SlashCommand[] = [
   warn,

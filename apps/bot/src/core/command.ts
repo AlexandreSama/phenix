@@ -14,6 +14,13 @@ export type CommandCategory =
 export interface SlashCommand {
   data: { name: string; toJSON(): RESTPostAPIChatInputApplicationCommandsJSONBody };
   category: CommandCategory;
+  /**
+   * La permission Discord que le membre doit avoir : le routeur la vérifie lui-même. Le réglage
+   * `setDefaultMemberPermissions` de la définition n'est qu'une suggestion à Discord, qu'un administrateur
+   * peut surcharger dans les réglages d'intégration du serveur ; une commande qui agit sur des personnes
+   * la déclare ici, avec la même valeur.
+   */
+  requiredPermissions?: bigint;
   execute(interaction: ChatInputCommandInteraction, context: BotContext): Promise<void>;
   autocomplete?(interaction: AutocompleteInteraction, context: BotContext): Promise<void>;
 }

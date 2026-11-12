@@ -6,6 +6,7 @@ import { applySanction } from '../sanction.js';
 
 export const unmute: SlashCommand = {
   category: 'moderation',
+  requiredPermissions: PermissionFlagsBits.ModerateMembers,
   data: new SlashCommandBuilder()
     .setName('unmute')
     .setDescription("Lève la sourdine d'un membre")
@@ -33,7 +34,6 @@ export const unmute: SlashCommand = {
         target: target.user,
         reason: interaction.options.getString('raison'),
         notify: false,
-        revokes: 'MUTE',
         act: (reason) => target.timeout(null, reason),
       },
       context,

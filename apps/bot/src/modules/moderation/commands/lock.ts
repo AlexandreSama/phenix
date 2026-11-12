@@ -11,7 +11,7 @@ import type { SlashCommand } from '../../../core/command.js';
 import type { BotContext } from '../../../core/context.js';
 import { reasonOption, refuse } from '../common.js';
 import { actionEmbed, sendModLog } from '../modlog.js';
-import { auditReason } from '../sanction.js';
+import { auditReason } from '@phenix/shared';
 
 const LOCKABLE = [ChannelType.GuildText, ChannelType.GuildAnnouncement] as const;
 
@@ -34,6 +34,11 @@ async function setLock(
   ) {
     return refuse(interaction, "Choisis un salon textuel ou un salon d'annonces.");
   }
+  // « Gérer les salons » peut être accordé salon par salon : le routeur ne contrôle que le salon où la
+  // commande est tapée, pas celui qu'on vise
+  if (!channel.permissionsFor(interaction.member).has(PermissionFlagsBits.ManageChannels)) {
+    return refuse(interaction, 'Il te manque « Gérer les salons » dans ce salon.');
+  }
   if (isLocked(channel) === lock) {
     return refuse(
       interaction,
@@ -52,7 +57,7 @@ async function setLock(
       CreatePublicThreads: value,
       CreatePrivateThreads: value,
     },
-    { reason: auditReason(interaction.user, reason) },
+    { reason: auditReason(interaction.user.username, reason) },
   );
 
   const summary = lock ? `🔒 ${channel} est verrouillé.` : `🔓 ${channel} est déverrouillé.`;
@@ -80,12 +85,14 @@ const lockData = (name: string, description: string) =>
 
 export const lockCommand: SlashCommand = {
   category: 'moderation',
+  requiredPermissions: PermissionFlagsBits.ManageChannels,
   data: lockData('lock', "Empêche les membres d'écrire dans un salon"),
   execute: (interaction, context) => setLock(interaction, context, true),
 };
 
 export const unlockCommand: SlashCommand = {
   category: 'moderation',
+  requiredPermissions: PermissionFlagsBits.ManageChannels,
   data: lockData('unlock', 'Rouvre un salon verrouillé par /lock'),
   execute: (interaction, context) => setLock(interaction, context, false),
 };

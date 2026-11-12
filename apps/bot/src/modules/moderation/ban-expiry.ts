@@ -1,4 +1,4 @@
-import { createCase, findExpiredBans, revokeCases } from '@phenix/database';
+import { findExpiredBans, liftSanction } from '@phenix/database';
 import { DiscordAPIError, RESTJSONErrorCodes, type Client } from 'discord.js';
 import type { BotContext } from '../../core/context.js';
 import { caseEmbed } from './case-format.js';
@@ -35,24 +35,29 @@ export async function liftExpiredBans(
     } catch (err) {
       if (!isUnknownBan(err)) {
         // Permission retirée, Discord indisponible… on réessaiera au prochain passage
-        logger.warn({ err, guildId: guild.id, case: ban.number }, 'Ban temporaire non levé');
+        // Le code, pas l'erreur : l'adresse d'une DiscordAPIError contient l'identifiant du banni
+        const code = err instanceof DiscordAPIError ? err.code : undefined;
+        logger.warn({ guildId: guild.id, case: ban.number, code }, 'Temporary ban not lifted');
         continue;
       }
     }
 
-    await revokeCases(
+    // Une seule transaction, la même que pour la levée depuis le site : si une autre levée est
+    // passée avant (site, /unban), rien n'est refait et aucun débannissement n'est créé en double
+    const { record } = await liftSanction(
       db,
-      { guildId: guild.id, targetId: ban.targetId, type: 'BAN', revokedById: client.user.id },
+      {
+        guildId: guild.id,
+        guildName: guild.name,
+        targetId: ban.targetId,
+        type: 'BAN',
+        actorId: client.user.id,
+        reason,
+        via: 'SCHEDULE',
+      },
       now,
     );
-    const record = await createCase(db, {
-      guildId: guild.id,
-      guildName: guild.name,
-      type: 'UNBAN',
-      targetId: ban.targetId,
-      moderatorId: client.user.id,
-      reason,
-    });
+    if (!record) continue;
     await sendModLog(guild, caseEmbed(record), context);
     lifted++;
   }

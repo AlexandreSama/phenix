@@ -5,6 +5,7 @@ import { applySanction } from '../sanction.js';
 
 export const unban: SlashCommand = {
   category: 'moderation',
+  requiredPermissions: PermissionFlagsBits.BanMembers,
   data: new SlashCommandBuilder()
     .setName('unban')
     .setDescription("Lève le bannissement d'un utilisateur")
@@ -32,7 +33,6 @@ export const unban: SlashCommand = {
         target: user,
         reason: interaction.options.getString('raison'),
         notify: false,
-        revokes: 'BAN',
         act: (reason) => interaction.guild.bans.remove(user.id, reason),
       },
       context,

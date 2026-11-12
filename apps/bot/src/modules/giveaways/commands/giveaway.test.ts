@@ -20,13 +20,23 @@ interface Options {
   strings?: Record<string, string>;
   integers?: Record<string, number>;
   writable?: boolean;
+  /** L'utilisateur peut-il écrire dans le salon ? (le bot, lui, selon `writable`) */
+  userCanWrite?: boolean;
 }
 
-function fakeInteraction({ subcommand, strings = {}, integers = {}, writable = true }: Options) {
+function fakeInteraction({
+  subcommand,
+  strings = {},
+  integers = {},
+  writable = true,
+  userCanWrite = true,
+}: Options) {
+  const me = {};
+  const member = {};
   const channel = {
     id: CHANNEL,
     isSendable: () => true,
-    permissionsFor: () => ({ has: () => writable }),
+    permissionsFor: (who: object) => ({ has: () => (who === me ? writable : userCanWrite) }),
     toString: () => `<#${CHANNEL}>`,
   };
   return {
@@ -34,7 +44,8 @@ function fakeInteraction({ subcommand, strings = {}, integers = {}, writable = t
     guildId: GUILD,
     channelId: CHANNEL,
     channel,
-    guild: { members: { me: {} } },
+    member,
+    guild: { members: { me } },
     user: { id: '200000000000000001' },
     options: {
       getSubcommand: () => subcommand,
@@ -127,6 +138,15 @@ describe('/giveaway créer', () => {
     const reply = await run(create({ lot: 'Nitro', durée: '1h' }, { writable: false }));
 
     expect(reply).toBe(GIVEAWAY_REPLIES.notWritable(CHANNEL));
+    expect(database.createGiveaway).not.toHaveBeenCalled();
+  });
+
+  it('refuse un salon où l’utilisateur lui-même ne peut pas écrire (le bot ne poste pas à sa place)', async () => {
+    const { run } = setup();
+
+    const reply = await run(create({ lot: 'Nitro', durée: '1h' }, { userCanWrite: false }));
+
+    expect(reply).toBe(GIVEAWAY_REPLIES.userCannotWrite(CHANNEL));
     expect(database.createGiveaway).not.toHaveBeenCalled();
   });
 });

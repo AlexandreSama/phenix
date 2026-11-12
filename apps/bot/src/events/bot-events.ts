@@ -11,13 +11,15 @@ interface Deps {
   ticketPanels: TicketPanelPublisher;
   /** Retire l'embed d'un signalement supprimé depuis la page d'administration */
   removeTd2Report(event: { guildId: string; messageId: string }): Promise<void>;
+  /** Publie dans le salon de logs une sanction levée depuis le site */
+  logModeration(event: { guildId: string; caseId: number }): Promise<void>;
   logger: Pick<Logger, 'info' | 'warn'>;
 }
 
 /** Applique un message reçu de l'API. Un message mal formé est ignoré, jamais fatal. */
 export function handleBotEvent(
   raw: string,
-  { configs, rolePanels, ticketPanels, removeTd2Report, logger }: Deps,
+  { configs, rolePanels, ticketPanels, removeTd2Report, logModeration, logger }: Deps,
 ): void {
   const event = parseBotEvent(raw);
   if (!event) {
@@ -49,6 +51,12 @@ export function handleBotEvent(
     case 'ticketPanel.delete':
       ticketPanels.remove(event).catch((err: unknown) => {
         logger.warn({ err, messageId: event.messageId }, 'Retrait du panel de tickets en échec');
+      });
+      return;
+    case 'moderation.logged':
+      // Ni la sanction ni le serveur dans l'erreur : un identifiant seul n'a rien d'utile à un journal
+      logModeration(event).catch((err: unknown) => {
+        logger.warn({ err }, 'Moderation log from the dashboard failed');
       });
       return;
     case 'td2Report.deleted':
