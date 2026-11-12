@@ -23,6 +23,7 @@ import { GuildPickerPage } from './features/dashboard/guild-picker/guild-picker-
 import { LevelingSettingsPage } from './features/dashboard/leveling/leveling-settings-page';
 import { RolePanelEditorPage } from './features/dashboard/roles/role-panel-editor-page';
 import { RolePanelsPage } from './features/dashboard/roles/role-panels-page';
+import { WelcomeSettingsPage } from './features/dashboard/welcome/welcome-settings-page';
 import { Td2Page } from './features/dashboard/td2/td2-page';
 import { TicketSettingsPage } from './features/dashboard/tickets/ticket-settings-page';
 import { TicketsPage } from './features/dashboard/tickets/tickets-page';
@@ -171,6 +172,14 @@ const td2Route = createRoute({
   path: 'td2',
   staticData: { module: 'TD2' },
   component: Td2Page,
+});
+
+/** Onglet « Bienvenue » : les messages d'arrivée et de départ, et le rôle d'arrivée. */
+const welcomeRoute = createRoute({
+  getParentRoute: () => guildRoute,
+  path: 'bienvenue',
+  staticData: { module: 'WELCOME' },
+  component: WelcomeSettingsPage,
 });
 
 /** Onglet « Accès » : les administrateurs y ouvrent des onglets à des membres. */
@@ -330,6 +339,7 @@ export const routeTree = rootRoute.addChildren([
       guildTicketsRoute.addChildren([ticketsRoute, ticketSettingsRoute, transcriptRoute]),
       guildGiveawaysRoute.addChildren([giveawaysRoute, giveawayCreateRoute]),
       td2Route,
+      welcomeRoute,
       accessRoute,
     ]),
   ]),

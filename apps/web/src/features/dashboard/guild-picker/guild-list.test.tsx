@@ -10,7 +10,7 @@ const guild = (id: string, name: string, botPresent: boolean): ManageableGuild =
   iconUrl: null,
   botPresent,
   access: 'admin',
-  modules: ['GENERAL', 'LEVELING', 'ROLES', 'TICKETS', 'GIVEAWAYS', 'TD2'],
+  modules: ['GENERAL', 'LEVELING', 'ROLES', 'TICKETS', 'GIVEAWAYS', 'TD2', 'WELCOME'],
 });
 
 const GUILDS = [

@@ -5,6 +5,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { routeTree } from '../../router';
 
 const GUILD = '100000000000000001';
+const GUILD_WELCOME = '100000000000000002';
 
 /** Faye n'administre pas Les Agents : un admin lui a ouvert l'onglet TD2, et lui seul. */
 const API: Record<string, unknown> = {
@@ -24,7 +25,26 @@ const API: Record<string, unknown> = {
       access: 'delegate',
       modules: ['TD2'],
     },
+    {
+      id: GUILD_WELCOME,
+      name: 'Escouade Delta',
+      iconUrl: null,
+      botPresent: true,
+      access: 'delegate',
+      modules: ['WELCOME'],
+    },
   ],
+  [`/api/guilds/${GUILD_WELCOME}/channels`]: [],
+  [`/api/guilds/${GUILD_WELCOME}/roles`]: [],
+  [`/api/guilds/${GUILD_WELCOME}/welcome`]: {
+    welcomeEnabled: false,
+    welcomeChannelId: null,
+    welcomeMessage: null,
+    welcomeRoleId: null,
+    goodbyeEnabled: false,
+    goodbyeChannelId: null,
+    goodbyeMessage: null,
+  },
   [`/api/guilds/${GUILD}/channels`]: [],
   [`/api/guilds/${GUILD}/roles`]: [],
   [`/api/guilds/${GUILD}/td2/settings`]: {
@@ -73,6 +93,17 @@ describe('accès délégué', () => {
     const tabs = within(nav).getAllByRole('link');
     expect(tabs).toHaveLength(1);
     expect(tabs[0]?.getAttribute('href')).toBe(`/dashboard/${GUILD}/td2`);
+  });
+
+  it('un délégué « Bienvenue » voit cet onglet, et lui seul', async () => {
+    open(`/dashboard/${GUILD_WELCOME}/bienvenue`);
+
+    expect(await screen.findByRole('heading', { level: 2, name: 'Bienvenue' })).toBeTruthy();
+    const nav = screen.getByRole('navigation', { name: 'Réglages du serveur' });
+    const tabs = within(nav).getAllByRole('link');
+    expect(tabs).toHaveLength(1);
+    expect(tabs[0]?.textContent).toBe('Bienvenue');
+    expect(tabs[0]?.getAttribute('href')).toBe(`/dashboard/${GUILD_WELCOME}/bienvenue`);
   });
 
   it('un onglet fermé l’explique et mène au sien, sans rien demander à l’API', async () => {
