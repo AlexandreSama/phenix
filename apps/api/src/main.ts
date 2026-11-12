@@ -12,7 +12,7 @@ const app = await NestFactory.create<NestExpressApplication>(AppModule.register(
 });
 
 app.useLogger(app.get(Logger));
-configureApp(app);
+configureApp(app, env.PUBLIC_URL);
 // SIGTERM (docker stop) ferme proprement la base et Valkey
 app.enableShutdownHooks();
 
