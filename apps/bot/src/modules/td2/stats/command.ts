@@ -9,8 +9,8 @@ import {
 import type { BotContext } from '../../../core/context.js';
 import { refuse } from '../../moderation/common.js';
 import { playerOptions, readPlayer } from '../player-options.js';
-import { careerMessage } from './messages.js';
 import type { Td2StatsUnavailable } from './provider.js';
+import { careerReply } from './stats-card.js';
 
 const label = (platform: Td2PlatformKey) => TD2_PLATFORM_LABELS[platform];
 
@@ -123,7 +123,7 @@ export async function showStats(
   const result = await stats.career(target.platform, target.playerName);
   switch (result.status) {
     case 'ok':
-      await interaction.editReply(careerMessage(result.career, stats.credit));
+      await interaction.editReply(await careerReply(result.career, stats.credit, { logger }));
       return;
     case 'not-found':
       await interaction.editReply(STATS_REPLIES.notFound(target.playerName, target.platform));
