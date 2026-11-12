@@ -47,6 +47,7 @@ export type CaseMinAggregateOutputType = {
   expiresAt: Date | null
   revokedAt: Date | null
   revokedById: string | null
+  revokedVia: $Enums.RevocationSource | null
   createdAt: Date | null
 }
 
@@ -61,6 +62,7 @@ export type CaseMaxAggregateOutputType = {
   expiresAt: Date | null
   revokedAt: Date | null
   revokedById: string | null
+  revokedVia: $Enums.RevocationSource | null
   createdAt: Date | null
 }
 
@@ -75,6 +77,7 @@ export type CaseCountAggregateOutputType = {
   expiresAt: number
   revokedAt: number
   revokedById: number
+  revokedVia: number
   createdAt: number
   _all: number
 }
@@ -101,6 +104,7 @@ export type CaseMinAggregateInputType = {
   expiresAt?: true
   revokedAt?: true
   revokedById?: true
+  revokedVia?: true
   createdAt?: true
 }
 
@@ -115,6 +119,7 @@ export type CaseMaxAggregateInputType = {
   expiresAt?: true
   revokedAt?: true
   revokedById?: true
+  revokedVia?: true
   createdAt?: true
 }
 
@@ -129,6 +134,7 @@ export type CaseCountAggregateInputType = {
   expiresAt?: true
   revokedAt?: true
   revokedById?: true
+  revokedVia?: true
   createdAt?: true
   _all?: true
 }
@@ -230,6 +236,7 @@ export type CaseGroupByOutputType = {
   expiresAt: Date | null
   revokedAt: Date | null
   revokedById: string | null
+  revokedVia: $Enums.RevocationSource | null
   createdAt: Date
   _count: CaseCountAggregateOutputType | null
   _avg: CaseAvgAggregateOutputType | null
@@ -267,6 +274,7 @@ export type CaseWhereInput = {
   expiresAt?: Prisma.DateTimeNullableFilter<"Case"> | Date | string | null
   revokedAt?: Prisma.DateTimeNullableFilter<"Case"> | Date | string | null
   revokedById?: Prisma.StringNullableFilter<"Case"> | string | null
+  revokedVia?: Prisma.EnumRevocationSourceNullableFilter<"Case"> | $Enums.RevocationSource | null
   createdAt?: Prisma.DateTimeFilter<"Case"> | Date | string
   guild?: Prisma.XOR<Prisma.GuildScalarRelationFilter, Prisma.GuildWhereInput>
 }
@@ -282,6 +290,7 @@ export type CaseOrderByWithRelationInput = {
   expiresAt?: Prisma.SortOrderInput | Prisma.SortOrder
   revokedAt?: Prisma.SortOrderInput | Prisma.SortOrder
   revokedById?: Prisma.SortOrderInput | Prisma.SortOrder
+  revokedVia?: Prisma.SortOrderInput | Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   guild?: Prisma.GuildOrderByWithRelationInput
 }
@@ -301,6 +310,7 @@ export type CaseWhereUniqueInput = Prisma.AtLeast<{
   expiresAt?: Prisma.DateTimeNullableFilter<"Case"> | Date | string | null
   revokedAt?: Prisma.DateTimeNullableFilter<"Case"> | Date | string | null
   revokedById?: Prisma.StringNullableFilter<"Case"> | string | null
+  revokedVia?: Prisma.EnumRevocationSourceNullableFilter<"Case"> | $Enums.RevocationSource | null
   createdAt?: Prisma.DateTimeFilter<"Case"> | Date | string
   guild?: Prisma.XOR<Prisma.GuildScalarRelationFilter, Prisma.GuildWhereInput>
 }, "id" | "guildId_number">
@@ -316,6 +326,7 @@ export type CaseOrderByWithAggregationInput = {
   expiresAt?: Prisma.SortOrderInput | Prisma.SortOrder
   revokedAt?: Prisma.SortOrderInput | Prisma.SortOrder
   revokedById?: Prisma.SortOrderInput | Prisma.SortOrder
+  revokedVia?: Prisma.SortOrderInput | Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   _count?: Prisma.CaseCountOrderByAggregateInput
   _avg?: Prisma.CaseAvgOrderByAggregateInput
@@ -338,6 +349,7 @@ export type CaseScalarWhereWithAggregatesInput = {
   expiresAt?: Prisma.DateTimeNullableWithAggregatesFilter<"Case"> | Date | string | null
   revokedAt?: Prisma.DateTimeNullableWithAggregatesFilter<"Case"> | Date | string | null
   revokedById?: Prisma.StringNullableWithAggregatesFilter<"Case"> | string | null
+  revokedVia?: Prisma.EnumRevocationSourceNullableWithAggregatesFilter<"Case"> | $Enums.RevocationSource | null
   createdAt?: Prisma.DateTimeWithAggregatesFilter<"Case"> | Date | string
 }
 
@@ -350,6 +362,7 @@ export type CaseCreateInput = {
   expiresAt?: Date | string | null
   revokedAt?: Date | string | null
   revokedById?: string | null
+  revokedVia?: $Enums.RevocationSource | null
   createdAt?: Date | string
   guild: Prisma.GuildCreateNestedOneWithoutCasesInput
 }
@@ -365,6 +378,7 @@ export type CaseUncheckedCreateInput = {
   expiresAt?: Date | string | null
   revokedAt?: Date | string | null
   revokedById?: string | null
+  revokedVia?: $Enums.RevocationSource | null
   createdAt?: Date | string
 }
 
@@ -377,6 +391,7 @@ export type CaseUpdateInput = {
   expiresAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   revokedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   revokedById?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  revokedVia?: Prisma.NullableEnumRevocationSourceFieldUpdateOperationsInput | $Enums.RevocationSource | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   guild?: Prisma.GuildUpdateOneRequiredWithoutCasesNestedInput
 }
@@ -392,6 +407,7 @@ export type CaseUncheckedUpdateInput = {
   expiresAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   revokedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   revokedById?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  revokedVia?: Prisma.NullableEnumRevocationSourceFieldUpdateOperationsInput | $Enums.RevocationSource | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
 }
 
@@ -406,6 +422,7 @@ export type CaseCreateManyInput = {
   expiresAt?: Date | string | null
   revokedAt?: Date | string | null
   revokedById?: string | null
+  revokedVia?: $Enums.RevocationSource | null
   createdAt?: Date | string
 }
 
@@ -418,6 +435,7 @@ export type CaseUpdateManyMutationInput = {
   expiresAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   revokedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   revokedById?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  revokedVia?: Prisma.NullableEnumRevocationSourceFieldUpdateOperationsInput | $Enums.RevocationSource | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
 }
 
@@ -432,6 +450,7 @@ export type CaseUncheckedUpdateManyInput = {
   expiresAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   revokedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   revokedById?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  revokedVia?: Prisma.NullableEnumRevocationSourceFieldUpdateOperationsInput | $Enums.RevocationSource | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
 }
 
@@ -461,6 +480,7 @@ export type CaseCountOrderByAggregateInput = {
   expiresAt?: Prisma.SortOrder
   revokedAt?: Prisma.SortOrder
   revokedById?: Prisma.SortOrder
+  revokedVia?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
 }
 
@@ -480,6 +500,7 @@ export type CaseMaxOrderByAggregateInput = {
   expiresAt?: Prisma.SortOrder
   revokedAt?: Prisma.SortOrder
   revokedById?: Prisma.SortOrder
+  revokedVia?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
 }
 
@@ -494,6 +515,7 @@ export type CaseMinOrderByAggregateInput = {
   expiresAt?: Prisma.SortOrder
   revokedAt?: Prisma.SortOrder
   revokedById?: Prisma.SortOrder
+  revokedVia?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
 }
 
@@ -548,6 +570,10 @@ export type EnumCaseTypeFieldUpdateOperationsInput = {
   set?: $Enums.CaseType
 }
 
+export type NullableEnumRevocationSourceFieldUpdateOperationsInput = {
+  set?: $Enums.RevocationSource | null
+}
+
 export type CaseCreateWithoutGuildInput = {
   number: number
   type: $Enums.CaseType
@@ -557,6 +583,7 @@ export type CaseCreateWithoutGuildInput = {
   expiresAt?: Date | string | null
   revokedAt?: Date | string | null
   revokedById?: string | null
+  revokedVia?: $Enums.RevocationSource | null
   createdAt?: Date | string
 }
 
@@ -570,6 +597,7 @@ export type CaseUncheckedCreateWithoutGuildInput = {
   expiresAt?: Date | string | null
   revokedAt?: Date | string | null
   revokedById?: string | null
+  revokedVia?: $Enums.RevocationSource | null
   createdAt?: Date | string
 }
 
@@ -613,6 +641,7 @@ export type CaseScalarWhereInput = {
   expiresAt?: Prisma.DateTimeNullableFilter<"Case"> | Date | string | null
   revokedAt?: Prisma.DateTimeNullableFilter<"Case"> | Date | string | null
   revokedById?: Prisma.StringNullableFilter<"Case"> | string | null
+  revokedVia?: Prisma.EnumRevocationSourceNullableFilter<"Case"> | $Enums.RevocationSource | null
   createdAt?: Prisma.DateTimeFilter<"Case"> | Date | string
 }
 
@@ -626,6 +655,7 @@ export type CaseCreateManyGuildInput = {
   expiresAt?: Date | string | null
   revokedAt?: Date | string | null
   revokedById?: string | null
+  revokedVia?: $Enums.RevocationSource | null
   createdAt?: Date | string
 }
 
@@ -638,6 +668,7 @@ export type CaseUpdateWithoutGuildInput = {
   expiresAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   revokedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   revokedById?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  revokedVia?: Prisma.NullableEnumRevocationSourceFieldUpdateOperationsInput | $Enums.RevocationSource | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
 }
 
@@ -651,6 +682,7 @@ export type CaseUncheckedUpdateWithoutGuildInput = {
   expiresAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   revokedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   revokedById?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  revokedVia?: Prisma.NullableEnumRevocationSourceFieldUpdateOperationsInput | $Enums.RevocationSource | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
 }
 
@@ -664,6 +696,7 @@ export type CaseUncheckedUpdateManyWithoutGuildInput = {
   expiresAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   revokedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   revokedById?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  revokedVia?: Prisma.NullableEnumRevocationSourceFieldUpdateOperationsInput | $Enums.RevocationSource | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
 }
 
@@ -680,6 +713,7 @@ export type CaseSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs = r
   expiresAt?: boolean
   revokedAt?: boolean
   revokedById?: boolean
+  revokedVia?: boolean
   createdAt?: boolean
   guild?: boolean | Prisma.GuildDefaultArgs<ExtArgs>
 }, ExtArgs["result"]["case"]>
@@ -695,6 +729,7 @@ export type CaseSelectCreateManyAndReturn<ExtArgs extends runtime.Types.Extensio
   expiresAt?: boolean
   revokedAt?: boolean
   revokedById?: boolean
+  revokedVia?: boolean
   createdAt?: boolean
   guild?: boolean | Prisma.GuildDefaultArgs<ExtArgs>
 }, ExtArgs["result"]["case"]>
@@ -710,6 +745,7 @@ export type CaseSelectUpdateManyAndReturn<ExtArgs extends runtime.Types.Extensio
   expiresAt?: boolean
   revokedAt?: boolean
   revokedById?: boolean
+  revokedVia?: boolean
   createdAt?: boolean
   guild?: boolean | Prisma.GuildDefaultArgs<ExtArgs>
 }, ExtArgs["result"]["case"]>
@@ -725,10 +761,11 @@ export type CaseSelectScalar = {
   expiresAt?: boolean
   revokedAt?: boolean
   revokedById?: boolean
+  revokedVia?: boolean
   createdAt?: boolean
 }
 
-export type CaseOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "guildId" | "number" | "type" | "targetId" | "moderatorId" | "reason" | "expiresAt" | "revokedAt" | "revokedById" | "createdAt", ExtArgs["result"]["case"]>
+export type CaseOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "guildId" | "number" | "type" | "targetId" | "moderatorId" | "reason" | "expiresAt" | "revokedAt" | "revokedById" | "revokedVia" | "createdAt", ExtArgs["result"]["case"]>
 export type CaseInclude<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   guild?: boolean | Prisma.GuildDefaultArgs<ExtArgs>
 }
@@ -755,6 +792,7 @@ export type $CasePayload<ExtArgs extends runtime.Types.Extensions.InternalArgs =
     expiresAt: Date | null
     revokedAt: Date | null
     revokedById: string | null
+    revokedVia: $Enums.RevocationSource | null
     createdAt: Date
   }, ExtArgs["result"]["case"]>
   composites: {}
@@ -1190,6 +1228,7 @@ export interface CaseFieldRefs {
   readonly expiresAt: Prisma.FieldRef<"Case", 'DateTime'>
   readonly revokedAt: Prisma.FieldRef<"Case", 'DateTime'>
   readonly revokedById: Prisma.FieldRef<"Case", 'String'>
+  readonly revokedVia: Prisma.FieldRef<"Case", 'RevocationSource'>
   readonly createdAt: Prisma.FieldRef<"Case", 'DateTime'>
 }
     

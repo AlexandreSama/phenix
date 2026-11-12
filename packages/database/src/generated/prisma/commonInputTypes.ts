@@ -199,6 +199,13 @@ export type EnumCaseTypeFilter<$PrismaModel = never> = {
   not?: Prisma.NestedEnumCaseTypeFilter<$PrismaModel> | $Enums.CaseType
 }
 
+export type EnumRevocationSourceNullableFilter<$PrismaModel = never> = {
+  equals?: $Enums.RevocationSource | Prisma.EnumRevocationSourceFieldRefInput<$PrismaModel> | null
+  in?: $Enums.RevocationSource[] | Prisma.ListEnumRevocationSourceFieldRefInput<$PrismaModel> | null
+  notIn?: $Enums.RevocationSource[] | Prisma.ListEnumRevocationSourceFieldRefInput<$PrismaModel> | null
+  not?: Prisma.NestedEnumRevocationSourceNullableFilter<$PrismaModel> | $Enums.RevocationSource | null
+}
+
 export type EnumCaseTypeWithAggregatesFilter<$PrismaModel = never> = {
   equals?: $Enums.CaseType | Prisma.EnumCaseTypeFieldRefInput<$PrismaModel>
   in?: $Enums.CaseType[] | Prisma.ListEnumCaseTypeFieldRefInput<$PrismaModel>
@@ -207,6 +214,16 @@ export type EnumCaseTypeWithAggregatesFilter<$PrismaModel = never> = {
   _count?: Prisma.NestedIntFilter<$PrismaModel>
   _min?: Prisma.NestedEnumCaseTypeFilter<$PrismaModel>
   _max?: Prisma.NestedEnumCaseTypeFilter<$PrismaModel>
+}
+
+export type EnumRevocationSourceNullableWithAggregatesFilter<$PrismaModel = never> = {
+  equals?: $Enums.RevocationSource | Prisma.EnumRevocationSourceFieldRefInput<$PrismaModel> | null
+  in?: $Enums.RevocationSource[] | Prisma.ListEnumRevocationSourceFieldRefInput<$PrismaModel> | null
+  notIn?: $Enums.RevocationSource[] | Prisma.ListEnumRevocationSourceFieldRefInput<$PrismaModel> | null
+  not?: Prisma.NestedEnumRevocationSourceNullableWithAggregatesFilter<$PrismaModel> | $Enums.RevocationSource | null
+  _count?: Prisma.NestedIntNullableFilter<$PrismaModel>
+  _min?: Prisma.NestedEnumRevocationSourceNullableFilter<$PrismaModel>
+  _max?: Prisma.NestedEnumRevocationSourceNullableFilter<$PrismaModel>
 }
 
 export type EnumTicketStatusFilter<$PrismaModel = never> = {
@@ -597,6 +614,13 @@ export type NestedEnumCaseTypeFilter<$PrismaModel = never> = {
   not?: Prisma.NestedEnumCaseTypeFilter<$PrismaModel> | $Enums.CaseType
 }
 
+export type NestedEnumRevocationSourceNullableFilter<$PrismaModel = never> = {
+  equals?: $Enums.RevocationSource | Prisma.EnumRevocationSourceFieldRefInput<$PrismaModel> | null
+  in?: $Enums.RevocationSource[] | Prisma.ListEnumRevocationSourceFieldRefInput<$PrismaModel> | null
+  notIn?: $Enums.RevocationSource[] | Prisma.ListEnumRevocationSourceFieldRefInput<$PrismaModel> | null
+  not?: Prisma.NestedEnumRevocationSourceNullableFilter<$PrismaModel> | $Enums.RevocationSource | null
+}
+
 export type NestedEnumCaseTypeWithAggregatesFilter<$PrismaModel = never> = {
   equals?: $Enums.CaseType | Prisma.EnumCaseTypeFieldRefInput<$PrismaModel>
   in?: $Enums.CaseType[] | Prisma.ListEnumCaseTypeFieldRefInput<$PrismaModel>
@@ -605,6 +629,16 @@ export type NestedEnumCaseTypeWithAggregatesFilter<$PrismaModel = never> = {
   _count?: Prisma.NestedIntFilter<$PrismaModel>
   _min?: Prisma.NestedEnumCaseTypeFilter<$PrismaModel>
   _max?: Prisma.NestedEnumCaseTypeFilter<$PrismaModel>
+}
+
+export type NestedEnumRevocationSourceNullableWithAggregatesFilter<$PrismaModel = never> = {
+  equals?: $Enums.RevocationSource | Prisma.EnumRevocationSourceFieldRefInput<$PrismaModel> | null
+  in?: $Enums.RevocationSource[] | Prisma.ListEnumRevocationSourceFieldRefInput<$PrismaModel> | null
+  notIn?: $Enums.RevocationSource[] | Prisma.ListEnumRevocationSourceFieldRefInput<$PrismaModel> | null
+  not?: Prisma.NestedEnumRevocationSourceNullableWithAggregatesFilter<$PrismaModel> | $Enums.RevocationSource | null
+  _count?: Prisma.NestedIntNullableFilter<$PrismaModel>
+  _min?: Prisma.NestedEnumRevocationSourceNullableFilter<$PrismaModel>
+  _max?: Prisma.NestedEnumRevocationSourceNullableFilter<$PrismaModel>
 }
 
 export type NestedEnumTicketStatusFilter<$PrismaModel = never> = {

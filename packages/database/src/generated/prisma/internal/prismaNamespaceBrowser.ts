@@ -179,6 +179,7 @@ export const CaseScalarFieldEnum = {
   expiresAt: 'expiresAt',
   revokedAt: 'revokedAt',
   revokedById: 'revokedById',
+  revokedVia: 'revokedVia',
   createdAt: 'createdAt'
 } as const
 

@@ -1,8 +1,10 @@
 import { afterAll, describe, expect, inject, it } from 'vitest';
 import {
   createCase,
+  findCaseById,
   findExpiredBans,
   getCase,
+  liftSanction,
   listCases,
   listGuildCases,
   revokeCases,
@@ -301,5 +303,177 @@ describe('summarizeMemberCases', () => {
       activeMute: null,
       activeBan: null,
     });
+  });
+});
+
+const typesOf = async (guildId: string) =>
+  (await prisma.case.findMany({ where: { guildId }, orderBy: { number: 'asc' } })).map(
+    (c) => c.type,
+  );
+
+describe('liftSanction', () => {
+  const ACTOR = '444444444444444444';
+  const lift = (
+    guildId: string,
+    input: Partial<Parameters<typeof liftSanction>[1]> & { type: 'WARN' | 'MUTE' | 'BAN' },
+  ) =>
+    liftSanction(prisma, {
+      ...base(guildId),
+      actorId: ACTOR,
+      reason: 'Erreur de modération',
+      via: 'DASHBOARD',
+      ...input,
+    });
+  it('lève un ban actif, puis crée le débannissement de l’acteur et garde d’où il vient', async () => {
+    const guildId = newGuildId();
+    await createCase(prisma, { ...base(guildId), type: 'BAN' });
+
+    const result = await lift(guildId, { type: 'BAN' });
+
+    expect(result.revoked).toBe(1);
+    expect(result.record).toMatchObject({
+      type: 'UNBAN',
+      moderatorId: ACTOR,
+      targetId: '222222222222222222',
+      reason: 'Erreur de modération',
+    });
+    const ban = await getCase(prisma, guildId, 1);
+    expect(ban).toMatchObject({ revokedById: ACTOR, revokedVia: 'DASHBOARD' });
+    expect(ban?.revokedAt).toBeInstanceOf(Date);
+  });
+
+  it('ne fait rien la deuxième fois : ni nouvelle levée, ni débannissement en double', async () => {
+    const guildId = newGuildId();
+    await createCase(prisma, { ...base(guildId), type: 'BAN' });
+    await lift(guildId, { type: 'BAN' });
+
+    const again = await lift(guildId, { type: 'BAN' });
+
+    expect(again).toEqual({ revoked: 0, record: null });
+    expect(await typesOf(guildId)).toEqual(['BAN', 'UNBAN']);
+  });
+
+  it('crée un seul débannissement pour deux levées simultanées', async () => {
+    const guildId = newGuildId();
+    await createCase(prisma, { ...base(guildId), type: 'BAN' });
+
+    const results = await Promise.all([
+      lift(guildId, { type: 'BAN' }),
+      lift(guildId, { type: 'BAN' }),
+    ]);
+
+    expect(results.map((r) => r.revoked).toSorted()).toEqual([0, 1]);
+    expect(await typesOf(guildId)).toEqual(['BAN', 'UNBAN']);
+  });
+
+  it('lève une sourdine en cours et crée la fin de sourdine', async () => {
+    const guildId = newGuildId();
+    await createCase(prisma, {
+      ...base(guildId),
+      type: 'MUTE',
+      expiresAt: new Date(Date.now() + 3_600_000),
+    });
+
+    const result = await lift(guildId, { type: 'MUTE', number: 1 });
+
+    expect(result.record?.type).toBe('UNMUTE');
+    expect(await typesOf(guildId)).toEqual(['MUTE', 'UNMUTE']);
+  });
+
+  it('ne lève pas une sourdine déjà terminée', async () => {
+    const guildId = newGuildId();
+    await createCase(prisma, {
+      ...base(guildId),
+      type: 'MUTE',
+      expiresAt: new Date(Date.now() - 60_000),
+    });
+
+    expect(await lift(guildId, { type: 'MUTE', number: 1 })).toEqual({ revoked: 0, record: null });
+    expect(await typesOf(guildId)).toEqual(['MUTE']);
+  });
+
+  it('retire un seul avertissement, par son numéro, sans créer de sanction', async () => {
+    const guildId = newGuildId();
+    await createCase(prisma, { ...base(guildId), type: 'WARN' });
+    await createCase(prisma, { ...base(guildId), type: 'WARN' });
+
+    const result = await lift(guildId, { type: 'WARN', number: 2 });
+
+    expect(result).toEqual({ revoked: 1, record: null });
+    expect((await getCase(prisma, guildId, 1))?.revokedAt).toBeNull();
+    expect(await getCase(prisma, guildId, 2)).toMatchObject({ revokedVia: 'DASHBOARD' });
+    expect(await typesOf(guildId)).toEqual(['WARN', 'WARN']);
+  });
+
+  it('lève par personne : deux bans actifs de la même cible sont levés ensemble, avec un seul débannissement', async () => {
+    const guildId = newGuildId();
+    // un /ban qui prolonge laisse parfois deux bans actifs ; Discord n'a qu'un seul ban par personne
+    await createCase(prisma, { ...base(guildId), type: 'BAN' });
+    await createCase(prisma, { ...base(guildId), type: 'BAN' });
+
+    const result = await lift(guildId, { type: 'BAN' });
+
+    expect(result.revoked).toBe(2);
+    expect(await typesOf(guildId)).toEqual(['BAN', 'BAN', 'UNBAN']);
+    expect((await getCase(prisma, guildId, 2))?.revokedAt).toBeInstanceOf(Date);
+  });
+
+  it('est atomique : si la création du débannissement échoue, rien n’est levé', async () => {
+    const guildId = newGuildId();
+    await createCase(prisma, { ...base(guildId), type: 'BAN' });
+    const failing = prisma.$extends({
+      query: {
+        case: {
+          create() {
+            throw new Error('panne simulée');
+          },
+        },
+      },
+    });
+
+    await expect(
+      liftSanction(failing as unknown as typeof prisma, {
+        ...base(guildId),
+        type: 'BAN',
+        actorId: ACTOR,
+        via: 'DASHBOARD',
+      }),
+    ).rejects.toThrow('panne simulée');
+
+    expect((await getCase(prisma, guildId, 1))?.revokedAt).toBeNull();
+    expect(await typesOf(guildId)).toEqual(['BAN']);
+  });
+
+  it('ne touche ni un autre serveur, ni un autre membre', async () => {
+    const guildId = newGuildId();
+    const elsewhere = newGuildId();
+    await createCase(prisma, { ...base(guildId), type: 'BAN', targetId: '555555555555555555' });
+    await createCase(prisma, { ...base(elsewhere), type: 'BAN' });
+
+    expect(await lift(guildId, { type: 'BAN' })).toEqual({ revoked: 0, record: null });
+    expect((await getCase(prisma, elsewhere, 1))?.revokedAt).toBeNull();
+  });
+});
+
+describe('origine d’une levée', () => {
+  it('revokeCases note COMMAND quand personne n’indique d’où vient la levée', async () => {
+    const guildId = newGuildId();
+    await createCase(prisma, { ...base(guildId), type: 'WARN' });
+
+    await revokeCases(prisma, {
+      ...base(guildId),
+      type: 'WARN',
+      revokedById: '444444444444444444',
+    });
+
+    expect((await getCase(prisma, guildId, 1))?.revokedVia).toBe('COMMAND');
+  });
+
+  it('findCaseById ne rend pas la sanction d’un autre serveur', async () => {
+    const guildId = newGuildId();
+    const created = await createCase(prisma, { ...base(guildId), type: 'WARN' });
+
+    expect((await findCaseById(prisma, guildId, created.id))?.number).toBe(1);
+    expect(await findCaseById(prisma, newGuildId(), created.id)).toBeNull();
   });
 });

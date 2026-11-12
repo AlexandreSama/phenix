@@ -2637,6 +2637,7 @@ export const CaseScalarFieldEnum = {
   expiresAt: 'expiresAt',
   revokedAt: 'revokedAt',
   revokedById: 'revokedById',
+  revokedVia: 'revokedVia',
   createdAt: 'createdAt'
 } as const
 
@@ -3056,6 +3057,20 @@ export type EnumCaseTypeFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaM
  * Reference to a field of type 'CaseType[]'
  */
 export type ListEnumCaseTypeFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'CaseType[]'>
+    
+
+
+/**
+ * Reference to a field of type 'RevocationSource'
+ */
+export type EnumRevocationSourceFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'RevocationSource'>
+    
+
+
+/**
+ * Reference to a field of type 'RevocationSource[]'
+ */
+export type ListEnumRevocationSourceFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'RevocationSource[]'>
     
 
 

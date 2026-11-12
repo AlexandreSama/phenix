@@ -95,6 +95,11 @@ describe('caseStatus', () => {
       { type: 'MUTE' as const, ...base },
       null,
     ],
+    [
+      'un mute qui se termine pile maintenant, comme caseStatusWhere (lte)',
+      { type: 'MUTE' as const, revokedAt: null, expiresAt: now },
+      'ended',
+    ],
     ['une expulsion', { type: 'KICK' as const, ...base }, null],
     ['une fin de sourdine', { type: 'UNMUTE' as const, ...base }, null],
     ['un débannissement', { type: 'UNBAN' as const, ...base }, null],

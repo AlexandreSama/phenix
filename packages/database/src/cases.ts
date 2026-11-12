@@ -1,5 +1,5 @@
 import { CaseType } from './generated/prisma/enums.js';
-import type { Case, Prisma, PrismaClient } from './generated/prisma/client.js';
+import type { Case, Prisma, PrismaClient, RevocationSource } from './generated/prisma/client.js';
 
 export interface NewCase {
   guildId: string;
@@ -18,24 +18,27 @@ export interface NewCase {
  * deux sanctions simultanées ne peuvent pas recevoir le même numéro.
  */
 export async function createCase(db: PrismaClient, input: NewCase): Promise<Case> {
-  return db.$transaction(async (tx) => {
-    const { caseCounter } = await tx.guild.upsert({
-      where: { id: input.guildId },
-      update: { caseCounter: { increment: 1 } },
-      create: { id: input.guildId, name: input.guildName, caseCounter: 1 },
-      select: { caseCounter: true },
-    });
-    return tx.case.create({
-      data: {
-        guildId: input.guildId,
-        number: caseCounter,
-        type: input.type,
-        targetId: input.targetId,
-        moderatorId: input.moderatorId,
-        reason: input.reason ?? null,
-        expiresAt: input.expiresAt ?? null,
-      },
-    });
+  return db.$transaction((tx) => insertCase(tx, input));
+}
+
+/** L'insertion elle-même, pour qui est déjà dans une transaction (voir `liftSanction`). */
+async function insertCase(tx: Prisma.TransactionClient, input: NewCase): Promise<Case> {
+  const { caseCounter } = await tx.guild.upsert({
+    where: { id: input.guildId },
+    update: { caseCounter: { increment: 1 } },
+    create: { id: input.guildId, name: input.guildName, caseCounter: 1 },
+    select: { caseCounter: true },
+  });
+  return tx.case.create({
+    data: {
+      guildId: input.guildId,
+      number: caseCounter,
+      type: input.type,
+      targetId: input.targetId,
+      moderatorId: input.moderatorId,
+      reason: input.reason ?? null,
+      expiresAt: input.expiresAt ?? null,
+    },
   });
 }
 
@@ -78,6 +81,8 @@ export interface RevokeInput {
   revokedById: string;
   /** Une seule sanction ; sans numéro, toutes les sanctions actives de ce type */
   number?: number;
+  /** D'où vient la levée ; COMMAND quand on ne le dit pas (les commandes du bot) */
+  via?: RevocationSource;
 }
 
 /** Révoque des sanctions actives et renvoie combien l'ont été. */
@@ -93,9 +98,76 @@ export async function revokeCases(
       targetId: input.targetId,
       ...(input.number !== undefined && { number: input.number }),
     },
-    data: { revokedAt: now, revokedById: input.revokedById },
+    data: { revokedAt: now, revokedById: input.revokedById, revokedVia: input.via ?? 'COMMAND' },
   });
   return count;
+}
+
+export function findCaseById(
+  db: Pick<PrismaClient, 'case'>,
+  guildId: string,
+  id: number,
+): Promise<Case | null> {
+  // guildId dans le filtre : un identifiant d'un autre serveur ne rend rien
+  return db.case.findFirst({ where: { id, guildId } });
+}
+
+export interface LiftInput {
+  guildId: string;
+  /** Nom du serveur, au cas où sa ligne n'existerait pas encore */
+  guildName: string;
+  targetId: string;
+  type: 'WARN' | 'MUTE' | 'BAN';
+  /** Une seule sanction ; sans numéro, toutes les sanctions actives de ce type */
+  number?: number;
+  /** Qui lève : le modérateur, ou le bot pour la levée automatique */
+  actorId: string;
+  reason?: string | null;
+  via: RevocationSource;
+}
+
+export interface LiftResult {
+  /** Combien de sanctions ont été levées ; 0 : déjà levées, ou plus actives */
+  revoked: number;
+  /** Le débannissement ou la fin de sourdine créés ; null pour un avertissement, ou si rien n'a été levé */
+  record: Case | null;
+}
+
+/**
+ * Lève des sanctions et en garde la trace, en une transaction : la levée, puis, pour un ban ou une
+ * sourdine, la sanction de fin (UNBAN, UNMUTE) au nom de celui qui lève. Idempotent : si une autre
+ * levée est passée avant (site, commande, levée automatique), rien n'est levé ni créé une seconde fois.
+ * L'action sur Discord est faite AVANT, par l'appelant : si elle échoue, la base ne change pas.
+ */
+export function liftSanction(
+  db: PrismaClient,
+  input: LiftInput,
+  now = new Date(),
+): Promise<LiftResult> {
+  return db.$transaction(async (tx) => {
+    const revoked = await revokeCases(
+      tx,
+      {
+        guildId: input.guildId,
+        targetId: input.targetId,
+        type: input.type,
+        number: input.number,
+        revokedById: input.actorId,
+        via: input.via,
+      },
+      now,
+    );
+    if (revoked === 0 || input.type === 'WARN') return { revoked, record: null };
+    const record = await insertCase(tx, {
+      guildId: input.guildId,
+      guildName: input.guildName,
+      type: input.type === 'BAN' ? 'UNBAN' : 'UNMUTE',
+      targetId: input.targetId,
+      moderatorId: input.actorId,
+      reason: input.reason ?? null,
+    });
+    return { revoked, record };
+  });
 }
 
 /** Bans temporaires arrivés à échéance, sur les serveurs où se trouve le bot. */
