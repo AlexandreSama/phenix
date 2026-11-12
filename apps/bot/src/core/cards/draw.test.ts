@@ -145,8 +145,11 @@ describe('fitText : coût (pseudo démesuré venu d’une API externe)', () => {
     const { counter, measurer } = countingCtx();
     const out = fitText(measurer, text, 5000);
     expect(counter.calls).toBeLessThanOrEqual(100);
-    expect(out).toBe(naiveFitText(ctx, text, 5000));
     expect(out).toBe(`${'abcdefghij'.repeat(50).slice(0, 499)}…`);
+    // la référence est en O(n²) : on la lance sur un texte 20 fois plus court (un runner de CI
+    // chargé a déjà mis plusieurs secondes à la lancer sur 10 000 caractères)
+    const small = 'abcdefghij'.repeat(50);
+    expect(fitText(measurer, small, 250)).toBe(naiveFitText(measurer, small, 250));
   });
 
   it('sur 10 000 emojis composés, même borne et même résultat que la référence', () => {
@@ -154,7 +157,10 @@ describe('fitText : coût (pseudo démesuré venu d’une API externe)', () => {
     const { counter, measurer } = countingCtx();
     const out = fitText(measurer, text, 1234);
     expect(counter.calls).toBeLessThanOrEqual(100);
-    expect(out).toBe(naiveFitText(ctx, text, 1234));
+    expect(out.endsWith('…')).toBe(true);
+    // référence en O(n²) : texte 50 fois plus court (voir le test précédent)
+    const small = '👩‍🚀'.repeat(200);
+    expect(fitText(measurer, small, 1234)).toBe(naiveFitText(measurer, small, 1234));
   });
 });
 
@@ -179,7 +185,10 @@ describe('fitText : même résultat que la définition de référence', () => {
     for (const measurer of [ctx, uneven]) {
       const full = measurer.measureText(text).width;
       const widths = [-5, Number.NaN, Number.POSITIVE_INFINITY];
-      for (let max = 0; max <= full + 10; max += 1) widths.push(max);
+      // toutes les largeurs pour un texte court ; au plus ~100 pour un long (la référence est en O(n²))
+      const step = Math.max(1, Math.floor(full / 100));
+      for (let max = 0; max <= full + 10; max += step) widths.push(max);
+      widths.push(full - 1, full, full + 1); // les frontières restent toujours testées
       for (const max of widths) {
         expect(fitText(measurer, text, max), `maxWidth ${max}`).toBe(
           naiveFitText(measurer, text, max),

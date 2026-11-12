@@ -1,3 +1,4 @@
+import { createHash } from 'node:crypto';
 import http from 'node:http';
 import https from 'node:https';
 import { createCanvas, loadImage } from '@napi-rs/canvas';
@@ -120,11 +121,21 @@ const FOOTER_BRAND = 'Phenix';
 type Point = { x: number; y: number };
 type Region = { x: number; y: number; width: number; height: number };
 
-async function decode(png: Buffer) {
+/** Un PNG n'est décodé qu'une fois : le décodage d'une carte de 1000 × 560 coûte cher sur un runner chargé. */
+const decoded = new WeakMap<Buffer, ReturnType<typeof decodeOnce>>();
+async function decodeOnce(png: Buffer) {
   const image = await loadImage(png);
   const canvas = createCanvas(image.width, image.height);
   const ctx = canvas.getContext('2d');
   ctx.drawImage(image, 0, 0);
+  return ctx;
+}
+function decode(png: Buffer) {
+  let ctx = decoded.get(png);
+  if (!ctx) {
+    ctx = decodeOnce(png);
+    decoded.set(png, ctx);
+  }
   return ctx;
 }
 
@@ -150,9 +161,11 @@ async function countColor(png: Buffer, region: Region, color: string): Promise<n
 }
 
 /** Les octets RGBA d'une zone : de quoi vérifier qu'elle est (ou n'est pas) restée intacte. */
-async function regionData(png: Buffer, region: Region): Promise<number[]> {
+/** L'empreinte (SHA-256) des pixels d'une zone : comparer deux empreintes évite de comparer des millions d'entiers. */
+async function regionData(png: Buffer, region: Region): Promise<string> {
   const ctx = await decode(png);
-  return [...ctx.getImageData(region.x, region.y, region.width, region.height).data];
+  const { data } = ctx.getImageData(region.x, region.y, region.width, region.height);
+  return createHash('sha256').update(data).digest('hex');
 }
 
 /** Combien de bandes de la couleur du panneau traverse la ligne y, de gauche à droite. */
