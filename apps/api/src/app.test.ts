@@ -85,6 +85,13 @@ const config = {
   td2ReportChannelId: null as string | null,
   td2ReportViewerRoleIds: [] as string[],
   td2ReportFeedChannelId: null as string | null,
+  welcomeEnabled: false,
+  welcomeChannelId: null as string | null,
+  welcomeMessage: null as string | null,
+  welcomeRoleId: null as string | null,
+  goodbyeEnabled: false,
+  goodbyeChannelId: null as string | null,
+  goodbyeMessage: null as string | null,
 };
 const publicGuild = {
   id: MANAGED,
@@ -1280,7 +1287,7 @@ describe('accès délégués', () => {
     expect(response.body[0]).toMatchObject({
       id: MANAGED,
       access: 'admin',
-      modules: ['GENERAL', 'LEVELING', 'ROLES', 'TICKETS', 'GIVEAWAYS', 'TD2'],
+      modules: ['GENERAL', 'LEVELING', 'ROLES', 'TICKETS', 'GIVEAWAYS', 'TD2', 'WELCOME'],
     });
   });
 
@@ -1413,6 +1420,240 @@ describe('accès délégués', () => {
 
     expect(removed.status).toBe(204);
     expect(again.status).toBe(404);
+  });
+});
+
+describe('bienvenue', () => {
+  const url = `/api/guilds/${MANAGED}/welcome`;
+  const settings = {
+    welcomeEnabled: true,
+    welcomeChannelId: CHANNEL,
+    welcomeMessage: 'Salut {membre} !',
+    welcomeRoleId: GAMER_ROLE,
+    goodbyeEnabled: true,
+    goodbyeChannelId: OTHER_CHANNEL,
+    goodbyeMessage: null,
+  };
+  const put = (body: object = {}, session = cookie) =>
+    request(app.getHttpServer())
+      .put(url)
+      .set('Cookie', session)
+      .send({ ...settings, ...body });
+  /** Faye, membre de MANAGED sans « Gérer le serveur », avec ces onglets. */
+  const fayeWith = (modules: string[]) => {
+    discord.getCurrentUserGuilds.mockResolvedValueOnce([
+      { id: MANAGED, name: 'Les Agents', icon: null, owner: false, permissions: '0' },
+    ]);
+    db.guildDelegate.findMany.mockResolvedValueOnce([{ ...delegateRow, modules }]);
+  };
+
+  it('lit les réglages, désactivés et vides par défaut, et crée la config au besoin', async () => {
+    const response = await request(app.getHttpServer()).get(url).set('Cookie', cookie);
+
+    expect(response.status).toBe(200);
+    expect(response.body).toEqual({
+      welcomeEnabled: false,
+      welcomeChannelId: null,
+      welcomeMessage: null,
+      welcomeRoleId: null,
+      goodbyeEnabled: false,
+      goodbyeChannelId: null,
+      goodbyeMessage: null,
+    });
+    expect(db.guildConfig.upsert).toHaveBeenCalledWith(
+      expect.objectContaining({
+        where: { guildId: MANAGED },
+        update: {},
+        create: expect.objectContaining({ guildId: MANAGED }),
+      }),
+    );
+  });
+
+  it('enregistre les sept réglages, puis prévient le bot', async () => {
+    const response = await put();
+
+    expect(response.status).toBe(200);
+    expect(response.body).toEqual(settings);
+    expect(db.guildConfig.upsert).toHaveBeenCalledWith(
+      expect.objectContaining({ where: { guildId: MANAGED }, update: settings }),
+    );
+    expect(redis.publish).toHaveBeenCalledWith(
+      'bot:events',
+      JSON.stringify({ type: 'config.updated', guildId: MANAGED }),
+    );
+  });
+
+  it('un message activé sans salon est refusé', async () => {
+    const response = await put({ welcomeChannelId: null });
+
+    expect(response.status).toBe(400);
+    expect(response.body.message).toEqual([
+      'welcomeChannelId: Choisis le salon des messages d’arrivée',
+    ]);
+    expect(db.guildConfig.upsert).not.toHaveBeenCalled();
+  });
+
+  it('refuse un salon ou un rôle inconnu du serveur', async () => {
+    const welcomeChannel = await put({ welcomeChannelId: '400000000000000099' });
+    const goodbyeChannel = await put({ goodbyeChannelId: '400000000000000099' });
+    const role = await put({ welcomeRoleId: '600000000000000099' });
+
+    expect(welcomeChannel.status).toBe(400);
+    expect(welcomeChannel.body.message).toBe('Salon inconnu sur ce serveur');
+    expect(goodbyeChannel.status).toBe(400);
+    expect(goodbyeChannel.body.message).toBe('Salon inconnu sur ce serveur');
+    expect(role.status).toBe(400);
+    expect(role.body.message).toBe('Rôle inconnu sur ce serveur');
+    expect(db.guildConfig.upsert).not.toHaveBeenCalled();
+  });
+
+  it('vérifie salon et rôle sur le serveur de l’adresse, pas sur un autre', async () => {
+    const FOREIGN_CHANNEL = '400000000000000777';
+    const FOREIGN_ROLE = '600000000000000777';
+    discord.getGuildChannels.mockImplementation(async (guildId?: string) =>
+      guildId === NOT_MANAGED
+        ? [{ id: FOREIGN_CHANNEL, type: 0, name: 'ailleurs', position: 0 }]
+        : [{ id: CHANNEL, type: 0, name: 'logs', position: 1 }],
+    );
+    discord.getGuildRoles.mockImplementation(async (guildId?: string) =>
+      guildId === NOT_MANAGED
+        ? [
+            {
+              id: FOREIGN_ROLE,
+              name: 'Ailleurs',
+              position: 1,
+              permissions: '0',
+              color: 0,
+              managed: false,
+            },
+          ]
+        : [
+            {
+              id: GAMER_ROLE,
+              name: 'Gamer',
+              position: 2,
+              permissions: '0',
+              color: 0,
+              managed: false,
+            },
+          ],
+    );
+
+    try {
+      const channel = await put({ goodbyeChannelId: FOREIGN_CHANNEL });
+      const role = await put({ goodbyeChannelId: CHANNEL, welcomeRoleId: FOREIGN_ROLE });
+
+      expect(channel.status).toBe(400);
+      expect(channel.body.message).toBe('Salon inconnu sur ce serveur');
+      expect(role.status).toBe(400);
+      expect(role.body.message).toBe('Rôle inconnu sur ce serveur');
+      expect(discord.getGuildChannels).toHaveBeenCalledWith(MANAGED);
+      expect(discord.getGuildChannels).not.toHaveBeenCalledWith(NOT_MANAGED);
+      expect(discord.getGuildRoles).not.toHaveBeenCalledWith(NOT_MANAGED);
+      expect(db.guildConfig.upsert).not.toHaveBeenCalled();
+    } finally {
+      discord.getGuildChannels.mockRestore();
+      discord.getGuildRoles.mockRestore();
+    }
+  });
+
+  it('refuse un rôle que le bot ne peut pas donner, avec la raison, sans rien écrire', async () => {
+    const staff = await put({ welcomeRoleId: MOD_ROLE });
+    const above = await put({ welcomeRoleId: '600000000000000003' });
+
+    expect(staff.status).toBe(400);
+    expect(staff.body.message).toBe(
+      'Le rôle « Modo » ne peut pas être distribué : Donne des droits de modération ou d’administration',
+    );
+    expect(above.status).toBe(400);
+    expect(above.body.message).toBe(
+      'Le rôle « Admin » ne peut pas être distribué : Placé au-dessus du rôle du bot',
+    );
+    expect(db.guildConfig.upsert).not.toHaveBeenCalled();
+    expect(db.guildConfig.update).not.toHaveBeenCalled();
+  });
+
+  it('refuse @everyone, comme rôle ou dans un message', async () => {
+    const role = await put({ welcomeRoleId: MANAGED });
+    const message = await put({ welcomeMessage: 'Salut @everyone' });
+
+    expect(role.status).toBe(400);
+    expect(role.body.message).toBe('Rôle inconnu sur ce serveur');
+    expect(message.status).toBe(400);
+    expect(db.guildConfig.upsert).not.toHaveBeenCalled();
+  });
+
+  it('un PUT avec staffRoleIds ou xpEnabled ne touche qu’aux réglages de bienvenue', async () => {
+    const response = await put({ staffRoleIds: [MOD_ROLE], xpEnabled: false });
+
+    expect(response.status).toBe(200);
+    const [args] = db.guildConfig.upsert.mock.calls.at(-1) as unknown as [
+      { update: object; create: Record<string, unknown> },
+    ];
+    expect(args.update).toEqual(settings);
+    expect(args.create).not.toHaveProperty('xpEnabled');
+    expect(args.create.staffRoleIds).toEqual([]);
+  });
+
+  it('demande une session', async () => {
+    const read = await request(app.getHttpServer()).get(url);
+    const write = await request(app.getHttpServer()).put(url).send(settings);
+
+    expect(read.status).toBe(401);
+    expect(write.status).toBe(401);
+  });
+
+  it('un délégué sans l’onglet Bienvenue est refusé', async () => {
+    fayeWith(['TD2']);
+
+    const read = await request(app.getHttpServer()).get(url).set('Cookie', faye);
+    const write = await put({}, faye);
+
+    expect(read.status).toBe(403);
+    expect(write.status).toBe(403);
+    expect(db.guildConfig.upsert).not.toHaveBeenCalled();
+  });
+
+  it('un délégué Bienvenue règle les messages, sans toucher au rôle d’arrivée', async () => {
+    fayeWith(['WELCOME']);
+
+    const response = await put({ welcomeRoleId: null }, faye);
+
+    expect(response.status).toBe(200);
+    expect(db.guildConfig.upsert).toHaveBeenCalledOnce();
+  });
+
+  it('un délégué Bienvenue seul ne peut pas changer le rôle d’arrivée', async () => {
+    fayeWith(['WELCOME']);
+
+    const response = await put({ welcomeRoleId: GAMER_ROLE }, faye);
+
+    expect(response.status).toBe(403);
+    expect(response.body.message).toBe(
+      'Seul un administrateur, ou un accès à l’onglet Rôles, peut changer le rôle d’arrivée',
+    );
+    expect(db.guildConfig.upsert).not.toHaveBeenCalled();
+  });
+
+  it('un délégué Bienvenue seul peut renvoyer le rôle d’arrivée déjà enregistré', async () => {
+    fayeWith(['WELCOME']);
+    db.guildConfig.findUnique.mockResolvedValueOnce({ welcomeRoleId: GAMER_ROLE });
+
+    const response = await put({ welcomeRoleId: GAMER_ROLE }, faye);
+
+    expect(response.status).toBe(200);
+    expect(db.guildConfig.findUnique).toHaveBeenCalledWith(
+      expect.objectContaining({ where: { guildId: MANAGED } }),
+    );
+  });
+
+  it('un délégué Bienvenue et Rôles peut changer le rôle d’arrivée', async () => {
+    fayeWith(['WELCOME', 'ROLES']);
+
+    const response = await put({ welcomeRoleId: GAMER_ROLE }, faye);
+
+    expect(response.status).toBe(200);
+    expect(response.body.welcomeRoleId).toBe(GAMER_ROLE);
   });
 });
 
