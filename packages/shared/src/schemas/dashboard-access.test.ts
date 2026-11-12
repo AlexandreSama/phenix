@@ -8,6 +8,12 @@ describe('guildDelegateInputSchema', () => {
     });
   });
 
+  it('accepte l’onglet Modération', () => {
+    expect(guildDelegateInputSchema.parse({ modules: ['MODERATION'] })).toEqual({
+      modules: ['MODERATION'],
+    });
+  });
+
   it('refuse une liste vide ou un onglet inconnu', () => {
     expect(guildDelegateInputSchema.safeParse({ modules: [] }).error?.issues[0]?.message).toBe(
       'Coche au moins un onglet',

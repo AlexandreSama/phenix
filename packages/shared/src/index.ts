@@ -12,6 +12,7 @@ export * from './schemas/forum.js';
 export * from './schemas/giveaways.js';
 export * from './schemas/guild-config.js';
 export * from './schemas/leveling.js';
+export * from './schemas/moderation.js';
 export * from './schemas/role-panel.js';
 export * from './schemas/td2.js';
 export * from './schemas/tickets.js';

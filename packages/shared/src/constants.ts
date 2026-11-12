@@ -113,6 +113,7 @@ export const DASHBOARD_MODULE_LABELS = {
   GIVEAWAYS: 'Giveaways',
   TD2: 'The Division 2',
   WELCOME: 'Bienvenue',
+  MODERATION: 'Modération',
 } as const;
 
 export type DashboardModuleKey = keyof typeof DASHBOARD_MODULE_LABELS;
@@ -133,6 +134,15 @@ export const CASE_TYPE_LABELS = {
 } as const;
 
 export type CaseTypeKey = keyof typeof CASE_TYPE_LABELS;
+
+/** Libellés du statut d'une sanction (« levée » comme dans le bot, jamais « révoquée »). */
+export const CASE_STATUS_LABELS = {
+  active: 'Active',
+  revoked: 'Levée',
+  ended: 'Terminée',
+} as const;
+
+export type CaseStatusKey = keyof typeof CASE_STATUS_LABELS;
 
 /**
  * Permissions demandées à l'invitation du bot, en entier Discord.
