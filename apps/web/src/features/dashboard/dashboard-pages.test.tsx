@@ -25,7 +25,16 @@ const API: Record<string, unknown> = {
       iconUrl: null,
       botPresent: true,
       access: 'admin',
-      modules: ['GENERAL', 'LEVELING', 'ROLES', 'TICKETS', 'GIVEAWAYS', 'TD2', 'WELCOME'],
+      modules: [
+        'GENERAL',
+        'LEVELING',
+        'ROLES',
+        'TICKETS',
+        'GIVEAWAYS',
+        'TD2',
+        'WELCOME',
+        'MODERATION',
+      ],
     },
   ],
   [`/api/guilds/${GUILD}/channels`]: [{ id: CHANNEL, name: 'général', parentName: 'Discussion' }],
@@ -121,6 +130,25 @@ const API: Record<string, unknown> = {
     goodbyeMessage: null,
   },
   [`/api/guilds/${GUILD}/tickets/settings`]: { settings: null },
+  [`/api/guilds/${GUILD}/moderation/cases?page=1`]: {
+    items: [
+      {
+        number: 12,
+        type: 'BAN',
+        status: 'active',
+        target: { id: '600000000000000001', name: 'Rook', avatarUrl: null },
+        moderator: { id: '600000000000000002', name: 'Modo', avatarUrl: null },
+        reason: 'Spam dans #général',
+        createdAt: '2026-11-10T18:00:00.000Z',
+        expiresAt: null,
+        revokedAt: null,
+        revokedBy: null,
+      },
+    ],
+    total: 1,
+    page: 1,
+    pageSize: 20,
+  },
   [`/api/guilds/${GUILD}/delegates`]: [],
   [`/api/guilds/${GUILD}/tickets?status=open&page=1`]: {
     tickets: [
@@ -196,6 +224,7 @@ describe('pages du tableau de bord', () => {
       () => screen.findByLabelText('Catégorie des tickets'),
     ],
     [`${base}/tickets/7`, 'Transcript', () => screen.findByTitle('Transcript du ticket')],
+    [`${base}/moderation`, 'Modération', () => screen.findByText('Spam dans #général')],
     [`${base}/acces`, 'Accès', () => screen.findByText('Personne n’a d’accès délégué')],
   ])('%s : « %s », chargée avec ses données', async (url, title, loaded) => {
     open(url);

@@ -14,4 +14,23 @@ export class CacheService {
     await this.redis.set(key, JSON.stringify(value), 'EX', seconds);
     return value;
   }
+
+  /** Plusieurs valeurs d'un coup (un seul aller-retour) ; null pour une clé absente ou illisible. */
+  async getMany<T>(keys: readonly string[]): Promise<(T | null)[]> {
+    if (keys.length === 0) return [];
+    const hits = await this.redis.mget(...keys);
+    return hits.map((hit) => {
+      if (!hit) return null;
+      try {
+        return JSON.parse(hit) as T;
+      } catch {
+        return null;
+      }
+    });
+  }
+
+  /** Garde la valeur `seconds` secondes. */
+  async put(key: string, value: unknown, seconds: number): Promise<void> {
+    await this.redis.set(key, JSON.stringify(value), 'EX', seconds);
+  }
 }

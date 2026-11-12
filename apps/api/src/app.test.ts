@@ -53,6 +53,7 @@ const DELEGATE_SESSION_ID = 'd'.repeat(43);
 const store = new Map<string, string>();
 const redis = {
   get: vi.fn(async (key: string) => store.get(key) ?? null),
+  mget: vi.fn(async (...keys: string[]) => keys.map((key) => store.get(key) ?? null)),
   set: vi.fn(async (key: string, value: string) => void store.set(key, value)),
   del: vi.fn(async (key: string) => Number(store.delete(key))),
   publish: vi.fn(async (_channel: string, _message: string) => 1),
@@ -138,6 +139,22 @@ const ticketPanel = {
   buttonLabel: 'Ouvrir un ticket',
   publishedAt: new Date(),
   publishError: null,
+};
+/** Un avertissement de MANAGED : la cible et le modérateur n'ont que leur identifiant en base. */
+const MOD_TARGET = '500000000000000001';
+const MOD_MODERATOR = '500000000000000002';
+const modCase = {
+  id: 1,
+  guildId: MANAGED,
+  number: 7,
+  type: 'WARN' as string,
+  targetId: MOD_TARGET,
+  moderatorId: MOD_MODERATOR,
+  reason: 'Spam dans #général',
+  expiresAt: null as Date | null,
+  revokedAt: null,
+  revokedById: null,
+  createdAt: new Date('2026-11-09T12:00:00Z'),
 };
 /** Un giveaway en cours dans CHANNEL, publié, avec 3 participants. */
 const giveaway = {
@@ -458,6 +475,12 @@ const db = {
     findMany: vi.fn(async () => [ticket]),
     findUnique: vi.fn(async () => ticket as typeof ticket | null),
   },
+  case: {
+    findMany: vi.fn(async (_args?: object) => [modCase]),
+    count: vi.fn(async () => 1),
+    groupBy: vi.fn(async (_args?: object) => [{ type: 'WARN', _count: { _all: 2 } }]),
+    findFirst: vi.fn(async () => null as object | null),
+  },
   ticketPanel: {
     findUnique: vi.fn(async () => ticketPanel as typeof ticketPanel | null),
     upsert: vi.fn(async ({ update }: { update: object }) => ({ ...ticketPanel, ...update })),
@@ -553,6 +576,12 @@ const discord = {
       } | null,
   ),
   createInvite: vi.fn(async () => 'agents'),
+  getUser: vi.fn(async (id: string) => ({
+    id,
+    username: `membre${id.slice(-2)}`,
+    global_name: null,
+    avatar: null,
+  })),
 };
 
 /** L'erreur que Discord renvoie quand le bot n'a pas une permission. */
@@ -1287,7 +1316,16 @@ describe('accès délégués', () => {
     expect(response.body[0]).toMatchObject({
       id: MANAGED,
       access: 'admin',
-      modules: ['GENERAL', 'LEVELING', 'ROLES', 'TICKETS', 'GIVEAWAYS', 'TD2', 'WELCOME'],
+      modules: [
+        'GENERAL',
+        'LEVELING',
+        'ROLES',
+        'TICKETS',
+        'GIVEAWAYS',
+        'TD2',
+        'WELCOME',
+        'MODERATION',
+      ],
     });
   });
 
@@ -1654,6 +1692,199 @@ describe('bienvenue', () => {
 
     expect(response.status).toBe(200);
     expect(response.body.welcomeRoleId).toBe(GAMER_ROLE);
+  });
+});
+
+const asFayeWith = (modules: string[], path: string) => {
+  discord.getCurrentUserGuilds.mockResolvedValueOnce([
+    { id: MANAGED, name: 'Les Agents', icon: null, owner: false, permissions: '0' },
+  ]);
+  db.guildDelegate.findMany.mockResolvedValueOnce([{ ...delegateRow, modules }]);
+  return request(app.getHttpServer())
+    .get(`/api/guilds/${MANAGED}/moderation${path}`)
+    .set('Cookie', faye);
+};
+
+describe('modération', () => {
+  const cases = (query = '') =>
+    request(app.getHttpServer())
+      .get(`/api/guilds/${MANAGED}/moderation/cases${query}`)
+      .set('Cookie', cookie);
+
+  it('veut une session', async () => {
+    const response = await request(app.getHttpServer()).get(
+      `/api/guilds/${MANAGED}/moderation/cases`,
+    );
+
+    expect(response.status).toBe(401);
+  });
+
+  it('refuse un délégué à qui l’onglet n’a pas été ouvert, l’accepte avec Modération', async () => {
+    expect((await asFayeWith(['TD2'], '/cases')).status).toBe(403);
+    expect((await asFayeWith(['MODERATION'], '/cases')).status).toBe(200);
+  });
+
+  it('refuse un serveur que l’utilisateur ne gère pas', async () => {
+    const response = await request(app.getHttpServer())
+      .get(`/api/guilds/${NOT_MANAGED}/moderation/cases`)
+      .set('Cookie', cookie);
+
+    expect(response.status).toBe(403);
+    expect(db.case.findMany).not.toHaveBeenCalled();
+  });
+
+  it('liste les sanctions avec les noms, la page est de 20 sanctions, celles de ce serveur', async () => {
+    const response = await cases('?pageSize=1000');
+
+    expect(response.status).toBe(200);
+    expect(response.body).toEqual({
+      items: [
+        {
+          number: 7,
+          type: 'WARN',
+          status: 'active',
+          target: { id: MOD_TARGET, name: 'membre01', avatarUrl: null },
+          moderator: { id: MOD_MODERATOR, name: 'membre02', avatarUrl: null },
+          reason: 'Spam dans #général',
+          createdAt: '2026-11-09T12:00:00.000Z',
+          expiresAt: null,
+          revokedAt: null,
+          revokedBy: null,
+        },
+      ],
+      total: 1,
+      page: 1,
+      pageSize: 20,
+    });
+    const args = db.case.findMany.mock.calls[0]?.[0] as unknown as {
+      where: { AND: object[] };
+      take: number;
+    };
+    expect(args.where.AND[0]).toEqual({ guildId: MANAGED });
+    expect(args.take).toBe(20);
+  });
+
+  it('transmet les filtres lus dans l’URL à la requête, en gardant ce serveur', async () => {
+    const response = await cases(
+      `?type=BAN&status=active&moderatorId=${MOD_MODERATOR}&targetId=${MOD_TARGET}&q=spam&from=2026-11-01&to=2026-11-09&page=2`,
+    );
+
+    expect(response.status).toBe(200);
+    const args = db.case.findMany.mock.calls[0]?.[0] as unknown as {
+      where: { AND: Record<string, unknown>[] };
+      skip: number;
+      take: number;
+    };
+    expect(args.skip).toBe(20);
+    expect(args.take).toBe(20);
+    expect(args.where.AND[0]).toEqual({ guildId: MANAGED });
+    expect(args.where.AND[1]).toEqual({
+      type: 'BAN',
+      moderatorId: MOD_MODERATOR,
+      targetId: MOD_TARGET,
+      createdAt: {
+        gte: new Date('2026-11-01T00:00:00.000Z'),
+        lte: new Date('2026-11-09T23:59:59.999Z'),
+      },
+    });
+    // la clause de statut, puis celle de la recherche (la raison, sans tenir compte de la casse)
+    expect(args.where.AND[2]).toMatchObject({ revokedAt: null });
+    expect(args.where.AND[3]).toEqual({ reason: { contains: 'spam', mode: 'insensitive' } });
+  });
+
+  it.each(['?page=0', '?type=NOPE', '?status=x', '?targetId=12', '?from=2026-02-30'])(
+    'refuse le filtre invalide %s',
+    async (query) => {
+      expect((await cases(query)).status).toBe(400);
+      expect(db.case.findMany).not.toHaveBeenCalled();
+    },
+  );
+
+  it('affiche l’identifiant si Discord ne répond pas, la liste reste servie', async () => {
+    discord.getUser.mockRejectedValue(new Error('503'));
+
+    const response = await cases();
+
+    discord.getUser.mockImplementation(async (id: string) => ({
+      id,
+      username: `membre${id.slice(-2)}`,
+      global_name: null,
+      avatar: null,
+    }));
+    expect(response.status).toBe(200);
+    expect(response.body.items[0].target).toEqual({
+      id: MOD_TARGET,
+      name: MOD_TARGET,
+      avatarUrl: null,
+    });
+  });
+
+  it('sert les noms déjà connus depuis le cache, sans rappeler Discord', async () => {
+    await cases();
+    expect(discord.getUser).toHaveBeenCalledTimes(2);
+
+    await cases();
+
+    expect(discord.getUser).toHaveBeenCalledTimes(2);
+  });
+
+  it('range la sanction d’une sourdine échue sous « Terminée »', async () => {
+    db.case.findMany.mockResolvedValueOnce([
+      { ...modCase, type: 'MUTE', expiresAt: new Date('2020-01-01T00:00:00Z') },
+    ]);
+
+    const response = await cases();
+
+    expect(response.body.items[0]).toMatchObject({ type: 'MUTE', status: 'ended' });
+  });
+
+  it('donne la fiche d’un membre : nom, compteurs, ce qui est encore actif', async () => {
+    db.case.count.mockResolvedValueOnce(2);
+    db.case.findFirst.mockResolvedValueOnce({
+      number: 9,
+      expiresAt: new Date('2099-01-01T00:00:00Z'),
+    });
+
+    const response = await request(app.getHttpServer())
+      .get(`/api/guilds/${MANAGED}/moderation/members/${MOD_TARGET}`)
+      .set('Cookie', cookie);
+
+    expect(response.status).toBe(200);
+    expect(response.body).toEqual({
+      user: { id: MOD_TARGET, name: 'membre01', avatarUrl: null },
+      total: 2,
+      byType: { WARN: 2, MUTE: 0, UNMUTE: 0, KICK: 0, BAN: 0, UNBAN: 0 },
+      activeWarns: 2,
+      activeMute: { number: 9, expiresAt: '2099-01-01T00:00:00.000Z' },
+      activeBan: null,
+    });
+    // jamais l'historique d'un autre serveur
+    expect(db.case.groupBy).toHaveBeenCalledWith(
+      expect.objectContaining({ where: { guildId: MANAGED, targetId: MOD_TARGET } }),
+    );
+  });
+
+  it('ne demande rien à Discord pour un membre sans aucune sanction sur ce serveur', async () => {
+    db.case.groupBy.mockResolvedValueOnce([]);
+    db.case.count.mockResolvedValueOnce(0);
+
+    const response = await request(app.getHttpServer())
+      .get(`/api/guilds/${MANAGED}/moderation/members/${MOD_TARGET}`)
+      .set('Cookie', cookie);
+
+    expect(response.status).toBe(200);
+    expect(response.body.user).toEqual({ id: MOD_TARGET, name: MOD_TARGET, avatarUrl: null });
+    expect(response.body.total).toBe(0);
+    expect(discord.getUser).not.toHaveBeenCalled();
+  });
+
+  it('répond 404 à un identifiant de membre qui n’en est pas un', async () => {
+    const response = await request(app.getHttpServer())
+      .get(`/api/guilds/${MANAGED}/moderation/members/abc`)
+      .set('Cookie', cookie);
+
+    expect(response.status).toBe(404);
+    expect(db.case.groupBy).not.toHaveBeenCalled();
   });
 });
 

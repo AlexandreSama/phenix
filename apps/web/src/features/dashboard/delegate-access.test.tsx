@@ -6,6 +6,7 @@ import { routeTree } from '../../router';
 
 const GUILD = '100000000000000001';
 const GUILD_WELCOME = '100000000000000002';
+const GUILD_MODERATION = '100000000000000003';
 
 /** Faye n'administre pas Les Agents : un admin lui a ouvert l'onglet TD2, et lui seul. */
 const API: Record<string, unknown> = {
@@ -33,7 +34,21 @@ const API: Record<string, unknown> = {
       access: 'delegate',
       modules: ['WELCOME'],
     },
+    {
+      id: GUILD_MODERATION,
+      name: 'Brigade Sigma',
+      iconUrl: null,
+      botPresent: true,
+      access: 'delegate',
+      modules: ['MODERATION'],
+    },
   ],
+  [`/api/guilds/${GUILD_MODERATION}/moderation/cases?page=1`]: {
+    items: [],
+    total: 0,
+    page: 1,
+    pageSize: 20,
+  },
   [`/api/guilds/${GUILD_WELCOME}/channels`]: [],
   [`/api/guilds/${GUILD_WELCOME}/roles`]: [],
   [`/api/guilds/${GUILD_WELCOME}/welcome`]: {
@@ -104,6 +119,24 @@ describe('accès délégué', () => {
     expect(tabs).toHaveLength(1);
     expect(tabs[0]?.textContent).toBe('Bienvenue');
     expect(tabs[0]?.getAttribute('href')).toBe(`/dashboard/${GUILD_WELCOME}/bienvenue`);
+  });
+
+  it('un délégué « Modération » voit cet onglet, et lui seul', async () => {
+    open(`/dashboard/${GUILD_MODERATION}/moderation`);
+
+    expect(await screen.findByRole('heading', { level: 2, name: 'Modération' })).toBeTruthy();
+    const nav = screen.getByRole('navigation', { name: 'Réglages du serveur' });
+    const tabs = within(nav).getAllByRole('link');
+    expect(tabs).toHaveLength(1);
+    expect(tabs[0]?.textContent).toBe('Modération');
+    expect(tabs[0]?.getAttribute('href')).toBe(`/dashboard/${GUILD_MODERATION}/moderation`);
+  });
+
+  it('refuse la modération à un délégué qui n’a pas reçu l’onglet', async () => {
+    open(`/dashboard/${GUILD}/moderation`);
+
+    expect(await screen.findByText('Cet onglet ne t’est pas ouvert')).toBeTruthy();
+    expect(requested().some((url) => url.includes('/moderation/'))).toBe(false);
   });
 
   it('un onglet fermé l’explique et mène au sien, sans rien demander à l’API', async () => {

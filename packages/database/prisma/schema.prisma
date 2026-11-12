@@ -89,6 +89,7 @@ enum DashboardModule {
   GIVEAWAYS
   TD2
   WELCOME
+  MODERATION
 }
 
 // un membre à qui un admin du serveur ouvre certains onglets du site
@@ -133,6 +134,8 @@ model Case {
 
   @@unique([guildId, number])
   @@index([guildId, targetId])
+  @@index([guildId, moderatorId]) // filtre « modérateur » de l'onglet Modération
+  @@index([guildId, createdAt]) // filtre par période
   @@index([type, expiresAt]) // bans temporaires à lever
 }
 

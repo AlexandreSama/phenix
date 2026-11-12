@@ -13,6 +13,7 @@ import {
   type RESTGetAPIGuildMemberResult,
   type RESTGetAPIGuildMembersSearchResult,
   type RESTGetAPIGuildRolesResult,
+  type RESTGetAPIUserResult,
   type RESTPostAPIChannelInviteJSONBody,
   type RESTPostAPIChannelInviteResult,
   type RESTPostOAuth2AccessTokenResult,
@@ -133,6 +134,11 @@ export class DiscordService {
       if (err instanceof DiscordAPIError && err.status === 404) return null;
       throw err;
     }
+  }
+
+  /** Le profil public d'un compte Discord, membre du serveur ou non (un banni, par exemple). */
+  async getUser(userId: string, signal?: AbortSignal): Promise<RESTGetAPIUserResult> {
+    return (await this.rest.get(Routes.user(userId), { signal })) as RESTGetAPIUserResult;
   }
 
   /**

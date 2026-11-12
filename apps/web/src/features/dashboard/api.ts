@@ -1,4 +1,7 @@
 import type {
+  CasePage,
+  CaseStatusKey,
+  CaseTypeKey,
   DashboardModuleKey,
   GeneralConfig,
   GeneralConfigPatch,
@@ -13,6 +16,7 @@ import type {
   LevelingConfig,
   LevelingConfigPatch,
   ManageableGuild,
+  MemberModeration,
   RolePanelDetail,
   RolePanelInput,
   RolePanelSummary,
@@ -303,3 +307,45 @@ export function useRemoveDelegate(guildId: string) {
     onSuccess: () => queryClient.invalidateQueries({ queryKey: delegatesQuery(guildId).queryKey }),
   });
 }
+
+/** Les filtres de la liste des sanctions, tels que l'adresse de la page les porte. */
+export interface CaseFilters {
+  type?: CaseTypeKey;
+  status?: CaseStatusKey;
+  moderatorId?: string;
+  targetId?: string;
+  q?: string;
+  /** AAAA-MM-JJ */
+  from?: string;
+  to?: string;
+}
+
+/** Les filtres posés, dans un ordre fixe, puis la page : une seule adresse par recherche. */
+function caseParams(filters: CaseFilters, page: number): string {
+  const params = new URLSearchParams();
+  for (const key of ['type', 'status', 'moderatorId', 'targetId', 'q', 'from', 'to'] as const) {
+    const value = filters[key];
+    if (value) params.set(key, value);
+  }
+  params.set('page', String(page));
+  return params.toString();
+}
+
+export const casesQuery = (guildId: string, filters: CaseFilters, page: number) =>
+  queryOptions({
+    queryKey: ['guilds', guildId, 'moderation', 'cases', filters, page],
+    queryFn: () =>
+      api<CasePage>(`/guilds/${guildId}/moderation/cases?${caseParams(filters, page)}`),
+    // Pendant le changement de page ou de filtre, la liste précédente reste affichée
+    placeholderData: keepPreviousData,
+    // Les sanctions se prennent sur Discord : la liste se rafraîchit seule
+    refetchInterval: 30_000,
+  });
+
+export const memberModerationQuery = (guildId: string, userId: string) =>
+  queryOptions({
+    queryKey: ['guilds', guildId, 'moderation', 'members', userId],
+    queryFn: () =>
+      api<MemberModeration>(`/guilds/${guildId}/moderation/members/${encodeURIComponent(userId)}`),
+    refetchInterval: 30_000,
+  });
