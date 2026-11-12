@@ -12,7 +12,7 @@ const guilds = (count: number): ManageableGuild[] =>
     iconUrl: null,
     botPresent: index % 2 === 0,
     access: 'admin',
-    modules: ['GENERAL', 'LEVELING', 'ROLES', 'TICKETS', 'GIVEAWAYS', 'TD2'],
+    modules: ['GENERAL', 'LEVELING', 'ROLES', 'TICKETS', 'GIVEAWAYS', 'TD2', 'WELCOME'],
   }));
 
 /** Les réponses successives de GET /api/guilds. */

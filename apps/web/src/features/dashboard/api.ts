@@ -23,6 +23,7 @@ import type {
   TicketSettings,
   TicketSettingsInput,
   TicketSettingsResponse,
+  WelcomeSettings,
 } from '@phenix/shared';
 import { keepPreviousData, queryOptions, useMutation, useQueryClient } from '@tanstack/react-query';
 import { api } from '../../lib/api';
@@ -82,6 +83,25 @@ export function useUpdateLeveling(guildId: string) {
       // Le classement public a pu changer de visibilité
       await queryClient.invalidateQueries({ queryKey: ['leaderboard', guildId] });
     },
+  });
+}
+
+export const welcomeQuery = (guildId: string) =>
+  queryOptions({
+    queryKey: ['guilds', guildId, 'welcome'],
+    queryFn: () => api<WelcomeSettings>(`/guilds/${guildId}/welcome`),
+  });
+
+export function useUpdateWelcome(guildId: string) {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (settings: WelcomeSettings) =>
+      api<WelcomeSettings>(`/guilds/${guildId}/welcome`, {
+        method: 'PUT',
+        body: JSON.stringify(settings),
+      }),
+    // La réponse est la config enregistrée : on la range directement dans le cache
+    onSuccess: (settings) => queryClient.setQueryData(welcomeQuery(guildId).queryKey, settings),
   });
 }
 

@@ -12,6 +12,7 @@ export type GuildTabPath =
   | '/dashboard/$guildId/tickets'
   | '/dashboard/$guildId/giveaways'
   | '/dashboard/$guildId/td2'
+  | '/dashboard/$guildId/bienvenue'
   | '/dashboard/$guildId/acces';
 
 export interface GuildTab {
@@ -38,6 +39,12 @@ export const GUILD_TABS: GuildTab[] = [
     short: 'TD2',
     icon: 'crosshair',
     module: 'TD2',
+  },
+  {
+    to: '/dashboard/$guildId/bienvenue',
+    label: DASHBOARD_MODULE_LABELS.WELCOME,
+    icon: 'users',
+    module: 'WELCOME',
   },
   { to: '/dashboard/$guildId/acces', label: 'Accès', icon: 'users', module: 'ADMIN' },
 ];

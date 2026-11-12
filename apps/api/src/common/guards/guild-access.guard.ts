@@ -8,7 +8,7 @@ import {
 import { Reflector } from '@nestjs/core';
 import type { DashboardModuleKey } from '@phenix/shared';
 import { GuildsService } from '../../modules/guilds/guilds.service.js';
-import type { AuthenticatedRequest } from '../request.js';
+import type { GuildRequest } from '../request.js';
 
 /** Un onglet du tableau de bord, ou 'ANY' : n'importe lequel (listes de salons et de rôles). */
 export type GuildModuleRequirement = DashboardModuleKey | 'ANY';
@@ -33,7 +33,7 @@ export class GuildAccessGuard implements CanActivate {
   ) {}
 
   async canActivate(context: ExecutionContext): Promise<boolean> {
-    const request = context.switchToHttp().getRequest<AuthenticatedRequest>();
+    const request = context.switchToHttp().getRequest<GuildRequest>();
     const guildId = request.params.guildId;
     if (typeof guildId !== 'string' || !/^\d{17,20}$/.test(guildId)) {
       throw new NotFoundException('Serveur introuvable');
@@ -43,7 +43,8 @@ export class GuildAccessGuard implements CanActivate {
       GUILD_MODULE,
       [context.getHandler(), context.getClass()],
     );
-    await this.guilds.assertAccess(request.auth, guildId, module);
+    // Gardé pour les routes qui distinguent administrateur et délégué (@CurrentGuildAccess)
+    request.guildAccess = await this.guilds.assertAccess(request.auth, guildId, module);
     return true;
   }
 }

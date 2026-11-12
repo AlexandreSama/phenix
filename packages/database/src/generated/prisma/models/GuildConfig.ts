@@ -55,6 +55,13 @@ export type GuildConfigMinAggregateOutputType = {
   td2ReportChannelId: string | null
   td2ReportFeedChannelId: string | null
   td2PublicListing: boolean | null
+  welcomeEnabled: boolean | null
+  welcomeChannelId: string | null
+  welcomeMessage: string | null
+  welcomeRoleId: string | null
+  goodbyeEnabled: boolean | null
+  goodbyeChannelId: string | null
+  goodbyeMessage: string | null
   updatedAt: Date | null
 }
 
@@ -75,6 +82,13 @@ export type GuildConfigMaxAggregateOutputType = {
   td2ReportChannelId: string | null
   td2ReportFeedChannelId: string | null
   td2PublicListing: boolean | null
+  welcomeEnabled: boolean | null
+  welcomeChannelId: string | null
+  welcomeMessage: string | null
+  welcomeRoleId: string | null
+  goodbyeEnabled: boolean | null
+  goodbyeChannelId: string | null
+  goodbyeMessage: string | null
   updatedAt: Date | null
 }
 
@@ -98,6 +112,13 @@ export type GuildConfigCountAggregateOutputType = {
   td2ReportViewerRoleIds: number
   td2ReportFeedChannelId: number
   td2PublicListing: number
+  welcomeEnabled: number
+  welcomeChannelId: number
+  welcomeMessage: number
+  welcomeRoleId: number
+  goodbyeEnabled: number
+  goodbyeChannelId: number
+  goodbyeMessage: number
   updatedAt: number
   _all: number
 }
@@ -132,6 +153,13 @@ export type GuildConfigMinAggregateInputType = {
   td2ReportChannelId?: true
   td2ReportFeedChannelId?: true
   td2PublicListing?: true
+  welcomeEnabled?: true
+  welcomeChannelId?: true
+  welcomeMessage?: true
+  welcomeRoleId?: true
+  goodbyeEnabled?: true
+  goodbyeChannelId?: true
+  goodbyeMessage?: true
   updatedAt?: true
 }
 
@@ -152,6 +180,13 @@ export type GuildConfigMaxAggregateInputType = {
   td2ReportChannelId?: true
   td2ReportFeedChannelId?: true
   td2PublicListing?: true
+  welcomeEnabled?: true
+  welcomeChannelId?: true
+  welcomeMessage?: true
+  welcomeRoleId?: true
+  goodbyeEnabled?: true
+  goodbyeChannelId?: true
+  goodbyeMessage?: true
   updatedAt?: true
 }
 
@@ -175,6 +210,13 @@ export type GuildConfigCountAggregateInputType = {
   td2ReportViewerRoleIds?: true
   td2ReportFeedChannelId?: true
   td2PublicListing?: true
+  welcomeEnabled?: true
+  welcomeChannelId?: true
+  welcomeMessage?: true
+  welcomeRoleId?: true
+  goodbyeEnabled?: true
+  goodbyeChannelId?: true
+  goodbyeMessage?: true
   updatedAt?: true
   _all?: true
 }
@@ -285,6 +327,13 @@ export type GuildConfigGroupByOutputType = {
   td2ReportViewerRoleIds: string[]
   td2ReportFeedChannelId: string | null
   td2PublicListing: boolean
+  welcomeEnabled: boolean
+  welcomeChannelId: string | null
+  welcomeMessage: string | null
+  welcomeRoleId: string | null
+  goodbyeEnabled: boolean
+  goodbyeChannelId: string | null
+  goodbyeMessage: string | null
   updatedAt: Date
   _count: GuildConfigCountAggregateOutputType | null
   _avg: GuildConfigAvgAggregateOutputType | null
@@ -331,6 +380,13 @@ export type GuildConfigWhereInput = {
   td2ReportViewerRoleIds?: Prisma.StringNullableListFilter<"GuildConfig">
   td2ReportFeedChannelId?: Prisma.StringNullableFilter<"GuildConfig"> | string | null
   td2PublicListing?: Prisma.BoolFilter<"GuildConfig"> | boolean
+  welcomeEnabled?: Prisma.BoolFilter<"GuildConfig"> | boolean
+  welcomeChannelId?: Prisma.StringNullableFilter<"GuildConfig"> | string | null
+  welcomeMessage?: Prisma.StringNullableFilter<"GuildConfig"> | string | null
+  welcomeRoleId?: Prisma.StringNullableFilter<"GuildConfig"> | string | null
+  goodbyeEnabled?: Prisma.BoolFilter<"GuildConfig"> | boolean
+  goodbyeChannelId?: Prisma.StringNullableFilter<"GuildConfig"> | string | null
+  goodbyeMessage?: Prisma.StringNullableFilter<"GuildConfig"> | string | null
   updatedAt?: Prisma.DateTimeFilter<"GuildConfig"> | Date | string
   guild?: Prisma.XOR<Prisma.GuildScalarRelationFilter, Prisma.GuildWhereInput>
 }
@@ -355,6 +411,13 @@ export type GuildConfigOrderByWithRelationInput = {
   td2ReportViewerRoleIds?: Prisma.SortOrder
   td2ReportFeedChannelId?: Prisma.SortOrderInput | Prisma.SortOrder
   td2PublicListing?: Prisma.SortOrder
+  welcomeEnabled?: Prisma.SortOrder
+  welcomeChannelId?: Prisma.SortOrderInput | Prisma.SortOrder
+  welcomeMessage?: Prisma.SortOrderInput | Prisma.SortOrder
+  welcomeRoleId?: Prisma.SortOrderInput | Prisma.SortOrder
+  goodbyeEnabled?: Prisma.SortOrder
+  goodbyeChannelId?: Prisma.SortOrderInput | Prisma.SortOrder
+  goodbyeMessage?: Prisma.SortOrderInput | Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
   guild?: Prisma.GuildOrderByWithRelationInput
 }
@@ -382,6 +445,13 @@ export type GuildConfigWhereUniqueInput = Prisma.AtLeast<{
   td2ReportViewerRoleIds?: Prisma.StringNullableListFilter<"GuildConfig">
   td2ReportFeedChannelId?: Prisma.StringNullableFilter<"GuildConfig"> | string | null
   td2PublicListing?: Prisma.BoolFilter<"GuildConfig"> | boolean
+  welcomeEnabled?: Prisma.BoolFilter<"GuildConfig"> | boolean
+  welcomeChannelId?: Prisma.StringNullableFilter<"GuildConfig"> | string | null
+  welcomeMessage?: Prisma.StringNullableFilter<"GuildConfig"> | string | null
+  welcomeRoleId?: Prisma.StringNullableFilter<"GuildConfig"> | string | null
+  goodbyeEnabled?: Prisma.BoolFilter<"GuildConfig"> | boolean
+  goodbyeChannelId?: Prisma.StringNullableFilter<"GuildConfig"> | string | null
+  goodbyeMessage?: Prisma.StringNullableFilter<"GuildConfig"> | string | null
   updatedAt?: Prisma.DateTimeFilter<"GuildConfig"> | Date | string
   guild?: Prisma.XOR<Prisma.GuildScalarRelationFilter, Prisma.GuildWhereInput>
 }, "guildId">
@@ -406,6 +476,13 @@ export type GuildConfigOrderByWithAggregationInput = {
   td2ReportViewerRoleIds?: Prisma.SortOrder
   td2ReportFeedChannelId?: Prisma.SortOrderInput | Prisma.SortOrder
   td2PublicListing?: Prisma.SortOrder
+  welcomeEnabled?: Prisma.SortOrder
+  welcomeChannelId?: Prisma.SortOrderInput | Prisma.SortOrder
+  welcomeMessage?: Prisma.SortOrderInput | Prisma.SortOrder
+  welcomeRoleId?: Prisma.SortOrderInput | Prisma.SortOrder
+  goodbyeEnabled?: Prisma.SortOrder
+  goodbyeChannelId?: Prisma.SortOrderInput | Prisma.SortOrder
+  goodbyeMessage?: Prisma.SortOrderInput | Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
   _count?: Prisma.GuildConfigCountOrderByAggregateInput
   _avg?: Prisma.GuildConfigAvgOrderByAggregateInput
@@ -437,6 +514,13 @@ export type GuildConfigScalarWhereWithAggregatesInput = {
   td2ReportViewerRoleIds?: Prisma.StringNullableListFilter<"GuildConfig">
   td2ReportFeedChannelId?: Prisma.StringNullableWithAggregatesFilter<"GuildConfig"> | string | null
   td2PublicListing?: Prisma.BoolWithAggregatesFilter<"GuildConfig"> | boolean
+  welcomeEnabled?: Prisma.BoolWithAggregatesFilter<"GuildConfig"> | boolean
+  welcomeChannelId?: Prisma.StringNullableWithAggregatesFilter<"GuildConfig"> | string | null
+  welcomeMessage?: Prisma.StringNullableWithAggregatesFilter<"GuildConfig"> | string | null
+  welcomeRoleId?: Prisma.StringNullableWithAggregatesFilter<"GuildConfig"> | string | null
+  goodbyeEnabled?: Prisma.BoolWithAggregatesFilter<"GuildConfig"> | boolean
+  goodbyeChannelId?: Prisma.StringNullableWithAggregatesFilter<"GuildConfig"> | string | null
+  goodbyeMessage?: Prisma.StringNullableWithAggregatesFilter<"GuildConfig"> | string | null
   updatedAt?: Prisma.DateTimeWithAggregatesFilter<"GuildConfig"> | Date | string
 }
 
@@ -459,6 +543,13 @@ export type GuildConfigCreateInput = {
   td2ReportViewerRoleIds?: Prisma.GuildConfigCreatetd2ReportViewerRoleIdsInput | string[]
   td2ReportFeedChannelId?: string | null
   td2PublicListing?: boolean
+  welcomeEnabled?: boolean
+  welcomeChannelId?: string | null
+  welcomeMessage?: string | null
+  welcomeRoleId?: string | null
+  goodbyeEnabled?: boolean
+  goodbyeChannelId?: string | null
+  goodbyeMessage?: string | null
   updatedAt?: Date | string
   guild: Prisma.GuildCreateNestedOneWithoutConfigInput
 }
@@ -483,6 +574,13 @@ export type GuildConfigUncheckedCreateInput = {
   td2ReportViewerRoleIds?: Prisma.GuildConfigCreatetd2ReportViewerRoleIdsInput | string[]
   td2ReportFeedChannelId?: string | null
   td2PublicListing?: boolean
+  welcomeEnabled?: boolean
+  welcomeChannelId?: string | null
+  welcomeMessage?: string | null
+  welcomeRoleId?: string | null
+  goodbyeEnabled?: boolean
+  goodbyeChannelId?: string | null
+  goodbyeMessage?: string | null
   updatedAt?: Date | string
 }
 
@@ -505,6 +603,13 @@ export type GuildConfigUpdateInput = {
   td2ReportViewerRoleIds?: Prisma.GuildConfigUpdatetd2ReportViewerRoleIdsInput | string[]
   td2ReportFeedChannelId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   td2PublicListing?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  welcomeEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  welcomeChannelId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  welcomeMessage?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  welcomeRoleId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  goodbyeEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  goodbyeChannelId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  goodbyeMessage?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   guild?: Prisma.GuildUpdateOneRequiredWithoutConfigNestedInput
 }
@@ -529,6 +634,13 @@ export type GuildConfigUncheckedUpdateInput = {
   td2ReportViewerRoleIds?: Prisma.GuildConfigUpdatetd2ReportViewerRoleIdsInput | string[]
   td2ReportFeedChannelId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   td2PublicListing?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  welcomeEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  welcomeChannelId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  welcomeMessage?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  welcomeRoleId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  goodbyeEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  goodbyeChannelId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  goodbyeMessage?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
 }
 
@@ -552,6 +664,13 @@ export type GuildConfigCreateManyInput = {
   td2ReportViewerRoleIds?: Prisma.GuildConfigCreatetd2ReportViewerRoleIdsInput | string[]
   td2ReportFeedChannelId?: string | null
   td2PublicListing?: boolean
+  welcomeEnabled?: boolean
+  welcomeChannelId?: string | null
+  welcomeMessage?: string | null
+  welcomeRoleId?: string | null
+  goodbyeEnabled?: boolean
+  goodbyeChannelId?: string | null
+  goodbyeMessage?: string | null
   updatedAt?: Date | string
 }
 
@@ -574,6 +693,13 @@ export type GuildConfigUpdateManyMutationInput = {
   td2ReportViewerRoleIds?: Prisma.GuildConfigUpdatetd2ReportViewerRoleIdsInput | string[]
   td2ReportFeedChannelId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   td2PublicListing?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  welcomeEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  welcomeChannelId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  welcomeMessage?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  welcomeRoleId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  goodbyeEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  goodbyeChannelId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  goodbyeMessage?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
 }
 
@@ -597,6 +723,13 @@ export type GuildConfigUncheckedUpdateManyInput = {
   td2ReportViewerRoleIds?: Prisma.GuildConfigUpdatetd2ReportViewerRoleIdsInput | string[]
   td2ReportFeedChannelId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   td2PublicListing?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  welcomeEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  welcomeChannelId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  welcomeMessage?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  welcomeRoleId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  goodbyeEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  goodbyeChannelId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  goodbyeMessage?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
 }
 
@@ -633,6 +766,13 @@ export type GuildConfigCountOrderByAggregateInput = {
   td2ReportViewerRoleIds?: Prisma.SortOrder
   td2ReportFeedChannelId?: Prisma.SortOrder
   td2PublicListing?: Prisma.SortOrder
+  welcomeEnabled?: Prisma.SortOrder
+  welcomeChannelId?: Prisma.SortOrder
+  welcomeMessage?: Prisma.SortOrder
+  welcomeRoleId?: Prisma.SortOrder
+  goodbyeEnabled?: Prisma.SortOrder
+  goodbyeChannelId?: Prisma.SortOrder
+  goodbyeMessage?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
 }
 
@@ -659,6 +799,13 @@ export type GuildConfigMaxOrderByAggregateInput = {
   td2ReportChannelId?: Prisma.SortOrder
   td2ReportFeedChannelId?: Prisma.SortOrder
   td2PublicListing?: Prisma.SortOrder
+  welcomeEnabled?: Prisma.SortOrder
+  welcomeChannelId?: Prisma.SortOrder
+  welcomeMessage?: Prisma.SortOrder
+  welcomeRoleId?: Prisma.SortOrder
+  goodbyeEnabled?: Prisma.SortOrder
+  goodbyeChannelId?: Prisma.SortOrder
+  goodbyeMessage?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
 }
 
@@ -679,6 +826,13 @@ export type GuildConfigMinOrderByAggregateInput = {
   td2ReportChannelId?: Prisma.SortOrder
   td2ReportFeedChannelId?: Prisma.SortOrder
   td2PublicListing?: Prisma.SortOrder
+  welcomeEnabled?: Prisma.SortOrder
+  welcomeChannelId?: Prisma.SortOrder
+  welcomeMessage?: Prisma.SortOrder
+  welcomeRoleId?: Prisma.SortOrder
+  goodbyeEnabled?: Prisma.SortOrder
+  goodbyeChannelId?: Prisma.SortOrder
+  goodbyeMessage?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
 }
 
@@ -770,6 +924,13 @@ export type GuildConfigCreateWithoutGuildInput = {
   td2ReportViewerRoleIds?: Prisma.GuildConfigCreatetd2ReportViewerRoleIdsInput | string[]
   td2ReportFeedChannelId?: string | null
   td2PublicListing?: boolean
+  welcomeEnabled?: boolean
+  welcomeChannelId?: string | null
+  welcomeMessage?: string | null
+  welcomeRoleId?: string | null
+  goodbyeEnabled?: boolean
+  goodbyeChannelId?: string | null
+  goodbyeMessage?: string | null
   updatedAt?: Date | string
 }
 
@@ -792,6 +953,13 @@ export type GuildConfigUncheckedCreateWithoutGuildInput = {
   td2ReportViewerRoleIds?: Prisma.GuildConfigCreatetd2ReportViewerRoleIdsInput | string[]
   td2ReportFeedChannelId?: string | null
   td2PublicListing?: boolean
+  welcomeEnabled?: boolean
+  welcomeChannelId?: string | null
+  welcomeMessage?: string | null
+  welcomeRoleId?: string | null
+  goodbyeEnabled?: boolean
+  goodbyeChannelId?: string | null
+  goodbyeMessage?: string | null
   updatedAt?: Date | string
 }
 
@@ -830,6 +998,13 @@ export type GuildConfigUpdateWithoutGuildInput = {
   td2ReportViewerRoleIds?: Prisma.GuildConfigUpdatetd2ReportViewerRoleIdsInput | string[]
   td2ReportFeedChannelId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   td2PublicListing?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  welcomeEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  welcomeChannelId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  welcomeMessage?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  welcomeRoleId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  goodbyeEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  goodbyeChannelId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  goodbyeMessage?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
 }
 
@@ -852,6 +1027,13 @@ export type GuildConfigUncheckedUpdateWithoutGuildInput = {
   td2ReportViewerRoleIds?: Prisma.GuildConfigUpdatetd2ReportViewerRoleIdsInput | string[]
   td2ReportFeedChannelId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   td2PublicListing?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  welcomeEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  welcomeChannelId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  welcomeMessage?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  welcomeRoleId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  goodbyeEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  goodbyeChannelId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  goodbyeMessage?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
 }
 
@@ -877,6 +1059,13 @@ export type GuildConfigSelect<ExtArgs extends runtime.Types.Extensions.InternalA
   td2ReportViewerRoleIds?: boolean
   td2ReportFeedChannelId?: boolean
   td2PublicListing?: boolean
+  welcomeEnabled?: boolean
+  welcomeChannelId?: boolean
+  welcomeMessage?: boolean
+  welcomeRoleId?: boolean
+  goodbyeEnabled?: boolean
+  goodbyeChannelId?: boolean
+  goodbyeMessage?: boolean
   updatedAt?: boolean
   guild?: boolean | Prisma.GuildDefaultArgs<ExtArgs>
 }, ExtArgs["result"]["guildConfig"]>
@@ -901,6 +1090,13 @@ export type GuildConfigSelectCreateManyAndReturn<ExtArgs extends runtime.Types.E
   td2ReportViewerRoleIds?: boolean
   td2ReportFeedChannelId?: boolean
   td2PublicListing?: boolean
+  welcomeEnabled?: boolean
+  welcomeChannelId?: boolean
+  welcomeMessage?: boolean
+  welcomeRoleId?: boolean
+  goodbyeEnabled?: boolean
+  goodbyeChannelId?: boolean
+  goodbyeMessage?: boolean
   updatedAt?: boolean
   guild?: boolean | Prisma.GuildDefaultArgs<ExtArgs>
 }, ExtArgs["result"]["guildConfig"]>
@@ -925,6 +1121,13 @@ export type GuildConfigSelectUpdateManyAndReturn<ExtArgs extends runtime.Types.E
   td2ReportViewerRoleIds?: boolean
   td2ReportFeedChannelId?: boolean
   td2PublicListing?: boolean
+  welcomeEnabled?: boolean
+  welcomeChannelId?: boolean
+  welcomeMessage?: boolean
+  welcomeRoleId?: boolean
+  goodbyeEnabled?: boolean
+  goodbyeChannelId?: boolean
+  goodbyeMessage?: boolean
   updatedAt?: boolean
   guild?: boolean | Prisma.GuildDefaultArgs<ExtArgs>
 }, ExtArgs["result"]["guildConfig"]>
@@ -949,10 +1152,17 @@ export type GuildConfigSelectScalar = {
   td2ReportViewerRoleIds?: boolean
   td2ReportFeedChannelId?: boolean
   td2PublicListing?: boolean
+  welcomeEnabled?: boolean
+  welcomeChannelId?: boolean
+  welcomeMessage?: boolean
+  welcomeRoleId?: boolean
+  goodbyeEnabled?: boolean
+  goodbyeChannelId?: boolean
+  goodbyeMessage?: boolean
   updatedAt?: boolean
 }
 
-export type GuildConfigOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"guildId" | "timezone" | "modLogChannelId" | "staffRoleIds" | "announceChannelId" | "xpEnabled" | "xpMin" | "xpMax" | "xpCooldownSec" | "levelUpChannelId" | "leaderboardPublic" | "ticketCategoryId" | "ticketStaffRoleIds" | "ticketLogChannelId" | "td2ChannelId" | "td2ReportChannelId" | "td2ReportViewerRoleIds" | "td2ReportFeedChannelId" | "td2PublicListing" | "updatedAt", ExtArgs["result"]["guildConfig"]>
+export type GuildConfigOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"guildId" | "timezone" | "modLogChannelId" | "staffRoleIds" | "announceChannelId" | "xpEnabled" | "xpMin" | "xpMax" | "xpCooldownSec" | "levelUpChannelId" | "leaderboardPublic" | "ticketCategoryId" | "ticketStaffRoleIds" | "ticketLogChannelId" | "td2ChannelId" | "td2ReportChannelId" | "td2ReportViewerRoleIds" | "td2ReportFeedChannelId" | "td2PublicListing" | "welcomeEnabled" | "welcomeChannelId" | "welcomeMessage" | "welcomeRoleId" | "goodbyeEnabled" | "goodbyeChannelId" | "goodbyeMessage" | "updatedAt", ExtArgs["result"]["guildConfig"]>
 export type GuildConfigInclude<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   guild?: boolean | Prisma.GuildDefaultArgs<ExtArgs>
 }
@@ -988,6 +1198,13 @@ export type $GuildConfigPayload<ExtArgs extends runtime.Types.Extensions.Interna
     td2ReportViewerRoleIds: string[]
     td2ReportFeedChannelId: string | null
     td2PublicListing: boolean
+    welcomeEnabled: boolean
+    welcomeChannelId: string | null
+    welcomeMessage: string | null
+    welcomeRoleId: string | null
+    goodbyeEnabled: boolean
+    goodbyeChannelId: string | null
+    goodbyeMessage: string | null
     updatedAt: Date
   }, ExtArgs["result"]["guildConfig"]>
   composites: {}
@@ -1432,6 +1649,13 @@ export interface GuildConfigFieldRefs {
   readonly td2ReportViewerRoleIds: Prisma.FieldRef<"GuildConfig", 'String[]'>
   readonly td2ReportFeedChannelId: Prisma.FieldRef<"GuildConfig", 'String'>
   readonly td2PublicListing: Prisma.FieldRef<"GuildConfig", 'Boolean'>
+  readonly welcomeEnabled: Prisma.FieldRef<"GuildConfig", 'Boolean'>
+  readonly welcomeChannelId: Prisma.FieldRef<"GuildConfig", 'String'>
+  readonly welcomeMessage: Prisma.FieldRef<"GuildConfig", 'String'>
+  readonly welcomeRoleId: Prisma.FieldRef<"GuildConfig", 'String'>
+  readonly goodbyeEnabled: Prisma.FieldRef<"GuildConfig", 'Boolean'>
+  readonly goodbyeChannelId: Prisma.FieldRef<"GuildConfig", 'String'>
+  readonly goodbyeMessage: Prisma.FieldRef<"GuildConfig", 'String'>
   readonly updatedAt: Prisma.FieldRef<"GuildConfig", 'DateTime'>
 }
     

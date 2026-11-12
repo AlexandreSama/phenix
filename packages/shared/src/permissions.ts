@@ -9,11 +9,21 @@ export const ROLE_PANEL_FORBIDDEN_PERMISSIONS = {
   Administrator: 1n << 3n,
   ManageChannels: 1n << 4n,
   ManageGuild: 1n << 5n,
+  ViewAuditLog: 1n << 7n,
   ManageMessages: 1n << 13n,
   MentionEveryone: 1n << 17n,
+  MuteMembers: 1n << 22n,
+  DeafenMembers: 1n << 23n,
+  MoveMembers: 1n << 24n,
+  ManageNicknames: 1n << 27n,
   ManageRoles: 1n << 28n,
   ManageWebhooks: 1n << 29n,
+  ManageGuildExpressions: 1n << 30n,
+  ManageEvents: 1n << 33n,
+  ManageThreads: 1n << 34n,
   ModerateMembers: 1n << 40n,
+  PinMessages: 1n << 51n,
+  BypassSlowmode: 1n << 52n,
 } as const;
 
 const FORBIDDEN_MASK = Object.values(ROLE_PANEL_FORBIDDEN_PERMISSIONS).reduce((a, b) => a | b, 0n);

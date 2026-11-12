@@ -25,7 +25,7 @@ const API: Record<string, unknown> = {
       iconUrl: null,
       botPresent: true,
       access: 'admin',
-      modules: ['GENERAL', 'LEVELING', 'ROLES', 'TICKETS', 'GIVEAWAYS', 'TD2'],
+      modules: ['GENERAL', 'LEVELING', 'ROLES', 'TICKETS', 'GIVEAWAYS', 'TD2', 'WELCOME'],
     },
   ],
   [`/api/guilds/${GUILD}/channels`]: [{ id: CHANNEL, name: 'général', parentName: 'Discussion' }],
@@ -111,6 +111,15 @@ const API: Record<string, unknown> = {
       reserve: 1,
     },
   ],
+  [`/api/guilds/${GUILD}/welcome`]: {
+    welcomeEnabled: false,
+    welcomeChannelId: null,
+    welcomeMessage: null,
+    welcomeRoleId: null,
+    goodbyeEnabled: false,
+    goodbyeChannelId: null,
+    goodbyeMessage: null,
+  },
   [`/api/guilds/${GUILD}/tickets/settings`]: { settings: null },
   [`/api/guilds/${GUILD}/delegates`]: [],
   [`/api/guilds/${GUILD}/tickets?status=open&page=1`]: {
@@ -175,6 +184,11 @@ describe('pages du tableau de bord', () => {
     [`${base}/giveaways`, 'Giveaways', () => screen.findByText('Nitro 1 mois')],
     [`${base}/giveaways/nouveau`, 'Nouveau giveaway', () => screen.findByLabelText('Lot')],
     [`${base}/td2`, 'The Division 2', () => screen.findByText('Raid Dark Hours · Normal')],
+    [
+      `${base}/bienvenue`,
+      'Bienvenue',
+      () => screen.findByRole('switch', { name: /message d’arrivée/ }),
+    ],
     [`${base}/tickets`, 'Tickets', () => screen.findByText('Rook')],
     [
       `${base}/tickets/reglages`,
@@ -198,8 +212,11 @@ describe('pages du tableau de bord', () => {
     const nav = screen.getByRole('navigation', { name: 'Réglages du serveur' });
     const current = within(nav).getByRole('link', { current: 'page' });
     expect(current.textContent).toBe('Tickets');
-    // Un administrateur voit tous les onglets, et l'onglet Accès en dernier
-    expect(within(nav).getAllByRole('link').at(-1)?.textContent).toBe('Accès');
+    // Un administrateur voit tous les onglets, « Bienvenue » puis l'onglet Accès en dernier
+    const labels = within(nav)
+      .getAllByRole('link')
+      .map((link) => link.textContent);
+    expect(labels.slice(-2)).toEqual(['Bienvenue', 'Accès']);
   });
 
   it('propose de régler les tickets tant que rien ne l’est', async () => {

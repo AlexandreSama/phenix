@@ -25,7 +25,7 @@ const grant = (
   guildId: string,
   userId: string,
   username: string,
-  modules: ('TD2' | 'TICKETS' | 'ROLES')[],
+  modules: ('TD2' | 'TICKETS' | 'ROLES' | 'WELCOME')[],
 ) =>
   saveGuildDelegate(prisma, {
     guildId,
@@ -46,6 +46,15 @@ describe('délégations', () => {
     const updated = await grant(guildId, 'u1', 'Faye (renommée)', ['TICKETS', 'TD2', 'TICKETS']);
     expect(updated).toMatchObject({ username: 'Faye (renommée)', modules: ['TICKETS', 'TD2'] });
     expect(await findDelegatedModules(prisma, guildId, 'u2')).toBe(null);
+  });
+
+  it('peut donner l’onglet Bienvenue', async () => {
+    const guildId = await newGuild();
+
+    const saved = await grant(guildId, 'u1', 'Faye', ['WELCOME']);
+
+    expect(saved.modules).toEqual(['WELCOME']);
+    expect(await findDelegatedModules(prisma, guildId, 'u1')).toEqual(['WELCOME']);
   });
 
   it('liste les membres d’un serveur par pseudo, et les serveurs d’un membre', async () => {

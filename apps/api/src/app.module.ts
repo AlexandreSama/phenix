@@ -14,6 +14,7 @@ import { LevelingModule } from './modules/leveling/leveling.module.js';
 import { RolePanelsModule } from './modules/role-panels/role-panels.module.js';
 import { Td2Module } from './modules/td2/td2.module.js';
 import { TicketsModule } from './modules/tickets/tickets.module.js';
+import { WelcomeModule } from './modules/welcome/welcome.module.js';
 
 @Module({})
 export class AppModule {
@@ -42,6 +43,7 @@ export class AppModule {
         TicketsModule,
         GiveawaysModule,
         Td2Module,
+        WelcomeModule,
         ForumModule,
         AdminModule,
       ],

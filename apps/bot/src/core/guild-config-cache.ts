@@ -20,6 +20,13 @@ export type GuildSettings = Pick<
   | 'td2ReportChannelId'
   | 'td2ReportViewerRoleIds'
   | 'td2ReportFeedChannelId'
+  | 'welcomeEnabled'
+  | 'welcomeChannelId'
+  | 'welcomeMessage'
+  | 'welcomeRoleId'
+  | 'goodbyeEnabled'
+  | 'goodbyeChannelId'
+  | 'goodbyeMessage'
 >;
 
 export interface GuildConfigCache {
@@ -49,6 +56,13 @@ const SELECT = {
   td2ReportChannelId: true,
   td2ReportViewerRoleIds: true,
   td2ReportFeedChannelId: true,
+  welcomeEnabled: true,
+  welcomeChannelId: true,
+  welcomeMessage: true,
+  welcomeRoleId: true,
+  goodbyeEnabled: true,
+  goodbyeChannelId: true,
+  goodbyeMessage: true,
 } satisfies Record<keyof GuildSettings, true>;
 
 /**

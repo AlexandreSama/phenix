@@ -112,6 +112,7 @@ export const DASHBOARD_MODULE_LABELS = {
   TICKETS: 'Tickets',
   GIVEAWAYS: 'Giveaways',
   TD2: 'The Division 2',
+  WELCOME: 'Bienvenue',
 } as const;
 
 export type DashboardModuleKey = keyof typeof DASHBOARD_MODULE_LABELS;

@@ -69,6 +69,13 @@ model GuildConfig {
   td2ReportViewerRoleIds String[] // rôles autorisés à consulter les signalements
   td2ReportFeedChannelId String? // fil des signalements confirmés du réseau
   td2PublicListing       Boolean  @default(false) // sorties visibles sur la page publique /sorties
+  welcomeEnabled         Boolean  @default(false) // message d'arrivée (et rôle d'arrivée) actif
+  welcomeChannelId       String? // salon du message d'arrivée ; obligatoire si activé
+  welcomeMessage         String? // vide = texte par défaut (WELCOME_DEFAULTS.welcomeMessage)
+  welcomeRoleId          String? // rôle donné à chaque nouveau membre, indépendamment du message d'arrivée ; null = aucun
+  goodbyeEnabled         Boolean  @default(false) // message de départ actif
+  goodbyeChannelId       String? // salon du message de départ ; obligatoire si activé
+  goodbyeMessage         String? // vide = texte par défaut (WELCOME_DEFAULTS.goodbyeMessage)
   updatedAt              DateTime @updatedAt
 }
 
@@ -81,6 +88,7 @@ enum DashboardModule {
   TICKETS
   GIVEAWAYS
   TD2
+  WELCOME
 }
 
 // un membre à qui un admin du serveur ouvre certains onglets du site

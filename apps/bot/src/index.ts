@@ -19,7 +19,7 @@ import {
   createGarageAdminFromEnv,
   createTranscriptStorage,
 } from '@phenix/storage';
-import { createClient } from './client.js';
+import { createClient, createShardDisconnectHandler } from './client.js';
 import { commands, ownerCommands } from './commands.js';
 import { createDbCommandUsageRecorder } from './core/command-usage.js';
 import type { BotContext } from './core/context.js';
@@ -59,6 +59,12 @@ import {
   publishPendingTicketPanels,
   ticketComponents,
 } from './modules/tickets/index.js';
+import {
+  createMemberAddHandler,
+  createMemberRemoveHandler,
+  createMemberUpdateHandler,
+  createWelcomeDeps,
+} from './modules/welcome/index.js';
 
 const env = loadEnv();
 const client = createClient();
@@ -165,6 +171,15 @@ client.on(
 
 client.on(Events.MessageCreate, createMessageXpHandler(context));
 client.on(Events.ChannelDelete, createTicketChannelDeleteHandler(prisma, logger));
+
+// Bienvenue / au-revoir : arrivées, départs et fin de la vérification Discord (pending)
+const welcome = createWelcomeDeps({ configs, logger });
+client.on(Events.GuildMemberAdd, createMemberAddHandler(welcome));
+client.on(Events.GuildMemberRemove, createMemberRemoveHandler(welcome));
+client.on(Events.GuildMemberUpdate, createMemberUpdateHandler(welcome));
+
+// Connexion fermée pour de bon par Discord (ex. 4014 : intent privilégié non activé)
+client.on(Events.ShardDisconnect, createShardDisconnectHandler(logger));
 
 client.once(Events.ClientReady, (ready) => {
   logger.info({ user: ready.user.tag, guilds: ready.guilds.cache.size }, 'Bot connecté');

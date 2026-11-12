@@ -141,6 +141,13 @@ export const GuildConfigScalarFieldEnum = {
   td2ReportViewerRoleIds: 'td2ReportViewerRoleIds',
   td2ReportFeedChannelId: 'td2ReportFeedChannelId',
   td2PublicListing: 'td2PublicListing',
+  welcomeEnabled: 'welcomeEnabled',
+  welcomeChannelId: 'welcomeChannelId',
+  welcomeMessage: 'welcomeMessage',
+  welcomeRoleId: 'welcomeRoleId',
+  goodbyeEnabled: 'goodbyeEnabled',
+  goodbyeChannelId: 'goodbyeChannelId',
+  goodbyeMessage: 'goodbyeMessage',
   updatedAt: 'updatedAt'
 } as const
 
