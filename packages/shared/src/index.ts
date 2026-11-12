@@ -6,6 +6,7 @@ export * from './events.js';
 export * from './forum.js';
 export * from './metrics.js';
 export * from './levels.js';
+export * from './moderation.js';
 export * from './permissions.js';
 export * from './schemas/dashboard-access.js';
 export * from './schemas/forum.js';

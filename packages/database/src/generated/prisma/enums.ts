@@ -44,6 +44,15 @@ export const CaseType = {
 export type CaseType = (typeof CaseType)[keyof typeof CaseType]
 
 
+export const RevocationSource = {
+  COMMAND: 'COMMAND',
+  SCHEDULE: 'SCHEDULE',
+  DASHBOARD: 'DASHBOARD'
+} as const
+
+export type RevocationSource = (typeof RevocationSource)[keyof typeof RevocationSource]
+
+
 export const TicketStatus = {
   OPEN: 'OPEN',
   CLOSED: 'CLOSED'

@@ -1,9 +1,10 @@
 import type { Case, CaseType } from '@phenix/database';
-import { BRAND, CASE_TYPE_LABELS } from '@phenix/shared';
+import { BRAND, CASE_TYPE_LABELS, NO_REASON } from '@phenix/shared';
 import { time, TimestampStyles, type ColorResolvable, type EmbedBuilder } from 'discord.js';
 import { baseEmbed, COLORS } from '../../core/embeds.js';
 
-export const NO_REASON = 'Aucune raison fournie';
+// Défini dans @phenix/shared : le site et le journal d'audit disent la même chose
+export { NO_REASON };
 
 /** Les libellés partagés couvrent bien tous les types de la base : TypeScript le vérifie ici. */
 const LABELS: Record<CaseType, string> = CASE_TYPE_LABELS;

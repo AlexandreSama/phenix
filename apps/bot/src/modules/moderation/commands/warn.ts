@@ -6,6 +6,7 @@ import { applySanction } from '../sanction.js';
 
 export const warn: SlashCommand = {
   category: 'moderation',
+  requiredPermissions: PermissionFlagsBits.ModerateMembers,
   data: new SlashCommandBuilder()
     .setName('warn')
     .setDescription('Donne un avertissement à un membre')

@@ -10,7 +10,13 @@ const context = { db: {}, logger } as unknown as BotContext;
 /** Fausse interaction de slash command, juste ce que le routeur lit. */
 function chatInput(
   commandName: string,
-  state: { deferred?: boolean; guildId?: string | null; subcommand?: string } = {},
+  state: {
+    deferred?: boolean;
+    guildId?: string | null;
+    subcommand?: string;
+    /** Les permissions du membre ; absent : le membre n'est pas connu (message privé) */
+    permissions?: bigint[];
+  } = {},
 ) {
   return {
     id: '1',
@@ -20,6 +26,9 @@ function chatInput(
       getSubcommandGroup: () => null,
       getSubcommand: () => state.subcommand ?? null,
     },
+    memberPermissions: state.permissions
+      ? { has: (flag: bigint) => state.permissions!.includes(flag) }
+      : null,
     deferred: state.deferred ?? false,
     replied: false,
     isChatInputCommand: () => true,
@@ -54,6 +63,80 @@ function command(name: string, execute: SlashCommand['execute']): SlashCommand {
     execute,
   };
 }
+
+describe('permissions requises par une commande', () => {
+  const BAN = 1n << 2n;
+  const withPermission = (execute: SlashCommand['execute']): SlashCommand => ({
+    ...command('ban', execute),
+    requiredPermissions: BAN,
+  });
+  const handler = (cmd: SlashCommand) =>
+    createInteractionHandler({
+      commands: new Map([[cmd.data.name, cmd]]),
+      components: new Map(),
+      context,
+    });
+
+  it('refuse, sans exécuter la commande, à qui n’a pas la permission', async () => {
+    const execute = vi.fn();
+    const interaction = chatInput('ban', { permissions: [1n << 1n] });
+
+    await handler(withPermission(execute))(interaction as unknown as Interaction);
+
+    expect(execute).not.toHaveBeenCalled();
+    expect(interaction.reply).toHaveBeenCalledWith({
+      content: expect.stringContaining('permission'),
+      flags: MessageFlags.Ephemeral,
+    });
+  });
+
+  it('exécute pour qui a la permission', async () => {
+    const execute = vi.fn();
+
+    await handler(withPermission(execute))(
+      chatInput('ban', { permissions: [BAN] }) as unknown as Interaction,
+    );
+
+    expect(execute).toHaveBeenCalledTimes(1);
+  });
+
+  it('refuse quand les permissions du membre ne sont pas connues (message privé)', async () => {
+    const execute = vi.fn();
+
+    await handler(withPermission(execute))(chatInput('ban') as unknown as Interaction);
+
+    expect(execute).not.toHaveBeenCalled();
+  });
+
+  it('l’autocomplétion respecte la permission : sans elle, aucune suggestion', async () => {
+    const autocomplete = vi.fn();
+    const respond = vi.fn();
+    const interaction = {
+      id: '3',
+      commandName: 'ban',
+      memberPermissions: { has: () => false },
+      isChatInputCommand: () => false,
+      isAutocomplete: () => true,
+      isMessageComponent: () => false,
+      isModalSubmit: () => false,
+      respond,
+    };
+    const cmd: SlashCommand = { ...withPermission(vi.fn()), autocomplete };
+
+    await handler(cmd)(interaction as unknown as Interaction);
+
+    expect(autocomplete).not.toHaveBeenCalled();
+    expect(respond).toHaveBeenCalledWith([]);
+  });
+
+  it('ne change rien pour une commande qui n’en demande pas', async () => {
+    const execute = vi.fn();
+
+    await handler(command('ping', execute))(chatInput('ping') as unknown as Interaction);
+
+    expect(execute).toHaveBeenCalledTimes(1);
+  });
+});
 
 describe('createInteractionHandler', () => {
   it('exécute la commande demandée', async () => {

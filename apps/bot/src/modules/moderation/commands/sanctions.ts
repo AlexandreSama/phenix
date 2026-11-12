@@ -14,6 +14,7 @@ const SHOWN = 15;
 
 export const sanctions: SlashCommand = {
   category: 'moderation',
+  requiredPermissions: PermissionFlagsBits.ModerateMembers,
   data: new SlashCommandBuilder()
     .setName('sanctions')
     .setDescription("Affiche l'historique des sanctions d'un membre")

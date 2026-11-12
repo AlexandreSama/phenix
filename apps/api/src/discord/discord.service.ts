@@ -10,6 +10,7 @@ import {
   type RESTGetAPICurrentUserGuildsResult,
   type RESTGetAPICurrentUserResult,
   type RESTGetAPIGuildChannelsResult,
+  type RESTGetAPIGuildResult,
   type RESTGetAPIGuildMemberResult,
   type RESTGetAPIGuildMembersSearchResult,
   type RESTGetAPIGuildRolesResult,
@@ -134,6 +135,24 @@ export class DiscordService {
       if (err instanceof DiscordAPIError && err.status === 404) return null;
       throw err;
     }
+  }
+
+  /** Le serveur lui-même : son propriétaire compte dans les garde-fous de modération. */
+  async getGuild(guildId: string): Promise<Pick<RESTGetAPIGuildResult, 'owner_id'>> {
+    return (await this.rest.get(Routes.guild(guildId))) as RESTGetAPIGuildResult;
+  }
+
+  /** Lève un bannissement ; `reason` va au journal d'audit du serveur. */
+  async removeGuildBan(guildId: string, userId: string, reason: string): Promise<void> {
+    await this.rest.delete(Routes.guildBan(guildId, userId), { reason });
+  }
+
+  /** Retire la sourdine (timeout) d'un membre. */
+  async clearMemberTimeout(guildId: string, userId: string, reason: string): Promise<void> {
+    await this.rest.patch(Routes.guildMember(guildId, userId), {
+      body: { communication_disabled_until: null },
+      reason,
+    });
   }
 
   /** Le profil public d'un compte Discord, membre du serveur ou non (un banni, par exemple). */

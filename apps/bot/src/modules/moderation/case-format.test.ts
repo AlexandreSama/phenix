@@ -18,6 +18,7 @@ function sanction(overrides: Partial<Case> = {}): Case {
     expiresAt: null,
     revokedAt: null,
     revokedById: null,
+    revokedVia: null,
     createdAt: hourAgo,
     ...overrides,
   };

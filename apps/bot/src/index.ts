@@ -39,7 +39,7 @@ import {
 } from './modules/giveaways/index.js';
 import { createMessageXpHandler, levelingComponents } from './modules/leveling/index.js';
 import { createMetricsProcessor } from './modules/metrics/index.js';
-import { startBanExpiry } from './modules/moderation/index.js';
+import { publishDashboardLog, startBanExpiry } from './modules/moderation/index.js';
 import {
   createRolePanelPublisher,
   publishPendingRolePanels,
@@ -147,6 +147,7 @@ const unsubscribe = subscribeToBotEvents(env.REDIS_URL, {
   rolePanels: createRolePanelPublisher(client, prisma, logger),
   ticketPanels: createTicketPanelPublisher(client, prisma, logger),
   removeTd2Report: (event) => removeReportStaffMessage(client, configs, event, logger),
+  logModeration: (event) => publishDashboardLog(client, context, event),
   logger,
 });
 let stopBanExpiry: (() => void) | undefined;

@@ -20,6 +20,7 @@ const subcommand =
 
 export const gestionrole: SlashCommand = {
   category: 'moderation',
+  requiredPermissions: PermissionFlagsBits.ManageRoles,
   data: new SlashCommandBuilder()
     .setName('gestionrole')
     .setDescription('Donne ou retire un rôle à un membre')

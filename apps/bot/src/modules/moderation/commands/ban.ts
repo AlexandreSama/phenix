@@ -9,6 +9,7 @@ export const BAN_MAX_MS = 365 * DAY_MS;
 
 export const ban: SlashCommand = {
   category: 'moderation',
+  requiredPermissions: PermissionFlagsBits.BanMembers,
   data: new SlashCommandBuilder()
     .setName('ban')
     .setDescription('Bannit un membre, pour un temps donné ou définitivement')

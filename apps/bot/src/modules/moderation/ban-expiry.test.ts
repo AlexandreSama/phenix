@@ -6,8 +6,7 @@ import { liftExpiredBans } from './ban-expiry.js';
 
 const database = vi.hoisted(() => ({
   findExpiredBans: vi.fn(),
-  revokeCases: vi.fn(),
-  createCase: vi.fn(),
+  liftSanction: vi.fn(),
 }));
 vi.mock('@phenix/database', () => database);
 
@@ -31,7 +30,10 @@ function setup(remove: () => Promise<unknown>) {
 beforeEach(() => {
   vi.clearAllMocks();
   database.findExpiredBans.mockResolvedValue([expiredBan]);
-  database.createCase.mockResolvedValue({ ...expiredBan, type: 'UNBAN', createdAt: new Date() });
+  database.liftSanction.mockResolvedValue({
+    revoked: 1,
+    record: { ...expiredBan, type: 'UNBAN', createdAt: new Date() },
+  });
 });
 
 describe('liftExpiredBans', () => {
@@ -44,14 +46,19 @@ describe('liftExpiredBans', () => {
       '222222222222222222',
       'Fin du bannissement temporaire (case #4)',
     );
-    expect(database.revokeCases).toHaveBeenCalledWith(
+    // une seule transaction, au nom du bot, notée « levée automatique »
+    expect(database.liftSanction).toHaveBeenCalledWith(
       context.db,
-      expect.objectContaining({ type: 'BAN', revokedById: '999999999999999999' }),
+      {
+        guildId: GUILD_ID,
+        guildName: 'Les Agents',
+        targetId: '222222222222222222',
+        type: 'BAN',
+        actorId: '999999999999999999',
+        reason: 'Fin du bannissement temporaire (case #4)',
+        via: 'SCHEDULE',
+      },
       expect.any(Date),
-    );
-    expect(database.createCase).toHaveBeenCalledWith(
-      context.db,
-      expect.objectContaining({ type: 'UNBAN', moderatorId: '999999999999999999' }),
     );
   });
 
@@ -67,15 +74,40 @@ describe('liftExpiredBans', () => {
     const { client, context } = setup(() => Promise.reject(unknownBan));
 
     expect(await liftExpiredBans(client, context)).toBe(1);
-    expect(database.revokeCases).toHaveBeenCalled();
+    expect(database.liftSanction).toHaveBeenCalled();
   });
 
   it('réessaiera plus tard si Discord refuse', async () => {
     const { client, context } = setup(() => Promise.reject(new Error('Missing Permissions')));
 
     expect(await liftExpiredBans(client, context)).toBe(0);
-    expect(database.revokeCases).not.toHaveBeenCalled();
+    expect(database.liftSanction).not.toHaveBeenCalled();
     expect(context.logger.warn).toHaveBeenCalled();
+  });
+
+  it('journalise le code de Discord, pas l’erreur : son adresse contient l’identifiant du banni', async () => {
+    const refused = new DiscordAPIError(
+      { message: 'Missing Permissions', code: RESTJSONErrorCodes.MissingPermissions },
+      RESTJSONErrorCodes.MissingPermissions,
+      403,
+      'DELETE',
+      '/guilds/111111111111111111/bans/222222222222222222',
+      {},
+    );
+    const { client, context } = setup(() => Promise.reject(refused));
+
+    await liftExpiredBans(client, context);
+
+    const logged = JSON.stringify(vi.mocked(context.logger.warn).mock.calls);
+    expect(logged).toContain(String(RESTJSONErrorCodes.MissingPermissions));
+    expect(logged).not.toContain('222222222222222222');
+  });
+
+  it('ne compte pas un ban déjà levé entre-temps (depuis le site ou une commande)', async () => {
+    database.liftSanction.mockResolvedValue({ revoked: 0, record: null });
+    const { client, context } = setup(async () => undefined);
+
+    expect(await liftExpiredBans(client, context)).toBe(0);
   });
 
   it('ne lit pas la base quand le bot n’est sur aucun serveur', async () => {

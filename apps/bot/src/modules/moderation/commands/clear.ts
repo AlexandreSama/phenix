@@ -10,6 +10,7 @@ import { actionEmbed, sendModLog } from '../modlog.js';
 
 export const clear: SlashCommand = {
   category: 'moderation',
+  requiredPermissions: PermissionFlagsBits.ManageMessages,
   data: new SlashCommandBuilder()
     .setName('clear')
     .setDescription('Supprime les derniers messages du salon')

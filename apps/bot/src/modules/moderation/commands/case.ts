@@ -11,6 +11,7 @@ import { refuse } from '../common.js';
 
 export const caseCommand: SlashCommand = {
   category: 'moderation',
+  requiredPermissions: PermissionFlagsBits.ModerateMembers,
   data: new SlashCommandBuilder()
     .setName('case')
     .setDescription("Affiche le détail d'une sanction")

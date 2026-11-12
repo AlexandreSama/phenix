@@ -1,5 +1,6 @@
 import 'reflect-metadata';
 import { DiscordAPIError } from '@discordjs/rest';
+import { Logger } from '@nestjs/common';
 import type { NestExpressApplication } from '@nestjs/platform-express';
 import { Test } from '@nestjs/testing';
 import { PrismaClient } from '@phenix/database';
@@ -480,6 +481,9 @@ const db = {
     count: vi.fn(async () => 1),
     groupBy: vi.fn(async (_args?: object) => [{ type: 'WARN', _count: { _all: 2 } }]),
     findFirst: vi.fn(async () => null as object | null),
+    findUnique: vi.fn(async (_args?: object) => modCase as typeof modCase | null),
+    updateMany: vi.fn(async (_args?: object) => ({ count: 1 })),
+    create: vi.fn(async ({ data }: { data: object }) => ({ ...modCase, id: 99, ...data })),
   },
   ticketPanel: {
     findUnique: vi.fn(async () => ticketPanel as typeof ticketPanel | null),
@@ -493,6 +497,7 @@ const db = {
       async () =>
         ({ id: MANAGED, name: 'Les Agents', config: { td2ChannelId: CHANNEL } }) as object | null,
     ),
+    upsert: vi.fn(async () => ({ caseCounter: 8 })),
   },
   guildConfig: {
     findUnique: vi.fn(async () => null as object | null),
@@ -576,6 +581,9 @@ const discord = {
       } | null,
   ),
   createInvite: vi.fn(async () => 'agents'),
+  getGuild: vi.fn(async () => ({ owner_id: '900000000000000099' })),
+  removeGuildBan: vi.fn(async (..._args: unknown[]) => {}),
+  clearMemberTimeout: vi.fn(async (..._args: unknown[]) => {}),
   getUser: vi.fn(async (id: string) => ({
     id,
     username: `membre${id.slice(-2)}`,
@@ -616,7 +624,7 @@ beforeAll(async () => {
     .useValue(giveawayQueue)
     .compile();
   app = moduleRef.createNestApplication<NestExpressApplication>();
-  configureApp(app);
+  configureApp(app, env.PUBLIC_URL);
   await app.init();
 });
 
@@ -636,6 +644,47 @@ beforeEach(() => {
     JSON.stringify({ userId: DELEGATE, accessToken: 'tok-faye' }),
   );
   vi.clearAllMocks();
+});
+
+describe('protection CSRF', () => {
+  it('refuse une écriture venue d’un autre site, avant toute route (403)', async () => {
+    const response = await request(app.getHttpServer())
+      .put(`/api/guilds/${MANAGED}/tickets/settings`)
+      .set('Cookie', cookie)
+      .set('Origin', 'https://evil.example')
+      .send({});
+
+    expect(response.status).toBe(403);
+    expect(db.ticketPanel.upsert).not.toHaveBeenCalled();
+  });
+
+  it('refuse aussi un formulaire d’un sous-domaine voisin (Sec-Fetch-Site: same-site)', async () => {
+    const response = await request(app.getHttpServer())
+      .post('/api/auth/logout')
+      .set('Cookie', cookie)
+      .set('Sec-Fetch-Site', 'same-site');
+
+    expect(response.status).toBe(403);
+    expect(store.has(`session:${SESSION_ID}`)).toBe(true);
+  });
+
+  it('laisse passer le site lui-même (Origin et Sec-Fetch-Site de PUBLIC_URL)', async () => {
+    const response = await request(app.getHttpServer())
+      .post('/api/auth/logout')
+      .set('Cookie', cookie)
+      .set('Origin', env.PUBLIC_URL)
+      .set('Sec-Fetch-Site', 'same-origin');
+
+    expect(response.status).not.toBe(403);
+  });
+
+  it('ne bloque pas une lecture venue d’ailleurs', async () => {
+    const response = await request(app.getHttpServer())
+      .get('/api/health')
+      .set('Origin', 'https://evil.example');
+
+    expect(response.status).toBe(200);
+  });
 });
 
 describe('connexion', () => {
@@ -1885,6 +1934,564 @@ describe('modération', () => {
 
     expect(response.status).toBe(404);
     expect(db.case.groupBy).not.toHaveBeenCalled();
+  });
+});
+
+/** Faye : déléguée de l'onglet, sans « Gérer le serveur » ; ce qu'elle peut vient de Discord. */
+const asDelegate = (permissions: bigint, over: object) => {
+  discord.getCurrentUserGuilds.mockResolvedValueOnce([
+    {
+      id: MANAGED,
+      name: 'Les Agents',
+      icon: null,
+      owner: false,
+      permissions: String(permissions),
+    },
+  ]);
+  db.guildDelegate.findMany.mockResolvedValueOnce([{ ...delegateRow, modules: ['MODERATION'] }]);
+  theCase(over);
+  return revoke(7, {}, faye);
+};
+
+// Les aides des tests de levée (hors du describe : elles ne dépendent de rien de lui)
+const revoke = (number = 7, body: object = {}, who = cookie) =>
+  request(app.getHttpServer())
+    .post(`/api/guilds/${MANAGED}/moderation/cases/${number}/revoke`)
+    .set('Cookie', who)
+    .send(body);
+/** L'utilisateur gère le serveur (32) et, en plus, a ces permissions Discord. */
+const withPermissions = (permissions: bigint) =>
+  discord.getCurrentUserGuilds.mockResolvedValueOnce([
+    {
+      id: MANAGED,
+      name: 'Les Agents',
+      icon: null,
+      owner: false,
+      permissions: String(permissions | 32n),
+    },
+  ]);
+const theCase = (over: object) =>
+  db.case.findUnique.mockResolvedValueOnce({ ...modCase, ...over } as typeof modCase);
+/** Le modérateur (« 1 ») puis la cible, dans l'ordre où l'API les demande. */
+const members = (actorRoles: string[], target: { roles: string[] } | null) => {
+  discord.getGuildMember.mockResolvedValueOnce({ roles: actorRoles, user: { id: '1' } } as never);
+  discord.getGuildMember.mockResolvedValueOnce(target as never);
+};
+const discordError = (code: number, status: number) =>
+  new DiscordAPIError({ code, message: 'x' }, code, status, 'PUT', '/guilds/1/bans/2', {
+    body: undefined,
+    files: undefined,
+  });
+const published = () => redis.publish.mock.calls.map(([, message]) => JSON.parse(message));
+/** Le filtre du premier updateMany : échoue clairement si la base n'a pas été appelée. */
+const updatedWhere = (): object => {
+  const call = db.case.updateMany.mock.calls[0];
+  expect(call).toBeDefined();
+  return (call![0] as { where: object }).where;
+};
+const untouched = () => {
+  expect(db.$transaction).not.toHaveBeenCalled();
+  expect(db.case.updateMany).not.toHaveBeenCalled();
+  expect(db.case.create).not.toHaveBeenCalled();
+  expect(published()).toEqual([]);
+};
+
+describe('levée d’une sanction depuis le site', () => {
+  const BAN_MEMBERS = 1n << 2n;
+  const MODERATE_MEMBERS = 1n << 40n;
+  const REASON = 'Erreur de modération';
+  const FUTURE = new Date('2099-01-01T00:00:00Z');
+
+  describe('abus', () => {
+    it('limite à 10 levées par minute et par compte : la 11e répond 429 sans interroger la base', async () => {
+      for (let i = 0; i < 10; i += 1) db.case.findUnique.mockResolvedValueOnce(null);
+      for (let i = 0; i < 10; i += 1) expect((await revoke(7)).status).toBe(404);
+
+      const response = await revoke(7);
+
+      expect(response.status).toBe(429);
+      expect(response.body.message).toContain('patiente');
+      expect(db.case.findUnique).toHaveBeenCalledTimes(10);
+      expect(discord.removeGuildBan).not.toHaveBeenCalled();
+      untouched();
+    });
+
+    it('limite aussi à 30 levées par minute pour tout un serveur', async () => {
+      store.set(`ratelimit:moderation-revoke:guild:${MANAGED}`, '30');
+
+      const response = await revoke(7);
+
+      expect(response.status).toBe(429);
+      expect(db.case.findUnique).not.toHaveBeenCalled();
+      untouched();
+    });
+
+    it('ne compte pas un refus d’accès : un délégué sans l’onglet ne remplit pas la limite du serveur', async () => {
+      discord.getCurrentUserGuilds.mockResolvedValueOnce([
+        { id: MANAGED, name: 'Les Agents', icon: null, owner: false, permissions: '0' },
+      ]);
+      db.guildDelegate.findMany.mockResolvedValueOnce([{ ...delegateRow, modules: ['TD2'] }]);
+
+      expect((await revoke(7, {}, faye)).status).toBe(403);
+
+      expect(store.get(`ratelimit:moderation-revoke:guild:${MANAGED}`)).toBeUndefined();
+    });
+
+    it.each([
+      ['un formulaire HTML (urlencoded)', 'form'],
+      ['du texte brut', 'text/plain'],
+    ])(
+      'n’accepte que du JSON : %s répond 415 (défense contre le CSRF par formulaire)',
+      async (_nom, type) => {
+        const response = await request(app.getHttpServer())
+          .post(`/api/guilds/${MANAGED}/moderation/cases/7/revoke`)
+          .set('Cookie', cookie)
+          .type(type)
+          .send('reason=Erreur');
+
+        expect(response.status).toBe(415);
+        expect(db.case.findUnique).not.toHaveBeenCalled();
+        untouched();
+      },
+    );
+  });
+
+  describe('accès', () => {
+    it('refuse un délégué à qui l’onglet n’a pas été ouvert', async () => {
+      discord.getCurrentUserGuilds.mockResolvedValueOnce([
+        { id: MANAGED, name: 'Les Agents', icon: null, owner: false, permissions: '0' },
+      ]);
+      db.guildDelegate.findMany.mockResolvedValueOnce([{ ...delegateRow, modules: ['TD2'] }]);
+
+      const response = await revoke(7, {}, faye);
+
+      expect(response.status).toBe(403);
+      untouched();
+    });
+
+    it('répond 404 pour une sanction inconnue ou d’un autre serveur', async () => {
+      db.case.findUnique.mockResolvedValueOnce(null);
+
+      const response = await revoke(7);
+
+      expect(response.status).toBe(404);
+      expect(db.case.findUnique).toHaveBeenCalledWith({
+        where: { guildId_number: { guildId: MANAGED, number: 7 } },
+      });
+      untouched();
+    });
+
+    it.each(['abc', '0', '-1', '1.5', '99999999999', '2147483648'])(
+      'répond 404 pour le numéro %s, sans interroger la base (pas de 500)',
+      async (number) => {
+        const response = await request(app.getHttpServer())
+          .post(`/api/guilds/${MANAGED}/moderation/cases/${number}/revoke`)
+          .set('Cookie', cookie)
+          .send({});
+
+        expect(response.status).toBe(404);
+        expect(db.case.findUnique).not.toHaveBeenCalled();
+        untouched();
+      },
+    );
+
+    it('refuse une raison de plus de 512 caractères', async () => {
+      expect((await revoke(7, { reason: 'x'.repeat(513) })).status).toBe(400);
+      untouched();
+    });
+  });
+
+  describe('délégué', () => {
+    it('l’onglet ne suffit pas : sans la permission Discord, refusé et rien n’est touché', async () => {
+      const response = await asDelegate(0n, { type: 'BAN' });
+
+      expect(response.status).toBe(403);
+      expect(discord.removeGuildBan).not.toHaveBeenCalled();
+      untouched();
+    });
+
+    it('avec la permission Discord « Bannir », il lève un ban', async () => {
+      expect((await asDelegate(BAN_MEMBERS, { type: 'BAN' })).status).toBe(200);
+    });
+
+    it('la permission d’un autre type ne suffit pas : « Bannir » ne lève pas une sourdine', async () => {
+      expect((await asDelegate(BAN_MEMBERS, { type: 'MUTE', expiresAt: FUTURE })).status).toBe(403);
+      untouched();
+    });
+  });
+
+  describe('ce qui ne peut pas être levé', () => {
+    it.each([
+      ['une expulsion', { type: 'KICK' }],
+      ['une fin de sourdine', { type: 'UNMUTE' }],
+      ['un débannissement', { type: 'UNBAN' }],
+      ['une sourdine déjà terminée', { type: 'MUTE', expiresAt: new Date('2020-01-01') }],
+    ])('refuse %s (409)', async (_nom, over) => {
+      withPermissions(MODERATE_MEMBERS | BAN_MEMBERS);
+      theCase(over);
+
+      expect((await revoke(7)).status).toBe(409);
+      expect(discord.removeGuildBan).not.toHaveBeenCalled();
+      expect(discord.clearMemberTimeout).not.toHaveBeenCalled();
+      untouched();
+    });
+
+    // Choix assumé (ADR-0004) : « déjà levée » se dit avant le contrôle de permission, c'est une
+    // information que la liste donne déjà à quiconque ouvre l'onglet
+    it('répond 200 « déjà levée » sans rien refaire', async () => {
+      theCase({ revokedAt: new Date('2026-11-10T10:00:00Z'), revokedById: '5' });
+
+      const response = await revoke(7);
+
+      expect(response.status).toBe(200);
+      expect(response.body).toEqual({ alreadyRevoked: true });
+      expect(discord.removeGuildBan).not.toHaveBeenCalled();
+      untouched();
+    });
+  });
+
+  describe('garde-fous', () => {
+    it('interdit de lever une sanction qui vise l’utilisateur lui-même', async () => {
+      withPermissions(BAN_MEMBERS);
+      theCase({ type: 'BAN', targetId: '1' });
+
+      expect((await revoke(7)).status).toBe(403);
+      expect(discord.removeGuildBan).not.toHaveBeenCalled();
+      untouched();
+    });
+
+    it('veut la permission Discord équivalente : « Bannir » pour un ban', async () => {
+      withPermissions(MODERATE_MEMBERS);
+      theCase({ type: 'BAN' });
+
+      const response = await revoke(7);
+
+      expect(response.status).toBe(403);
+      expect(discord.removeGuildBan).not.toHaveBeenCalled();
+      untouched();
+    });
+
+    it('veut « Exclure temporairement » pour un avertissement, sans appeler Discord', async () => {
+      withPermissions(BAN_MEMBERS);
+      theCase({ type: 'WARN' });
+
+      expect((await revoke(7)).status).toBe(403);
+      untouched();
+    });
+
+    it('refuse de lever la sourdine du bot lui-même', async () => {
+      withPermissions(MODERATE_MEMBERS);
+      theCase({ type: 'MUTE', expiresAt: FUTURE, targetId: env.DISCORD_CLIENT_ID });
+      members([MOD_ROLE], { roles: [] });
+
+      expect((await revoke(7)).status).toBe(403);
+      expect(discord.clearMemberTimeout).not.toHaveBeenCalled();
+      untouched();
+    });
+
+    it('un administrateur de Discord a toutes les permissions', async () => {
+      withPermissions(1n << 3n);
+      theCase({ type: 'BAN' });
+
+      expect((await revoke(7)).status).toBe(200);
+    });
+
+    it('le propriétaire du serveur aussi', async () => {
+      discord.getCurrentUserGuilds.mockResolvedValueOnce([
+        { id: MANAGED, name: 'Les Agents', icon: null, owner: true, permissions: '0' },
+      ]);
+      theCase({ type: 'BAN' });
+
+      expect((await revoke(7)).status).toBe(200);
+    });
+  });
+
+  describe('lever un bannissement', () => {
+    beforeEach(() => {
+      withPermissions(BAN_MEMBERS);
+      theCase({ type: 'BAN', reason: 'Spam' });
+    });
+
+    it('agit sur Discord AVANT la base, au nom de l’utilisateur, puis prévient le bot', async () => {
+      db.user.findUnique.mockResolvedValueOnce({ username: 'Faye' });
+
+      const response = await revoke(7, { reason: REASON });
+
+      expect(response.status).toBe(200);
+      expect(response.body).toEqual({ alreadyRevoked: false });
+      expect(discord.removeGuildBan).toHaveBeenCalledWith(
+        MANAGED,
+        MOD_TARGET,
+        `Faye (tableau de bord) : ${REASON}`,
+      );
+      expect(discord.removeGuildBan.mock.invocationCallOrder[0]).toBeLessThan(
+        db.case.updateMany.mock.invocationCallOrder[0]!,
+      );
+      expect(db.case.updateMany).toHaveBeenCalledWith(
+        expect.objectContaining({
+          where: expect.objectContaining({ guildId: MANAGED, targetId: MOD_TARGET }),
+          data: expect.objectContaining({ revokedById: '1', revokedVia: 'DASHBOARD' }),
+        }),
+      );
+      // Discord n'a qu'un ban par personne : on lève toutes les sanctions actives de ce type, pas
+      // seulement celle-ci (un /ban qui prolonge en a pu créer une plus récente entre-temps)
+      expect(updatedWhere()).not.toHaveProperty('number');
+      expect(db.case.create).toHaveBeenCalledWith({
+        data: expect.objectContaining({ type: 'UNBAN', moderatorId: '1', reason: REASON }),
+      });
+      // seulement des identifiants : ni la raison ni un pseudo
+      expect(published()).toEqual([{ type: 'moderation.logged', guildId: MANAGED, caseId: 99 }]);
+    });
+
+    it('un ban déjà levé sur Discord (10026) se clôt quand même côté site', async () => {
+      discord.removeGuildBan.mockRejectedValueOnce(discordError(10026, 404));
+
+      const response = await revoke(7);
+
+      expect(response.status).toBe(200);
+      expect(db.case.updateMany).toHaveBeenCalled();
+    });
+
+    it('laisse la sanction active si Discord est indisponible (503)', async () => {
+      discord.removeGuildBan.mockRejectedValueOnce(discordError(0, 503));
+
+      expect((await revoke(7)).status).toBe(503);
+      untouched();
+    });
+
+    it('laisse la sanction active si le bot est trop bas (409)', async () => {
+      discord.removeGuildBan.mockRejectedValueOnce(discordError(50013, 403));
+
+      const response = await revoke(7);
+
+      expect(response.status).toBe(409);
+      expect(response.body.message).toContain('bot');
+      untouched();
+    });
+
+    it('ne journalise ni la raison ni la cible quand Discord échoue', async () => {
+      const spies = (['warn', 'error', 'log'] as const).map((level) =>
+        vi.spyOn(Logger.prototype, level).mockImplementation(() => undefined),
+      );
+      discord.removeGuildBan.mockRejectedValueOnce(discordError(0, 503));
+
+      await revoke(7, { reason: REASON });
+
+      const logged = JSON.stringify(spies.flatMap((spy) => spy.mock.calls));
+      expect(logged).not.toContain(REASON);
+      expect(logged).not.toContain(MOD_TARGET);
+      spies.forEach((spy) => spy.mockRestore());
+    });
+
+    it('nomme l’acteur par son identifiant quand son pseudo est inconnu', async () => {
+      await revoke(7, { reason: REASON });
+
+      expect(discord.removeGuildBan).toHaveBeenCalledWith(
+        MANAGED,
+        MOD_TARGET,
+        `1 (tableau de bord) : ${REASON}`,
+      );
+    });
+
+    it('un bot sans accès (50001) est dit « pas le droit d’agir », pas une panne (409)', async () => {
+      discord.removeGuildBan.mockRejectedValueOnce(discordError(50001, 403));
+
+      expect((await revoke(7)).status).toBe(409);
+      untouched();
+    });
+
+    it('si la base échoue APRÈS Discord : 503 qui dit de réessayer, journalisé sans la cible, bot non prévenu', async () => {
+      const error = vi.spyOn(Logger.prototype, 'error').mockImplementation(() => undefined);
+      db.$transaction.mockRejectedValueOnce(new Error('connexion perdue'));
+
+      const response = await revoke(7, { reason: REASON });
+
+      expect(discord.removeGuildBan).toHaveBeenCalledTimes(1);
+      expect(response.status).toBe(503);
+      expect(response.body.message).toContain('levée sur Discord mais pas enregistrée');
+      expect(response.body.message).toContain('réessaie');
+      expect(published()).toEqual([]);
+      const logged = JSON.stringify(error.mock.calls);
+      expect(logged).toContain('"discordDone":true');
+      expect(logged).not.toContain(MOD_TARGET);
+      expect(logged).not.toContain(REASON);
+      error.mockRestore();
+    });
+
+    it('journalise le code de l’erreur de base (diagnostic), jamais son message', async () => {
+      const error = vi.spyOn(Logger.prototype, 'error').mockImplementation(() => undefined);
+      db.$transaction.mockRejectedValueOnce(
+        Object.assign(new Error(`Invalid invocation: targetId ${MOD_TARGET}`), { code: 'P1001' }),
+      );
+
+      await revoke(7);
+
+      const logged = JSON.stringify(error.mock.calls);
+      expect(logged).toContain('P1001');
+      expect(logged).not.toContain(MOD_TARGET);
+      error.mockRestore();
+    });
+
+    it('un second essai converge : Discord répond « déjà levé » (10026) et la base est complétée', async () => {
+      db.$transaction.mockRejectedValueOnce(new Error('connexion perdue'));
+      await revoke(7);
+      theCase({ type: 'BAN', reason: 'Spam' });
+      // la liste des serveurs de l'utilisateur est déjà en cache : rien à rejouer
+      discord.removeGuildBan.mockRejectedValueOnce(discordError(10026, 404));
+
+      const retry = await revoke(7);
+
+      expect(retry.status).toBe(200);
+      expect(retry.body).toEqual({ alreadyRevoked: false });
+      expect(db.case.create).toHaveBeenCalled();
+    });
+
+    it('si une autre levée est passée entre-temps, ne crée rien et ne prévient pas le bot', async () => {
+      db.case.updateMany.mockResolvedValueOnce({ count: 0 });
+
+      const response = await revoke(7);
+
+      expect(response.body).toEqual({ alreadyRevoked: true });
+      expect(db.case.create).not.toHaveBeenCalled();
+      expect(published()).toEqual([]);
+    });
+
+    it('réussit même si le bot n’a pas pu être prévenu', async () => {
+      redis.publish.mockRejectedValueOnce(new Error('ECONNREFUSED'));
+
+      expect((await revoke(7)).status).toBe(200);
+    });
+  });
+
+  describe('lever une sourdine', () => {
+    beforeEach(() => {
+      withPermissions(MODERATE_MEMBERS);
+      theCase({ type: 'MUTE', expiresAt: FUTURE });
+    });
+
+    it('retire la sourdine sur Discord puis crée la fin de sourdine', async () => {
+      members([MOD_ROLE], { roles: [GAMER_ROLE] });
+
+      const response = await revoke(7, { reason: REASON });
+
+      expect(response.status).toBe(200);
+      expect(discord.clearMemberTimeout).toHaveBeenCalledWith(
+        MANAGED,
+        MOD_TARGET,
+        expect.stringContaining('(tableau de bord)'),
+      );
+      expect(db.case.create).toHaveBeenCalledWith({
+        data: expect.objectContaining({ type: 'UNMUTE', moderatorId: '1' }),
+      });
+    });
+
+    it('refuse si le membre a quitté le serveur : la sourdine reviendrait avec lui (409)', async () => {
+      members([MOD_ROLE], null);
+
+      const response = await revoke(7);
+
+      expect(response.status).toBe(409);
+      expect(discord.clearMemberTimeout).not.toHaveBeenCalled();
+      untouched();
+    });
+
+    it('refuse un membre dont le rôle est égal ou supérieur à celui du modérateur', async () => {
+      members([MOD_ROLE], { roles: ['600000000000000003'] }); // Admin, position 9
+
+      expect((await revoke(7)).status).toBe(403);
+      expect(discord.clearMemberTimeout).not.toHaveBeenCalled();
+      untouched();
+    });
+
+    it('refuse de lever la sourdine du propriétaire du serveur', async () => {
+      discord.getGuild.mockResolvedValueOnce({ owner_id: MOD_TARGET });
+      members([MOD_ROLE], { roles: [GAMER_ROLE] });
+
+      expect((await revoke(7)).status).toBe(403);
+      untouched();
+    });
+
+    it('lève par personne aussi : la sourdine d’un membre, pas seulement ce numéro', async () => {
+      members([MOD_ROLE], { roles: [GAMER_ROLE] });
+
+      await revoke(7);
+
+      expect(updatedWhere()).not.toHaveProperty('number');
+    });
+
+    it('laisse la sanction active si le bot est trop bas (409)', async () => {
+      members([MOD_ROLE], { roles: [GAMER_ROLE] });
+      discord.clearMemberTimeout.mockRejectedValueOnce(discordError(50013, 403));
+
+      expect((await revoke(7)).status).toBe(409);
+      untouched();
+    });
+
+    it('laisse la sanction active si Discord limite le débit (503)', async () => {
+      members([MOD_ROLE], { roles: [GAMER_ROLE] });
+      discord.clearMemberTimeout.mockRejectedValueOnce(discordError(0, 429));
+
+      expect((await revoke(7)).status).toBe(503);
+      untouched();
+    });
+
+    it('répond « a quitté le serveur » si le membre part entre la lecture et le retrait (10007)', async () => {
+      members([MOD_ROLE], { roles: [GAMER_ROLE] });
+      discord.clearMemberTimeout.mockRejectedValueOnce(discordError(10007, 404));
+
+      const response = await revoke(7);
+
+      expect(response.status).toBe(409);
+      expect(response.body.message).toContain('quitté');
+      untouched();
+    });
+
+    it.each([
+      ['le serveur', () => discord.getGuild],
+      ['les rôles', () => discord.getGuildRoles],
+      ['le membre', () => discord.getGuildMember],
+    ])('ne touche à rien si la lecture de %s échoue (503)', async (_nom, which) => {
+      (which() as ReturnType<typeof vi.fn>).mockRejectedValueOnce(discordError(0, 503));
+
+      expect((await revoke(7)).status).toBe(503);
+      expect(discord.clearMemberTimeout).not.toHaveBeenCalled();
+      untouched();
+    });
+
+    it('un modérateur absent du serveur n’y a aucun rang : refusé (403), pas une erreur 500', async () => {
+      discord.getGuildMember.mockResolvedValueOnce(null as never);
+      discord.getGuildMember.mockResolvedValueOnce({ roles: [GAMER_ROLE] } as never);
+
+      expect((await revoke(7)).status).toBe(403);
+      expect(discord.clearMemberTimeout).not.toHaveBeenCalled();
+      untouched();
+    });
+
+    it('le propriétaire du serveur peut lever la sourdine d’un membre de rang supérieur', async () => {
+      discord.getGuild.mockResolvedValueOnce({ owner_id: '1' });
+      members([], { roles: ['600000000000000003'] });
+
+      expect((await revoke(7)).status).toBe(200);
+    });
+  });
+
+  describe('retirer un avertissement', () => {
+    it('ne touche pas Discord et prévient le bot avec l’avertissement lui-même', async () => {
+      withPermissions(MODERATE_MEMBERS);
+      theCase({ type: 'WARN', id: 5 });
+
+      const response = await revoke(7);
+
+      expect(response.status).toBe(200);
+      expect(discord.removeGuildBan).not.toHaveBeenCalled();
+      expect(discord.clearMemberTimeout).not.toHaveBeenCalled();
+      expect(db.case.updateMany).toHaveBeenCalledWith(
+        expect.objectContaining({ data: expect.objectContaining({ revokedVia: 'DASHBOARD' }) }),
+      );
+      // pas de sanction de fin pour un avertissement
+      expect(db.case.create).not.toHaveBeenCalled();
+      expect(published()).toEqual([{ type: 'moderation.logged', guildId: MANAGED, caseId: 5 }]);
+    });
   });
 });
 

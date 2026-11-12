@@ -13,6 +13,9 @@ interface RouterDeps {
   usage?: Pick<CommandUsageRecorder, 'record'>;
 }
 
+export const MISSING_PERMISSION =
+  'Il te manque une permission Discord pour utiliser cette commande.';
+
 export const ERROR_MESSAGE = 'Oups, une erreur est survenue. Réessaie dans un instant.';
 
 /** Aiguille chaque interaction vers sa commande ou son handler, et rattrape toutes les erreurs. */
@@ -24,6 +27,14 @@ export function createInteractionHandler({ commands, components, context, usage 
         const command = commands.get(interaction.commandName);
         if (!command) {
           logger.warn({ command: interaction.commandName }, 'Commande inconnue');
+          return;
+        }
+        // Administrateur ou propriétaire : `has` les compte déjà. Inconnu (message privé) : refusé
+        if (
+          command.requiredPermissions !== undefined &&
+          !interaction.memberPermissions?.has(command.requiredPermissions)
+        ) {
+          await interaction.reply({ content: MISSING_PERMISSION, flags: MessageFlags.Ephemeral });
           return;
         }
         const started = performance.now();
@@ -48,7 +59,16 @@ export function createInteractionHandler({ commands, components, context, usage 
       }
 
       if (interaction.isAutocomplete()) {
-        await commands.get(interaction.commandName)?.autocomplete?.(interaction, context);
+        const command = commands.get(interaction.commandName);
+        // Les suggestions (numéros, lots…) sont des données : même permission que la commande
+        if (
+          command?.requiredPermissions !== undefined &&
+          !interaction.memberPermissions?.has(command.requiredPermissions)
+        ) {
+          await interaction.respond([]);
+          return;
+        }
+        await command?.autocomplete?.(interaction, context);
         return;
       }
 

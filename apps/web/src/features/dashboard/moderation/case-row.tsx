@@ -1,6 +1,7 @@
-import { CASE_STATUS_LABELS, CASE_TYPE_LABELS, type CaseSummary } from '@phenix/shared';
+import { CASE_STATUS_LABELS, CASE_TYPE_LABELS, NO_REASON, type CaseSummary } from '@phenix/shared';
 import { Link } from '@tanstack/react-router';
 import { Badge, type BadgeTone } from '../../../components/ui/badge';
+import { buttonClass } from '../../../components/ui/button';
 
 const dateTime = new Intl.DateTimeFormat('fr-FR', { dateStyle: 'short', timeStyle: 'short' });
 const format = (iso: string) => dateTime.format(new Date(iso));
@@ -11,8 +12,32 @@ const STATUS_TONES: Record<NonNullable<CaseSummary['status']>, BadgeTone> = {
   ended: 'muted',
 };
 
+/** Ce qu'on peut lever depuis le site : un avertissement, une sourdine ou un ban encore actifs. */
+export function canRevoke(sanction: CaseSummary): boolean {
+  return (
+    sanction.status === 'active' &&
+    (sanction.type === 'WARN' || sanction.type === 'MUTE' || sanction.type === 'BAN')
+  );
+}
+
+/** Le libellé du bouton, qui dit ce qu'il fait à cette sanction. */
+export const REVOKE_LABELS = {
+  WARN: 'Retirer l’avertissement',
+  MUTE: 'Lever la sourdine',
+  BAN: 'Lever le bannissement',
+} as const;
+
 /** Une sanction de la liste : de quoi la retrouver, savoir sur qui elle porte et où elle en est. */
-export function CaseRow({ guildId, sanction }: { guildId: string; sanction: CaseSummary }) {
+export function CaseRow({
+  guildId,
+  sanction,
+  onRevoke,
+}: {
+  guildId: string;
+  sanction: CaseSummary;
+  /** Sans lui, pas de bouton de levée */
+  onRevoke?: (sanction: CaseSummary) => void;
+}) {
   return (
     <li className="flex flex-col gap-2 px-5 py-4 sm:px-6">
       <div className="flex flex-wrap items-center gap-x-3 gap-y-2">
@@ -45,7 +70,7 @@ export function CaseRow({ guildId, sanction }: { guildId: string; sanction: Case
       {sanction.reason ? (
         <p className="text-pretty break-words text-stone-200">{sanction.reason}</p>
       ) : (
-        <p className="text-stone-500 italic">Aucune raison fournie</p>
+        <p className="text-stone-500 italic">{NO_REASON}</p>
       )}
       <p className="flex flex-wrap gap-x-3 text-sm text-stone-400">
         <span>Le {format(sanction.createdAt)}</span>
@@ -57,6 +82,15 @@ export function CaseRow({ guildId, sanction }: { guildId: string; sanction: Case
           </span>
         )}
       </p>
+      {onRevoke && canRevoke(sanction) && (
+        <button
+          type="button"
+          onClick={() => onRevoke(sanction)}
+          className={`${buttonClass('ghost')} self-start`}
+        >
+          {REVOKE_LABELS[sanction.type as keyof typeof REVOKE_LABELS]}
+        </button>
+      )}
     </li>
   );
 }

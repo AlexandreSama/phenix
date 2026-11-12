@@ -8,7 +8,7 @@ import {
   type GuildRoleSummary,
   type ManageableGuild,
 } from '@phenix/shared';
-import { ChannelType } from 'discord-api-types/v10';
+import { ChannelType, PermissionFlagsBits } from 'discord-api-types/v10';
 import type { GuildModuleRequirement } from '../../common/guards/guild-access.guard.js';
 import { CacheService } from '../../core/cache.service.js';
 import { guildIconUrl } from '../../discord/cdn.js';
@@ -112,6 +112,17 @@ export class GuildsService {
       throw new ForbiddenException('Cet onglet ne t’a pas été ouvert sur ce serveur');
     }
     return guild;
+  }
+
+  /**
+   * L'utilisateur a-t-il cette permission Discord sur ce serveur ? Le propriétaire et les
+   * administrateurs les ont toutes. C'est la permission de base du serveur, sans les règles des salons.
+   */
+  async hasDiscordPermission(session: Session, guildId: string, flag: bigint): Promise<boolean> {
+    const guild = (await this.userGuilds(session)).find((entry) => entry.id === guildId);
+    if (!guild) return false;
+    if (guild.owner) return true;
+    return (BigInt(guild.permissions) & (PermissionFlagsBits.Administrator | flag)) !== 0n;
   }
 
   async channels(guildId: string): Promise<GuildChannelSummary[]> {

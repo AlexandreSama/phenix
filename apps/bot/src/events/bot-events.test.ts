@@ -7,17 +7,42 @@ function deps() {
   const rolePanels = { publish: vi.fn(async () => {}), remove: vi.fn(async () => {}) };
   const ticketPanels = { publish: vi.fn(async () => {}), remove: vi.fn(async () => {}) };
   const removeTd2Report = vi.fn(async () => {});
+  const logModeration = vi.fn(async (_event: { guildId: string; caseId: number }) => {});
   const logger = { info: vi.fn(), warn: vi.fn(), debug: vi.fn() };
   return {
     configs: configs as unknown as GuildConfigCache & typeof configs,
     rolePanels,
     ticketPanels,
     removeTd2Report,
+    logModeration,
     logger,
   };
 }
 
 describe('handleBotEvent', () => {
+  it('publie le log de modération d’une sanction levée depuis le site', () => {
+    const d = deps();
+
+    handleBotEvent(JSON.stringify({ type: 'moderation.logged', guildId: '1', caseId: 42 }), d);
+
+    expect(d.logModeration).toHaveBeenCalledWith({
+      type: 'moderation.logged',
+      guildId: '1',
+      caseId: 42,
+    });
+  });
+
+  it('garde une erreur du log de modération dans les journaux, sans l’exposer', async () => {
+    const d = deps();
+    d.logModeration.mockRejectedValueOnce(new Error('Missing Access'));
+
+    handleBotEvent(JSON.stringify({ type: 'moderation.logged', guildId: '1', caseId: 42 }), d);
+    await new Promise((resolve) => setImmediate(resolve));
+
+    expect(d.logger.warn).toHaveBeenCalledTimes(1);
+    expect(JSON.stringify(d.logger.warn.mock.calls)).not.toContain('"42"');
+  });
+
   it('oublie la config du serveur modifié sur le site', () => {
     const d = deps();
 

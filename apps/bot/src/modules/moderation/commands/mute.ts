@@ -10,6 +10,7 @@ export const MUTE_MAX_MS = 28 * DAY_MS;
 
 export const mute: SlashCommand = {
   category: 'moderation',
+  requiredPermissions: PermissionFlagsBits.ModerateMembers,
   data: new SlashCommandBuilder()
     .setName('mute')
     .setDescription("Empêche un membre d'écrire et de parler pendant un temps donné")
