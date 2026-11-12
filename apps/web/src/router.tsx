@@ -21,6 +21,9 @@ import { AccessPage } from './features/dashboard/access/access-page';
 import { GuildLayout } from './features/dashboard/guild-layout';
 import { GuildPickerPage } from './features/dashboard/guild-picker/guild-picker-page';
 import { LevelingSettingsPage } from './features/dashboard/leveling/leveling-settings-page';
+import { MemberPage } from './features/dashboard/moderation/member-page';
+import { ModerationPage } from './features/dashboard/moderation/moderation-page';
+import { moderationSearchSchema } from './features/dashboard/moderation/search';
 import { RolePanelEditorPage } from './features/dashboard/roles/role-panel-editor-page';
 import { RolePanelsPage } from './features/dashboard/roles/role-panels-page';
 import { WelcomeSettingsPage } from './features/dashboard/welcome/welcome-settings-page';
@@ -141,6 +144,28 @@ const transcriptRoute = createRoute({
   getParentRoute: () => guildTicketsRoute,
   path: '$ticketId',
   component: TranscriptPage,
+});
+
+/** Onglet « Modération » : les sanctions filtrables et la fiche d'un membre. */
+const guildModerationRoute = createRoute({
+  getParentRoute: () => guildRoute,
+  path: 'moderation',
+  staticData: { module: 'MODERATION' },
+});
+
+const moderationRoute = createRoute({
+  getParentRoute: () => guildModerationRoute,
+  path: '/',
+  validateSearch: moderationSearchSchema,
+  component: ModerationPage,
+});
+
+/** Chemin fixe `membres/` : l'historique de ce membre, page par page. */
+const moderationMemberRoute = createRoute({
+  getParentRoute: () => guildModerationRoute,
+  path: 'membres/$userId',
+  validateSearch: z.object({ page: z.number().int().min(1).max(1000).optional().catch(undefined) }),
+  component: MemberPage,
 });
 
 /** Onglet « Giveaways » : la liste et le formulaire de création. */
@@ -337,6 +362,7 @@ export const routeTree = rootRoute.addChildren([
       guildLevelingRoute,
       guildRolesRoute.addChildren([rolePanelsRoute, rolePanelEditorRoute]),
       guildTicketsRoute.addChildren([ticketsRoute, ticketSettingsRoute, transcriptRoute]),
+      guildModerationRoute.addChildren([moderationRoute, moderationMemberRoute]),
       guildGiveawaysRoute.addChildren([giveawaysRoute, giveawayCreateRoute]),
       td2Route,
       welcomeRoute,

@@ -8,7 +8,16 @@ import { routeTree } from '../../../router';
 const GUILD = '100000000000000001';
 const FAYE = '700000000000000009';
 const ROOK = '700000000000000010';
-const ALL = ['GENERAL', 'LEVELING', 'ROLES', 'TICKETS', 'GIVEAWAYS', 'TD2', 'WELCOME'] as const;
+const ALL = [
+  'GENERAL',
+  'LEVELING',
+  'ROLES',
+  'TICKETS',
+  'GIVEAWAYS',
+  'TD2',
+  'WELCOME',
+  'MODERATION',
+] as const;
 
 const rook: GuildDelegate = {
   userId: ROOK,

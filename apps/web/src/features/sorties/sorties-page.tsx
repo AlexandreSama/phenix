@@ -91,6 +91,7 @@ export function SortiesPage({ now, timeZone }: Props = {}) {
             </p>
           </div>
           <Link
+            from="/sorties"
             to="/sorties"
             search={(previous) => ({ ...previous, invitation: undefined })}
             className="text-sm font-medium text-stone-300 underline-offset-4 hover:text-white hover:underline"

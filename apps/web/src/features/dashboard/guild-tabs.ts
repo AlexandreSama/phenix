@@ -10,6 +10,7 @@ export type GuildTabPath =
   | '/dashboard/$guildId/niveaux'
   | '/dashboard/$guildId/roles'
   | '/dashboard/$guildId/tickets'
+  | '/dashboard/$guildId/moderation'
   | '/dashboard/$guildId/giveaways'
   | '/dashboard/$guildId/td2'
   | '/dashboard/$guildId/bienvenue'
@@ -32,6 +33,12 @@ export const GUILD_TABS: GuildTab[] = [
   { to: '/dashboard/$guildId/niveaux', label: 'Niveaux', icon: 'chart', module: 'LEVELING' },
   { to: '/dashboard/$guildId/roles', label: 'Rôles', icon: 'tag', module: 'ROLES' },
   { to: '/dashboard/$guildId/tickets', label: 'Tickets', icon: 'ticket', module: 'TICKETS' },
+  {
+    to: '/dashboard/$guildId/moderation',
+    label: DASHBOARD_MODULE_LABELS.MODERATION,
+    icon: 'shield',
+    module: 'MODERATION',
+  },
   { to: '/dashboard/$guildId/giveaways', label: 'Giveaways', icon: 'gift', module: 'GIVEAWAYS' },
   {
     to: '/dashboard/$guildId/td2',
