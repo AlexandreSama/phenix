@@ -25,7 +25,7 @@ const grant = (
   guildId: string,
   userId: string,
   username: string,
-  modules: ('TD2' | 'TICKETS' | 'ROLES' | 'WELCOME')[],
+  modules: ('TD2' | 'TICKETS' | 'ROLES' | 'WELCOME' | 'MODERATION')[],
 ) =>
   saveGuildDelegate(prisma, {
     guildId,
@@ -37,6 +37,14 @@ const grant = (
   });
 
 describe('délégations', () => {
+  it('donne l’onglet Modération à un membre', async () => {
+    const guildId = await newGuild();
+
+    await grant(guildId, 'u1', 'Faye', ['MODERATION']);
+
+    expect(await findDelegatedModules(prisma, guildId, 'u1')).toEqual(['MODERATION']);
+  });
+
   it('donne des onglets à un membre, puis les remplace (sans doublon)', async () => {
     const guildId = await newGuild();
 

@@ -25,7 +25,8 @@ export const DashboardModule = {
   TICKETS: 'TICKETS',
   GIVEAWAYS: 'GIVEAWAYS',
   TD2: 'TD2',
-  WELCOME: 'WELCOME'
+  WELCOME: 'WELCOME',
+  MODERATION: 'MODERATION'
 } as const
 
 export type DashboardModule = (typeof DashboardModule)[keyof typeof DashboardModule]
