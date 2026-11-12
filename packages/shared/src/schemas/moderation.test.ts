@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { CASE_STATUS_LABELS, DASHBOARD_MODULE_LABELS, DASHBOARD_MODULES } from '../constants.js';
-import { CASE_PAGE_SIZE, caseListQuerySchema } from './moderation.js';
+import { CASE_PAGE_SIZE, caseListQuerySchema, caseRevokeSchema } from './moderation.js';
 
 const ID = '222222222222222222';
 
@@ -73,5 +73,42 @@ describe('caseListQuerySchema', () => {
   it('ignore la taille de page : c’est le serveur qui la fixe', () => {
     expect(CASE_PAGE_SIZE).toBe(20);
     expect(caseListQuerySchema.parse({ pageSize: '100000' })).toEqual({ page: 1 });
+  });
+});
+
+describe('caseRevokeSchema', () => {
+  it('accepte une levée sans raison, ou avec une raison rognée', () => {
+    expect(caseRevokeSchema.parse({})).toEqual({ reason: null });
+    expect(caseRevokeSchema.parse({ reason: '  Erreur de modération ' })).toEqual({
+      reason: 'Erreur de modération',
+    });
+  });
+
+  it('accepte une raison nulle, refuse un autre type', () => {
+    expect(caseRevokeSchema.parse({ reason: null })).toEqual({ reason: null });
+    expect(caseRevokeSchema.safeParse({ reason: 123 }).success).toBe(false);
+  });
+
+  it('compte les 512 caractères après avoir rogné les espaces', () => {
+    expect(caseRevokeSchema.safeParse({ reason: `  ${'x'.repeat(512)}  ` }).success).toBe(true);
+  });
+
+  it('remplace une demi-paire isolée : ni le journal d’audit ni la base ne la supportent', () => {
+    expect(caseRevokeSchema.parse({ reason: 'a\ud800b' })).toEqual({ reason: 'a\ufffdb' });
+  });
+
+  it('traite une raison vide comme l’absence de raison', () => {
+    expect(caseRevokeSchema.parse({ reason: '   ' })).toEqual({ reason: null });
+  });
+
+  it('refuse une raison de plus de 512 caractères (limite du journal d’audit de Discord)', () => {
+    expect(caseRevokeSchema.safeParse({ reason: 'x'.repeat(512) }).success).toBe(true);
+    expect(caseRevokeSchema.safeParse({ reason: 'x'.repeat(513) }).success).toBe(false);
+  });
+
+  it('ignore le reste : la cible vient de la sanction, jamais du client', () => {
+    expect(caseRevokeSchema.parse({ targetId: '1', type: 'BAN', number: 3 })).toEqual({
+      reason: null,
+    });
   });
 });

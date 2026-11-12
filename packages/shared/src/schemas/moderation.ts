@@ -94,3 +94,27 @@ export interface MemberModeration {
   activeMute: { number: number; expiresAt: string | null } | null;
   activeBan: { number: number } | null;
 }
+
+/** Corps de la levée d'une sanction : seulement la raison ; la cible vient de la sanction elle-même. */
+export const caseRevokeSchema = z.object({
+  reason: z
+    .string()
+    // Une demi-paire isolée (JSON "\ud800") casserait l'en-tête du journal d'audit, et la base
+    .transform((value) => value.toWellFormed())
+    .pipe(
+      z
+        .string()
+        .trim()
+        .max(512, '512 caractères au plus')
+        .transform((value) => value || null),
+    )
+    .nullish()
+    .transform((value) => value ?? null),
+});
+
+export type CaseRevokeInput = z.infer<typeof caseRevokeSchema>;
+
+/** `alreadyRevoked` : la sanction était déjà levée, rien n'a été refait. */
+export interface CaseRevokeResult {
+  alreadyRevoked: boolean;
+}

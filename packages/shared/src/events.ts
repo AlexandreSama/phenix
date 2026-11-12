@@ -27,6 +27,9 @@ export const botEventSchema = z.discriminatedUnion('type', [
     channelId: z.string(),
     messageId: z.string(),
   }),
+  // Une sanction a été levée depuis le site : le bot en publie le log de modération. Seulement des
+  // identifiants, jamais la raison ni un pseudo : ils se relisent en base.
+  z.object({ type: z.literal('moderation.logged'), guildId: z.string(), caseId: z.number().int() }),
 ]);
 
 export type BotEvent = z.infer<typeof botEventSchema>;
