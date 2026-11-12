@@ -13,6 +13,10 @@
     "td2:record": "tsx --env-file-if-exists=../../.env src/scripts/record-td2-profile.ts"
   },
   "dependencies": {
+    "@fontsource/inter": "5.3.0",
+    "@fontsource/jetbrains-mono": "5.3.0",
+    "@fontsource/space-grotesk": "5.3.0",
+    "@napi-rs/canvas": "1.0.13",
     "@phenix/database": "workspace:*",
     "@phenix/shared": "workspace:*",
     "@phenix/storage": "workspace:*",

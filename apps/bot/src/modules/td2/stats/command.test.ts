@@ -17,6 +17,9 @@ const database = vi.hoisted(() => ({
 }));
 vi.mock('@phenix/database', () => database);
 
+const card = vi.hoisted(() => ({ careerReply: vi.fn() }));
+vi.mock('./stats-card.js', () => card);
+
 const USER = '500000000000000001';
 const MEMBER = '500000000000000002';
 const OK: Td2CareerResult = {
@@ -68,6 +71,8 @@ function setup({ strings = {}, member = null, career = OK, enabled = true }: Opt
 
 beforeEach(() => {
   for (const mock of Object.values(database)) mock.mockReset();
+  card.careerReply.mockReset();
+  card.careerReply.mockResolvedValue({ embeds: [{ repli: true }] });
 });
 
 describe('/td2 lier', () => {
@@ -140,6 +145,53 @@ describe('/td2 stats', () => {
     expect(interaction.editReply).toHaveBeenCalledWith(
       expect.objectContaining({ embeds: [expect.anything()] }),
     );
+  });
+
+  it('répond avec ce que renvoie careerReply, en lui passant la carrière et le crédit du service', async () => {
+    const reply = { files: ['carte stats'] };
+    card.careerReply.mockResolvedValue(reply);
+    const { interaction, context, run } = setup({
+      strings: { plateforme: 'PSN', pseudo: 'Agent47' },
+    });
+
+    await run(showStats);
+
+    expect(card.careerReply).toHaveBeenCalledTimes(1);
+    // le logger du bot est transmis : sans lui, l'avertissement du repli se perdrait
+    expect(card.careerReply).toHaveBeenCalledWith(
+      expect.objectContaining({ handle: 'Agent47', platform: 'PSN' }),
+      'Powered by Tracker Network',
+      expect.objectContaining({ logger: context.logger }),
+    );
+    expect(interaction.editReply).toHaveBeenCalledWith(reply);
+    // le rendu peut dépasser les 3 s : la réponse est différée avant le dessin
+    expect(interaction.deferReply.mock.invocationCallOrder[0]).toBeLessThan(
+      card.careerReply.mock.invocationCallOrder[0] ?? Number.NEGATIVE_INFINITY,
+    );
+  });
+
+  it('transmet à editReply tout l’objet de careerReply, bouton du lien compris', async () => {
+    const reply = { files: ['carte stats'], components: [{ rangée: 'bouton tracker.gg' }] };
+    card.careerReply.mockResolvedValue(reply);
+    const { interaction, run } = setup({ strings: { plateforme: 'PSN', pseudo: 'Agent47' } });
+
+    await run(showStats);
+
+    expect(interaction.editReply).toHaveBeenCalledTimes(1);
+    const [sent] = interaction.editReply.mock.calls[0] as unknown[];
+    expect(sent).toBe(reply);
+    expect(sent).toHaveProperty('components', reply.components);
+  });
+
+  it('introuvable ou indisponible : pas de carte dessinée', async () => {
+    const strings = { plateforme: 'PSN', pseudo: 'Agent47' };
+    for (const career of [
+      { status: 'not-found' },
+      { status: 'unavailable', reason: 'down' },
+    ] as Td2CareerResult[]) {
+      await setup({ strings, career }).run(showStats);
+    }
+    expect(card.careerReply).not.toHaveBeenCalled();
   });
 
   it('un pseudo tapé passe avant tout compte lié, mais exige sa plateforme', async () => {

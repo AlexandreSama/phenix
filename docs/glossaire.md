@@ -39,6 +39,18 @@ Relevé fait sur le vocabulaire déjà en usage dans `apps/web`, `apps/bot` et `
 | **rôle d'arrivée**      | Rôle donné automatiquement à chaque nouveau membre                                      | `welcomeRoleId`                              | rôle par défaut, rôle de bienvenue, autorôle  |
 | **variable de message** | Mot entre accolades remplacé à l'envoi : `{membre}` `{pseudo}` `{serveur}` `{effectif}` | `WELCOME_VARIABLES`, `renderWelcomeTemplate` | placeholder, balise                           |
 
+Mots ajoutés pour les cartes PNG de `/rank` et `/td2 stats` (à valider) :
+
+| Terme affiché                    | Définition courte                                                                                                         | Identifiant technique                                          | À ne pas employer                                       |
+| -------------------------------- | ------------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------- | ------------------------------------------------------- |
+| **carte de rang**                | Image PNG de `/rank` : niveau, classement, progression, XP totale, messages                                               | `rank-card.ts`, `renderRankCard`, `rankReply`, `rank.png`      | rank card, fiche de niveau                              |
+| **carte de stats**               | Image PNG de `/td2 stats` : niveau, score d'équipement, temps de jeu, éliminations, Dark Zone                             | `stats-card.ts`, `renderStatsCard`, `careerReply`, `stats.png` | fiche d'agent, stats card, profil                       |
+| **Voir sur tracker.gg** (bouton) | Bouton lien sous la carte de stats, vers la page du joueur sur tracker.gg                                                 | `profileButton`, `profileUrl`                                  | Voir le profil, profil                                  |
+| **Classement** (étiquette)       | Étiquette de la carte de rang pour la position d'un membre, écrite `#3 / 412` ; « rang » reste le palier Dark Zone du jeu | `MemberRank.rank`                                              | place, rang (pour la position au classement du serveur) |
+| **progression**                  | Part de l'XP du niveau en cours déjà gagnée, en pourcentage                                                               | `levelProgress`, `ratio`                                       |                                                         |
+| **score d'équipement**           | Valeur d'équipement d'un agent dans The Division 2                                                                        | `gearScore`                                                    | gear score, GS                                          |
+| **Dark Zone**                    | Zone JcJ de The Division 2 (nom du jeu, gardé tel quel)                                                                   | `darkZone`, `dzRank`                                           | Zone Noire                                              |
+
 Notes sur les variables de message (à figer avant le code) :
 
 - `{membre}` : mention du membre ; `{pseudo}` : son nom affiché sans mention ; `{serveur}` : nom

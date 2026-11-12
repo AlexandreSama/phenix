@@ -1,7 +1,22 @@
 import { getMemberRank } from '@phenix/database';
-import { InteractionContextType, MessageFlags, SlashCommandBuilder } from 'discord.js';
+import {
+  InteractionContextType,
+  MessageFlags,
+  SlashCommandBuilder,
+  type ChatInputCommandInteraction,
+} from 'discord.js';
 import type { SlashCommand } from '../../../core/command.js';
-import { rankEmbed } from '../rank-card.js';
+import { rankReply } from '../rank-card.js';
+
+/**
+ * Qui dessiner : le membre ciblé s'il est encore sur le serveur, sinon son compte (il a quitté),
+ * sinon soi. Jamais `interaction.member` pour une cible : ce serait le visage de l'auteur.
+ */
+function resolveSubject(interaction: ChatInputCommandInteraction<'cached'>) {
+  const target = interaction.options.getUser('membre');
+  if (target) return interaction.options.getMember('membre') ?? target;
+  return interaction.member;
+}
 
 export const rank: SlashCommand = {
   category: 'leveling',
@@ -13,10 +28,9 @@ export const rank: SlashCommand = {
       option.setName('membre').setDescription('Le membre (toi par défaut)').setRequired(false),
     ),
 
-  async execute(interaction, { db }) {
+  async execute(interaction, { db, logger }) {
     if (!interaction.inCachedGuild()) return;
     const user = interaction.options.getUser('membre') ?? interaction.user;
-    const member = interaction.options.getMember('membre') ?? interaction.member;
 
     if (user.bot) {
       await interaction.reply({
@@ -36,14 +50,20 @@ export const rank: SlashCommand = {
       return;
     }
 
-    await interaction.reply({
-      embeds: [
-        rankEmbed({
-          rank: memberRank,
-          displayName: member?.displayName ?? user.displayName,
-          avatarUrl: (member ?? user).displayAvatarURL({ size: 256 }),
-        }),
-      ],
-    });
+    // Le téléchargement de l'avatar et le dessin peuvent dépasser les 3 s de la première réponse
+    await interaction.deferReply();
+    const subject = resolveSubject(interaction);
+    const reply = await rankReply(
+      {
+        rank: memberRank,
+        displayName: subject.displayName,
+        guildName: interaction.guild.name,
+        // Statique : un avatar animé servi en .gif peut dépasser AVATAR_MAX_BYTES et donner
+        // l'initiale, alors que la carte n'en dessine que la première image
+        avatarUrl: subject.displayAvatarURL({ size: 256, forceStatic: true }),
+      },
+      { logger },
+    );
+    await interaction.editReply(reply);
   },
 };
