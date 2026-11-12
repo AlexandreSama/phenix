@@ -20,6 +20,13 @@ const settings = {
   td2ReportChannelId: null,
   td2ReportViewerRoleIds: [],
   td2ReportFeedChannelId: null,
+  welcomeEnabled: false,
+  welcomeChannelId: null,
+  welcomeMessage: null,
+  welcomeRoleId: null,
+  goodbyeEnabled: false,
+  goodbyeChannelId: null,
+  goodbyeMessage: null,
 };
 
 function setup() {
@@ -52,6 +59,25 @@ describe('createGuildConfigCache', () => {
     await cache.get('1');
 
     expect(findUnique).toHaveBeenCalledTimes(4);
+  });
+
+  it('lit les réglages du module welcome', async () => {
+    const { cache, findUnique } = setup();
+
+    await cache.get('1');
+
+    expect(findUnique).toHaveBeenCalledWith({
+      where: { guildId: '1' },
+      select: expect.objectContaining({
+        welcomeEnabled: true,
+        welcomeChannelId: true,
+        welcomeMessage: true,
+        welcomeRoleId: true,
+        goodbyeEnabled: true,
+        goodbyeChannelId: true,
+        goodbyeMessage: true,
+      }),
+    });
   });
 
   it('ne garde pas une lecture qui a échoué', async () => {

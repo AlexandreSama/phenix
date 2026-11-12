@@ -27,6 +27,13 @@ const settings: GuildSettings = {
   td2ReportChannelId: null,
   td2ReportViewerRoleIds: [],
   td2ReportFeedChannelId: null,
+  welcomeEnabled: false,
+  welcomeChannelId: null,
+  welcomeMessage: null,
+  welcomeRoleId: null,
+  goodbyeEnabled: false,
+  goodbyeChannelId: null,
+  goodbyeMessage: null,
 };
 
 /** Faux message : seulement ce que le handler lit. */
