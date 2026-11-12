@@ -1,5 +1,7 @@
 import type {
   CasePage,
+  CaseRevokeInput,
+  CaseRevokeResult,
   CaseStatusKey,
   CaseTypeKey,
   DashboardModuleKey,
@@ -349,3 +351,18 @@ export const memberModerationQuery = (guildId: string, userId: string) =>
       api<MemberModeration>(`/guilds/${guildId}/moderation/members/${encodeURIComponent(userId)}`),
     refetchInterval: 30_000,
   });
+
+/** Lève une sanction ; la liste et les fiches se rechargent, quel que soit le résultat côté serveur. */
+export function useRevokeCase(guildId: string) {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: ({ number, reason }: { number: number; reason?: CaseRevokeInput['reason'] }) =>
+      api<CaseRevokeResult>(`/guilds/${guildId}/moderation/cases/${number}/revoke`, {
+        method: 'POST',
+        // Sans raison : un corps vide, le serveur s'en charge
+        body: JSON.stringify(reason ? { reason } : {}),
+      }),
+    // Quel que soit le résultat : après un refus (409…), la sanction a pu changer entre-temps
+    onSettled: () => queryClient.invalidateQueries({ queryKey: ['guilds', guildId, 'moderation'] }),
+  });
+}
