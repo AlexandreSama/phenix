@@ -51,7 +51,7 @@ export function TicketSettingsPage() {
       </Link>
       <PageHeader
         title="Réglages des tickets"
-        description="Les types de ticket, le journal, et le message avec les boutons pour en ouvrir un."
+        description="Les types de ticket, le journal, et le message avec le bouton pour en ouvrir un."
         actions={current && <PublicationBadge status={current.panelStatus} />}
       />
       {current?.panelError && (
@@ -100,7 +100,6 @@ export function TicketSettingsPage() {
           <TicketSettingsForm
             // Les relectures toutes les 2 s ne remontent pas le formulaire : seul l'état du panel change
             settings={settings.data.settings}
-            types={types.data}
             channels={channels.data}
             onSubmit={(input) => save.mutateAsync(input)}
           />

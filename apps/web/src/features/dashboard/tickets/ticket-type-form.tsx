@@ -62,7 +62,7 @@ export function TicketTypeForm({ defaultValues, categories, roles, onSubmit, onC
       <Panel
         icon="ticket"
         title="Type de ticket"
-        description="Le motif que le membre choisit sur le panel : un bouton ou une entrée du menu."
+        description="Le type que le membre choisit dans le menu « Type de ticket », après un clic sur le bouton du panel."
       >
         <Field id="typeName" label="Nom" error={errors.name?.message}>
           <input id="typeName" className={inputClass} {...register('name')} />
