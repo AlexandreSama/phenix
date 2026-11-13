@@ -167,6 +167,22 @@ describe('createInteractionHandler', () => {
     expect(execute).toHaveBeenCalledWith(expect.anything(), '42', context);
   });
 
+  it('envoie à son handler un bouton d’un message privé, sans serveur', async () => {
+    const execute = vi.fn();
+    const handler: ComponentHandler = { prefix: 'ticket:rate', execute };
+    const handle = createInteractionHandler({
+      commands: new Map(),
+      components: new Map([[handler.prefix, handler]]),
+      context,
+    });
+    const interaction = { ...button('ticket:rate:7:4'), guildId: null };
+
+    await handle(interaction as unknown as Interaction);
+
+    expect(execute).toHaveBeenCalledWith(interaction, '7:4', context);
+    expect(interaction.reply).not.toHaveBeenCalled();
+  });
+
   it('répond un message d’erreur discret quand la commande plante', async () => {
     const handle = createInteractionHandler({
       commands: new Map([['ping', command('ping', () => Promise.reject(new Error('boom')))]]),

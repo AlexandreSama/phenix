@@ -20,8 +20,6 @@ const settings: GuildSettings = {
   xpCooldownSec: 60,
   levelUpChannelId: null,
   leaderboardPublic: true,
-  ticketCategoryId: null,
-  ticketStaffRoleIds: [],
   ticketLogChannelId: null,
   td2ChannelId: null,
   td2ReportChannelId: null,

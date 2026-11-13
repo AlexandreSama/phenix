@@ -1,20 +1,34 @@
-import { closeTicket, createTicket, findOpenTicket, reserveTicketNumber } from '@phenix/database';
+import {
+  closeTicket,
+  createTicket,
+  findOpenTicket,
+  findTicketType,
+  listTicketTypes,
+  reserveTicketNumber,
+  type TicketTypeWithQuestions,
+} from '@phenix/database';
 import {
   ChannelType,
+  ComponentType,
   MessageFlags,
   RESTJSONErrorCodes,
   type ButtonInteraction,
+  type ModalSubmitInteraction,
+  type StringSelectMenuInteraction,
   type TextChannel,
 } from 'discord.js';
 import type { ComponentHandler } from '../../core/command.js';
 import type { BotContext } from '../../core/context.js';
 import { isDiscordError } from '../../core/publish.js';
-import { welcomeMessage } from './messages.js';
+import { buildTicketModal, readFormAnswers } from './form.js';
+import { formAnswersMessage, welcomeMessage, type FormAnswer } from './messages.js';
 import { ticketChannelName, ticketOverwrites } from './permissions.js';
 
 export const OPEN_REPLIES = {
   notConfigured:
-    'Les tickets ne sont pas configurés sur ce serveur (catégorie manquante). Préviens un admin.',
+    'Les tickets ne sont pas configurés sur ce serveur (type de ticket ou catégorie manquants). ' +
+    'Préviens un admin.',
+  typeGone: 'Ce type de ticket n’existe plus. Préviens un admin : le panneau doit être republié.',
   inProgress: 'Ton ticket est déjà en cours de création…',
   missingPermissions:
     'Je ne peux pas créer le salon : il me faut « Gérer les salons » sur la catégorie des tickets, ' +
@@ -29,38 +43,63 @@ const CLOSED_WITHOUT_TRANSCRIPT = {
   messageCount: null,
 };
 
+type Chooser = ButtonInteraction<'cached'> | StringSelectMenuInteraction<'cached'>;
+type Submission = ModalSubmitInteraction<'cached'>;
+type Opener = Chooser | Submission;
+
+const ephemeral = (interaction: Chooser, content: string) =>
+  interaction.reply({ content, flags: MessageFlags.Ephemeral });
+
 /**
- * Ouvre un ticket : un salon privé dans la catégorie choisie sur le site, que seuls
- * l'auteur, l'équipe et le bot voient. Un membre n'a qu'un ticket ouvert à la fois.
+ * Le type demandé. Sans id (ancien bouton `ticket:open` déjà posté avant les types), le premier
+ * type du serveur. Un type d'un autre serveur n'existe pas, pour ce serveur.
  */
-async function openTicket(interaction: ButtonInteraction<'cached'>, context: BotContext) {
-  const { guild, member } = interaction;
-  const { db, logger } = context;
+async function resolveType(
+  { db }: BotContext,
+  guildId: string,
+  id: string | undefined,
+): Promise<TicketTypeWithQuestions | null> {
+  if (id === undefined) return (await listTicketTypes(db, guildId))[0] ?? null;
+  if (!/^\d+$/.test(id)) return null;
+  const type = await findTicketType(db, Number(id));
+  return type?.guildId === guildId ? type : null;
+}
 
-  const settings = await context.configs.get(guild.id);
-  const category = settings?.ticketCategoryId
-    ? guild.channels.cache.get(settings.ticketCategoryId)
-    : undefined;
-  if (!settings || category?.type !== ChannelType.GuildCategory) {
-    await interaction.reply({ content: OPEN_REPLIES.notConfigured, flags: MessageFlags.Ephemeral });
-    return;
+/**
+ * Ce qui empêche d'ouvrir un ticket de ce type, dit à la personne : catégorie disparue, ou ticket
+ * déjà ouvert. Un ticket dont le salon a disparu (supprimé pendant que le bot était éteint) est fermé.
+ */
+async function findBlocker(
+  { guild, member }: Pick<Opener, 'guild' | 'member'>,
+  type: TicketTypeWithQuestions,
+  { db }: BotContext,
+): Promise<string | null> {
+  if (guild.channels.cache.get(type.categoryId)?.type !== ChannelType.GuildCategory) {
+    return OPEN_REPLIES.notConfigured;
   }
-
-  // Créer un salon prend parfois plus de 3 s : on répond « en cours » tout de suite
-  await interaction.deferReply({ flags: MessageFlags.Ephemeral });
-
   const existing = await findOpenTicket(db, guild.id, member.id);
-  if (existing) {
-    if (guild.channels.cache.has(existing.channelId)) {
-      await interaction.editReply(`Tu as déjà un ticket ouvert : <#${existing.channelId}>`);
-      return;
-    }
-    // Salon supprimé pendant que le bot était éteint
-    await closeTicket(db, existing.id, CLOSED_WITHOUT_TRANSCRIPT);
+  if (!existing) return null;
+  if (guild.channels.cache.has(existing.channelId)) {
+    return `Tu as déjà un ticket ouvert : <#${existing.channelId}>`;
   }
+  await closeTicket(db, existing.id, CLOSED_WITHOUT_TRANSCRIPT);
+  return null;
+}
 
+/**
+ * Crée le salon privé du ticket dans la catégorie du type, que seuls l'auteur, l'équipe du type
+ * et le bot voient, puis y poste l'accueil et les réponses du formulaire. Renvoie la phrase à
+ * montrer à l'auteur. Les réponses ne vont que dans le salon : jamais en base, jamais dans les logs.
+ */
+async function createTicketChannel(
+  interaction: Opener,
+  type: TicketTypeWithQuestions,
+  answers: FormAnswer[],
+  { db, logger }: BotContext,
+): Promise<string> {
+  const { guild, member } = interaction;
   // Un rôle supprimé depuis le réglage ferait échouer toute la création
-  const staffRoleIds = settings.ticketStaffRoleIds.filter((id) => guild.roles.cache.has(id));
+  const staffRoleIds = type.staffRoleIds.filter((id) => guild.roles.cache.has(id));
   const number = await reserveTicketNumber(db, guild.id);
 
   let channel: TextChannel;
@@ -68,7 +107,7 @@ async function openTicket(interaction: ButtonInteraction<'cached'>, context: Bot
     channel = await guild.channels.create({
       name: ticketChannelName(number),
       type: ChannelType.GuildText,
-      parent: category.id,
+      parent: type.categoryId,
       topic: `Ticket de ${member.displayName}`,
       permissionOverwrites: ticketOverwrites({
         everyoneId: guild.roles.everyone.id,
@@ -84,8 +123,7 @@ async function openTicket(interaction: ButtonInteraction<'cached'>, context: Bot
       isDiscordError(err, RESTJSONErrorCodes.MissingAccess)
     ) {
       logger.warn({ err, guildId: guild.id }, 'Création du salon de ticket refusée');
-      await interaction.editReply(OPEN_REPLIES.missingPermissions);
-      return;
+      return OPEN_REPLIES.missingPermissions;
     }
     throw err;
   }
@@ -97,42 +135,118 @@ async function openTicket(interaction: ButtonInteraction<'cached'>, context: Bot
       channelId: channel.id,
       ownerId: member.id,
       ownerName: member.displayName,
+      typeId: type.id,
     });
-    await channel.send(welcomeMessage(ticket, staffRoleIds));
+    await channel.send(welcomeMessage(ticket, { name: type.name, staffRoleIds }));
+    if (answers.length > 0) await channel.send(formAnswersMessage(answers));
   } catch (err) {
     // Pas de salon fantôme : sans ligne en base, personne ne pourrait le fermer
     await channel.delete('Ticket non enregistré').catch(() => undefined);
     throw err;
   }
 
-  logger.info({ guildId: guild.id, number }, 'Ticket ouvert');
-  await interaction.editReply(`Ton ticket est ouvert : ${channel}`);
+  logger.info({ guildId: guild.id, number, typeId: type.id }, 'Ticket ouvert');
+  return `Ton ticket est ouvert : ${channel}`;
 }
 
-/**
- * Bouton « Ouvrir un ticket ». Le verrou en mémoire bloque le double-clic :
- * sans lui, deux clics rapprochés passeraient tous deux le test « déjà un ticket ouvert ».
- */
-export function createOpenTicketButton(): ComponentHandler {
+/** Les trois façons d'ouvrir un ticket : un bouton de type, le menu de choix, puis l'envoi du formulaire. */
+export function createOpenTicketHandlers(): ComponentHandler[] {
+  // Le verrou en mémoire bloque le double clic ou le double envoi : sans lui, deux demandes
+  // rapprochées passeraient toutes deux le test « déjà un ticket ouvert ».
   const opening = new Set<string>();
-  return {
-    prefix: 'ticket:open',
-    async execute(interaction, _id, context) {
-      if (!interaction.isButton() || !interaction.inCachedGuild()) return;
-      const key = `${interaction.guildId}:${interaction.user.id}`;
-      if (opening.has(key)) {
-        await interaction.reply({
-          content: OPEN_REPLIES.inProgress,
-          flags: MessageFlags.Ephemeral,
-        });
+
+  /** Fait `action` sous le verrou de ce membre ; s'il est déjà pris, prévient et ne fait rien. */
+  async function locked(interaction: Opener, action: () => Promise<void>): Promise<void> {
+    const key = `${interaction.guildId}:${interaction.user.id}`;
+    if (opening.has(key)) {
+      await interaction.reply({ content: OPEN_REPLIES.inProgress, flags: MessageFlags.Ephemeral });
+      return;
+    }
+    opening.add(key);
+    try {
+      await action();
+    } finally {
+      opening.delete(key);
+    }
+  }
+
+  /**
+   * Un type sans question ouvre le salon tout de suite ; un type avec questions montre le formulaire,
+   * comme PREMIÈRE réponse : Discord ne l'accepte pas après un `deferReply`, et le test « déjà un
+   * ticket ouvert » doit donc se faire avant, en moins de 3 secondes.
+   */
+  async function choose(interaction: Chooser, id: string | undefined, context: BotContext) {
+    const type = await resolveType(context, interaction.guildId, id);
+    if (!type) {
+      await ephemeral(
+        interaction,
+        id === undefined ? OPEN_REPLIES.notConfigured : OPEN_REPLIES.typeGone,
+      );
+      return;
+    }
+
+    if (type.questions.length > 0) {
+      const blocker = await findBlocker(interaction, type, context);
+      if (blocker) await ephemeral(interaction, blocker);
+      else await interaction.showModal(buildTicketModal(type));
+      return;
+    }
+
+    await locked(interaction, async () => {
+      const blocker = await findBlocker(interaction, type, context);
+      if (blocker) {
+        await ephemeral(interaction, blocker);
         return;
       }
-      opening.add(key);
-      try {
-        await openTicket(interaction, context);
-      } finally {
-        opening.delete(key);
-      }
+      // Créer un salon prend parfois plus de 3 s : on répond « en cours » tout de suite
+      await interaction.deferReply({ flags: MessageFlags.Ephemeral });
+      await interaction.editReply(await createTicketChannel(interaction, type, [], context));
+    });
+  }
+
+  const open: ComponentHandler = {
+    prefix: 'ticket:open',
+    async execute(interaction, id, context) {
+      if (!interaction.isButton() || !interaction.inCachedGuild()) return;
+      await choose(interaction, id, context);
     },
   };
+
+  const menu: ComponentHandler = {
+    prefix: 'ticket:choose',
+    async execute(interaction, _id, context) {
+      if (!interaction.isStringSelectMenu() || !interaction.inCachedGuild()) return;
+      await choose(interaction, interaction.values[0], context);
+    },
+  };
+
+  const form: ComponentHandler = {
+    prefix: 'ticket:form',
+    async execute(interaction, id, context) {
+      if (!interaction.isModalSubmit() || !interaction.inCachedGuild()) return;
+      await locked(interaction, async () => {
+        await interaction.deferReply({ flags: MessageFlags.Ephemeral });
+        // Le type et le ticket ouvert sont relus : ils ont pu changer pendant que le formulaire se remplissait
+        const type = await resolveType(context, interaction.guildId, id);
+        if (!type) {
+          await interaction.editReply(OPEN_REPLIES.typeGone);
+          return;
+        }
+        const blocker = await findBlocker(interaction, type, context);
+        if (blocker) {
+          await interaction.editReply(blocker);
+          return;
+        }
+        const submitted = [...interaction.fields.fields.values()].flatMap((field) =>
+          field.type === ComponentType.TextInput
+            ? [{ customId: field.customId, value: field.value }]
+            : [],
+        );
+        const answers = readFormAnswers(type, submitted);
+        await interaction.editReply(await createTicketChannel(interaction, type, answers, context));
+      });
+    },
+  };
+
+  return [open, menu, form];
 }

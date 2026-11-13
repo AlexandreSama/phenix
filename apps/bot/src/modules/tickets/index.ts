@@ -3,17 +3,22 @@ import type { Client } from 'discord.js';
 import type { ComponentHandler } from '../../core/command.js';
 import { deleteMessageQuietly, whenReady } from '../../core/publish.js';
 import type { Logger } from '../../logger.js';
+import { createClaimHandler } from './claim.js';
 import { createCloseTicketButtons } from './close.js';
-import { createOpenTicketButton } from './open.js';
+import { createOpenTicketHandlers } from './open.js';
 import { publishTicketPanel } from './publish.js';
+import { createRatingHandler } from './rating.js';
 
+export { registerTicketAutomation } from './automation.js';
 export { closeOrphanTickets, createTicketChannelDeleteHandler } from './lifecycle.js';
 export { publishPendingTicketPanels } from './publish.js';
 
 /** Créés une seule fois : les verrous anti double-clic vivent dans ces handlers. */
 export const ticketComponents: ComponentHandler[] = [
-  createOpenTicketButton(),
+  ...createOpenTicketHandlers(),
   ...createCloseTicketButtons(),
+  ...createClaimHandler(),
+  ...createRatingHandler(),
 ];
 
 export interface TicketPanelPublisher {
@@ -23,7 +28,7 @@ export interface TicketPanelPublisher {
 
 export function createTicketPanelPublisher(
   client: Client,
-  db: Pick<PrismaClient, 'ticketPanel'>,
+  db: Pick<PrismaClient, 'ticketPanel' | 'ticketType'>,
   logger: Pick<Logger, 'info' | 'warn'>,
 ): TicketPanelPublisher {
   return {

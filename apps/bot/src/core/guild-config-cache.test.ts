@@ -13,8 +13,6 @@ const settings = {
   xpCooldownSec: 60,
   levelUpChannelId: null,
   leaderboardPublic: true,
-  ticketCategoryId: null,
-  ticketStaffRoleIds: [],
   ticketLogChannelId: null,
   td2ChannelId: null,
   td2ReportChannelId: null,
@@ -78,6 +76,18 @@ describe('createGuildConfigCache', () => {
         goodbyeMessage: true,
       }),
     });
+  });
+
+  it('ne lit plus l’ancien réglage des tickets (catégorie et équipe viennent du type)', async () => {
+    const { cache, findUnique } = setup();
+
+    await cache.get('1');
+
+    const [args] = findUnique.mock.calls[0] as [{ select: Record<string, true> }];
+    const { select } = args;
+    expect(select).not.toHaveProperty('ticketCategoryId');
+    expect(select).not.toHaveProperty('ticketStaffRoleIds');
+    expect(select).toHaveProperty('ticketLogChannelId', true);
   });
 
   it('ne garde pas une lecture qui a échoué', async () => {

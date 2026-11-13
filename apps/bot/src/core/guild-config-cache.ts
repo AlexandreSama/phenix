@@ -13,8 +13,6 @@ export type GuildSettings = Pick<
   | 'xpCooldownSec'
   | 'levelUpChannelId'
   | 'leaderboardPublic'
-  | 'ticketCategoryId'
-  | 'ticketStaffRoleIds'
   | 'ticketLogChannelId'
   | 'td2ChannelId'
   | 'td2ReportChannelId'
@@ -49,8 +47,6 @@ const SELECT = {
   xpCooldownSec: true,
   levelUpChannelId: true,
   leaderboardPublic: true,
-  ticketCategoryId: true,
-  ticketStaffRoleIds: true,
   ticketLogChannelId: true,
   td2ChannelId: true,
   td2ReportChannelId: true,

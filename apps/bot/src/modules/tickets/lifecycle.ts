@@ -11,11 +11,12 @@ type Db = Pick<PrismaClient, 'ticket'>;
 type Log = Pick<Logger, 'info' | 'error'>;
 
 /** Les messages sont partis avec le salon : le ticket est fermé, sans transcript ni auteur. */
-const DELETED_BY_HAND = {
+export const DELETED_BY_HAND = {
   closedById: null,
   closedByName: null,
   transcriptKey: null,
   messageCount: null,
+  closedVia: 'CHANNEL_DELETED' as const,
 };
 
 /**
