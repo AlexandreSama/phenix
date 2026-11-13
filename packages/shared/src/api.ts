@@ -11,7 +11,7 @@ import type {
 } from './constants.js';
 import type { MetricsRange, ServiceHeartbeat } from './metrics.js';
 import type { RolePanelInput, RolePanelMode } from './schemas/role-panel.js';
-import type { TicketSettingsInput } from './schemas/tickets.js';
+import type { TicketSettingsInput, TicketTypeInput } from './schemas/tickets.js';
 
 /** Formes des réponses de l'API, partagées avec le site. */
 
@@ -145,6 +145,24 @@ export interface TicketSettingsResponse {
   settings: TicketSettings | null;
 }
 
+/** Un type de ticket dans la liste de l'onglet « Tickets ». */
+export interface TicketTypeSummary {
+  id: number;
+  name: string;
+  description: string | null;
+  emoji: string | null;
+  categoryId: string;
+  staffRoleIds: string[];
+  /** Heures sans message avant la fermeture automatique ; null : désactivée */
+  inactivityHours: number | null;
+  questionCount: number;
+}
+
+/** Un type de ticket en entier, avec ses questions dans l'ordre. */
+export interface TicketTypeDetail extends TicketTypeInput {
+  id: number;
+}
+
 export interface TicketSummary {
   id: number;
   number: number;
@@ -155,9 +173,57 @@ export interface TicketSummary {
   closedAt: string | null;
   closedByName: string | null;
   messageCount: number | null;
+  /** Nom du type du ticket ; null pour un ticket sans type (type supprimé depuis) */
+  typeName: string | null;
+  /** Pseudo de la personne qui a pris le ticket en charge ; null tant que personne ne l'a pris */
+  claimedByName: string | null;
+  /** Comment le ticket a été fermé : null tant qu'il est ouvert, ou s'il a été fermé avant ce suivi */
+  closedVia: 'BUTTON' | 'INACTIVITY' | 'CHANNEL_DELETED' | null;
   /** Vrai si le transcript a été rangé dans Garage */
   hasTranscript: boolean;
 }
+
+/**
+ * Nombres de notes et moyennes EXACTS, lus en base, par type et par personne qui a pris les
+ * tickets en charge. Reste côté serveur : jamais envoyé au site (voir `maskRatingStats`).
+ */
+export interface RawTicketStats {
+  types: {
+    typeId: number | null;
+    typeName: string | null;
+    count: number;
+    average: number | null;
+  }[];
+  members: {
+    claimedById: string;
+    claimedByName: string | null;
+    count: number;
+    average: number | null;
+  }[];
+}
+
+/**
+ * Ce que le site reçoit : des moyennes seulement, sans nombre de notes ni identifiant Discord.
+ * `average` vaut null sous TICKET_RATING_MIN_COUNT notes, sinon elle est arrondie au dixième :
+ * jamais la note d'un ticket, ni de quoi la retrouver en comparant deux lectures.
+ */
+export interface TicketStats {
+  types: {
+    typeId: number | null;
+    typeName: string | null;
+    average: number | null;
+  }[];
+  members: {
+    claimedByName: string | null;
+    average: number | null;
+  }[];
+}
+
+/** GET /guilds/:guildId/tickets/stats : l'onglet Tickets, ouvert aussi aux accès délégués. */
+export type TicketTypeStats = Pick<TicketStats, 'types'>;
+
+/** GET /guilds/:guildId/tickets/stats/members : réservé aux administrateurs du serveur. */
+export type TicketMemberStats = Pick<TicketStats, 'members'>;
 
 export interface TicketPage {
   tickets: TicketSummary[];
