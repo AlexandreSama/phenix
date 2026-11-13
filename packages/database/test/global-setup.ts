@@ -18,6 +18,8 @@ export async function setup(project: TestProject): Promise<void> {
   execFileSync('pnpm', ['exec', 'prisma', 'migrate', 'deploy'], {
     env: { ...process.env, DATABASE_URL: databaseUrl },
     stdio: 'inherit',
+    // Sous Windows, pnpm est un pnpm.cmd : Node refuse de le lancer sans shell
+    shell: process.platform === 'win32',
   });
 
   project.provide('databaseUrl', databaseUrl);

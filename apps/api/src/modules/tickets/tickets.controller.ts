@@ -1,10 +1,13 @@
 import {
   Body,
   Controller,
+  Delete,
   Get,
+  HttpCode,
   NotFoundException,
   Param,
   ParseIntPipe,
+  Post,
   Put,
   Query,
   Res,
@@ -13,11 +16,17 @@ import {
 import {
   ticketListQuerySchema,
   ticketSettingsSchema,
+  ticketTypeSchema,
   type TicketListQuery,
+  type TicketMemberStats,
   type TicketPage,
   type TicketSettings,
   type TicketSettingsInput,
   type TicketSettingsResponse,
+  type TicketTypeDetail,
+  type TicketTypeInput,
+  type TicketTypeStats,
+  type TicketTypeSummary,
 } from '@phenix/shared';
 import type { Response } from 'express';
 import { AuthGuard } from '../../common/guards/auth.guard.js';
@@ -26,6 +35,11 @@ import { TicketsService } from './tickets.service.js';
 
 const TicketId = new ParseIntPipe({
   exceptionFactory: () => new NotFoundException('Ticket introuvable'),
+});
+
+/** Un ID de type illisible répond 404, comme un type qui n'existe pas. */
+const TypeId = new ParseIntPipe({
+  exceptionFactory: () => new NotFoundException('Type de ticket introuvable'),
 });
 
 /**
@@ -41,6 +55,22 @@ export const TRANSCRIPT_HEADERS = {
   'X-Content-Type-Options': 'nosniff',
   'Cache-Control': 'private, max-age=300',
 } as const;
+
+/**
+ * Les moyennes nominatives des membres de l'équipe évaluent des personnes : pas de @GuildModule,
+ * la route reste aux administrateurs du serveur (comme l'onglet Accès), un délégué de l'onglet
+ * Tickets n'y entre pas. Enregistré avant TicketsController, donc avant `:ticketId/transcript`.
+ */
+@Controller('guilds/:guildId/tickets')
+@UseGuards(AuthGuard, GuildAccessGuard)
+export class TicketMemberStatsController {
+  constructor(private readonly tickets: TicketsService) {}
+
+  @Get('stats/members')
+  memberStats(@Param('guildId') guildId: string): Promise<TicketMemberStats> {
+    return this.tickets.memberStats(guildId);
+  }
+}
 
 @Controller('guilds/:guildId/tickets')
 @UseGuards(AuthGuard, GuildAccessGuard)
@@ -59,6 +89,54 @@ export class TicketsController {
     @Body({ schema: ticketSettingsSchema }) input: TicketSettingsInput,
   ): Promise<TicketSettings> {
     return this.tickets.saveSettings(guildId, input);
+  }
+
+  @Get('types')
+  listTypes(@Param('guildId') guildId: string): Promise<TicketTypeSummary[]> {
+    return this.tickets.listTypes(guildId);
+  }
+
+  @Post('types')
+  createType(
+    @Param('guildId') guildId: string,
+    @Body({ schema: ticketTypeSchema }) input: TicketTypeInput,
+  ): Promise<TicketTypeDetail> {
+    return this.tickets.createType(guildId, input);
+  }
+
+  @Get('types/:typeId')
+  getType(
+    @Param('guildId') guildId: string,
+    @Param('typeId', TypeId) typeId: number,
+  ): Promise<TicketTypeDetail> {
+    return this.tickets.getType(guildId, typeId);
+  }
+
+  @Put('types/:typeId')
+  updateType(
+    @Param('guildId') guildId: string,
+    @Param('typeId', TypeId) typeId: number,
+    @Body({ schema: ticketTypeSchema }) input: TicketTypeInput,
+  ): Promise<TicketTypeDetail> {
+    return this.tickets.updateType(guildId, typeId, input);
+  }
+
+  @Delete('types/:typeId')
+  @HttpCode(204)
+  removeType(
+    @Param('guildId') guildId: string,
+    @Param('typeId', TypeId) typeId: number,
+  ): Promise<void> {
+    return this.tickets.removeType(guildId, typeId);
+  }
+
+  /**
+   * Moyennes par type seulement, arrondies et masquées sous le seuil, sans nombre de notes :
+   * jamais la note d'un ticket. Celles par membre de l'équipe : TicketMemberStatsController.
+   */
+  @Get('stats')
+  stats(@Param('guildId') guildId: string): Promise<TicketTypeStats> {
+    return this.tickets.typeStats(guildId);
   }
 
   @Get()

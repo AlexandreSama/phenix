@@ -28,6 +28,7 @@ describe('salon de ticket supprimé à la main', () => {
       closedByName: null,
       transcriptKey: null,
       messageCount: null,
+      closedVia: 'CHANNEL_DELETED',
     });
   });
 
@@ -56,7 +57,7 @@ describe('ménage au démarrage', () => {
     expect(database.closeTicket).toHaveBeenCalledWith(
       {},
       2,
-      expect.objectContaining({ transcriptKey: null }),
+      expect.objectContaining({ transcriptKey: null, closedVia: 'CHANNEL_DELETED' }),
     );
   });
 });

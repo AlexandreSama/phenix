@@ -30,12 +30,16 @@ export type TicketAvgAggregateOutputType = {
   id: number | null
   number: number | null
   messageCount: number | null
+  rating: number | null
+  typeId: number | null
 }
 
 export type TicketSumAggregateOutputType = {
   id: number | null
   number: number | null
   messageCount: number | null
+  rating: number | null
+  typeId: number | null
 }
 
 export type TicketMinAggregateOutputType = {
@@ -52,6 +56,16 @@ export type TicketMinAggregateOutputType = {
   transcriptKey: string | null
   createdAt: Date | null
   closedAt: Date | null
+  claimedById: string | null
+  claimedByName: string | null
+  claimedAt: Date | null
+  rating: number | null
+  ratedAt: Date | null
+  typeId: number | null
+  lastActivityAt: Date | null
+  inactivityRemindedAt: Date | null
+  closedVia: $Enums.TicketCloseSource | null
+  inactivityFailedAt: Date | null
 }
 
 export type TicketMaxAggregateOutputType = {
@@ -68,6 +82,16 @@ export type TicketMaxAggregateOutputType = {
   transcriptKey: string | null
   createdAt: Date | null
   closedAt: Date | null
+  claimedById: string | null
+  claimedByName: string | null
+  claimedAt: Date | null
+  rating: number | null
+  ratedAt: Date | null
+  typeId: number | null
+  lastActivityAt: Date | null
+  inactivityRemindedAt: Date | null
+  closedVia: $Enums.TicketCloseSource | null
+  inactivityFailedAt: Date | null
 }
 
 export type TicketCountAggregateOutputType = {
@@ -84,6 +108,16 @@ export type TicketCountAggregateOutputType = {
   transcriptKey: number
   createdAt: number
   closedAt: number
+  claimedById: number
+  claimedByName: number
+  claimedAt: number
+  rating: number
+  ratedAt: number
+  typeId: number
+  lastActivityAt: number
+  inactivityRemindedAt: number
+  closedVia: number
+  inactivityFailedAt: number
   _all: number
 }
 
@@ -92,12 +126,16 @@ export type TicketAvgAggregateInputType = {
   id?: true
   number?: true
   messageCount?: true
+  rating?: true
+  typeId?: true
 }
 
 export type TicketSumAggregateInputType = {
   id?: true
   number?: true
   messageCount?: true
+  rating?: true
+  typeId?: true
 }
 
 export type TicketMinAggregateInputType = {
@@ -114,6 +152,16 @@ export type TicketMinAggregateInputType = {
   transcriptKey?: true
   createdAt?: true
   closedAt?: true
+  claimedById?: true
+  claimedByName?: true
+  claimedAt?: true
+  rating?: true
+  ratedAt?: true
+  typeId?: true
+  lastActivityAt?: true
+  inactivityRemindedAt?: true
+  closedVia?: true
+  inactivityFailedAt?: true
 }
 
 export type TicketMaxAggregateInputType = {
@@ -130,6 +178,16 @@ export type TicketMaxAggregateInputType = {
   transcriptKey?: true
   createdAt?: true
   closedAt?: true
+  claimedById?: true
+  claimedByName?: true
+  claimedAt?: true
+  rating?: true
+  ratedAt?: true
+  typeId?: true
+  lastActivityAt?: true
+  inactivityRemindedAt?: true
+  closedVia?: true
+  inactivityFailedAt?: true
 }
 
 export type TicketCountAggregateInputType = {
@@ -146,6 +204,16 @@ export type TicketCountAggregateInputType = {
   transcriptKey?: true
   createdAt?: true
   closedAt?: true
+  claimedById?: true
+  claimedByName?: true
+  claimedAt?: true
+  rating?: true
+  ratedAt?: true
+  typeId?: true
+  lastActivityAt?: true
+  inactivityRemindedAt?: true
+  closedVia?: true
+  inactivityFailedAt?: true
   _all?: true
 }
 
@@ -249,6 +317,16 @@ export type TicketGroupByOutputType = {
   transcriptKey: string | null
   createdAt: Date
   closedAt: Date | null
+  claimedById: string | null
+  claimedByName: string | null
+  claimedAt: Date | null
+  rating: number | null
+  ratedAt: Date | null
+  typeId: number | null
+  lastActivityAt: Date
+  inactivityRemindedAt: Date | null
+  closedVia: $Enums.TicketCloseSource | null
+  inactivityFailedAt: Date | null
   _count: TicketCountAggregateOutputType | null
   _avg: TicketAvgAggregateOutputType | null
   _sum: TicketSumAggregateOutputType | null
@@ -288,7 +366,18 @@ export type TicketWhereInput = {
   transcriptKey?: Prisma.StringNullableFilter<"Ticket"> | string | null
   createdAt?: Prisma.DateTimeFilter<"Ticket"> | Date | string
   closedAt?: Prisma.DateTimeNullableFilter<"Ticket"> | Date | string | null
+  claimedById?: Prisma.StringNullableFilter<"Ticket"> | string | null
+  claimedByName?: Prisma.StringNullableFilter<"Ticket"> | string | null
+  claimedAt?: Prisma.DateTimeNullableFilter<"Ticket"> | Date | string | null
+  rating?: Prisma.IntNullableFilter<"Ticket"> | number | null
+  ratedAt?: Prisma.DateTimeNullableFilter<"Ticket"> | Date | string | null
+  typeId?: Prisma.IntNullableFilter<"Ticket"> | number | null
+  lastActivityAt?: Prisma.DateTimeFilter<"Ticket"> | Date | string
+  inactivityRemindedAt?: Prisma.DateTimeNullableFilter<"Ticket"> | Date | string | null
+  closedVia?: Prisma.EnumTicketCloseSourceNullableFilter<"Ticket"> | $Enums.TicketCloseSource | null
+  inactivityFailedAt?: Prisma.DateTimeNullableFilter<"Ticket"> | Date | string | null
   guild?: Prisma.XOR<Prisma.GuildScalarRelationFilter, Prisma.GuildWhereInput>
+  type?: Prisma.XOR<Prisma.TicketTypeNullableScalarRelationFilter, Prisma.TicketTypeWhereInput> | null
 }
 
 export type TicketOrderByWithRelationInput = {
@@ -305,7 +394,18 @@ export type TicketOrderByWithRelationInput = {
   transcriptKey?: Prisma.SortOrderInput | Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   closedAt?: Prisma.SortOrderInput | Prisma.SortOrder
+  claimedById?: Prisma.SortOrderInput | Prisma.SortOrder
+  claimedByName?: Prisma.SortOrderInput | Prisma.SortOrder
+  claimedAt?: Prisma.SortOrderInput | Prisma.SortOrder
+  rating?: Prisma.SortOrderInput | Prisma.SortOrder
+  ratedAt?: Prisma.SortOrderInput | Prisma.SortOrder
+  typeId?: Prisma.SortOrderInput | Prisma.SortOrder
+  lastActivityAt?: Prisma.SortOrder
+  inactivityRemindedAt?: Prisma.SortOrderInput | Prisma.SortOrder
+  closedVia?: Prisma.SortOrderInput | Prisma.SortOrder
+  inactivityFailedAt?: Prisma.SortOrderInput | Prisma.SortOrder
   guild?: Prisma.GuildOrderByWithRelationInput
+  type?: Prisma.TicketTypeOrderByWithRelationInput
 }
 
 export type TicketWhereUniqueInput = Prisma.AtLeast<{
@@ -326,7 +426,18 @@ export type TicketWhereUniqueInput = Prisma.AtLeast<{
   transcriptKey?: Prisma.StringNullableFilter<"Ticket"> | string | null
   createdAt?: Prisma.DateTimeFilter<"Ticket"> | Date | string
   closedAt?: Prisma.DateTimeNullableFilter<"Ticket"> | Date | string | null
+  claimedById?: Prisma.StringNullableFilter<"Ticket"> | string | null
+  claimedByName?: Prisma.StringNullableFilter<"Ticket"> | string | null
+  claimedAt?: Prisma.DateTimeNullableFilter<"Ticket"> | Date | string | null
+  rating?: Prisma.IntNullableFilter<"Ticket"> | number | null
+  ratedAt?: Prisma.DateTimeNullableFilter<"Ticket"> | Date | string | null
+  typeId?: Prisma.IntNullableFilter<"Ticket"> | number | null
+  lastActivityAt?: Prisma.DateTimeFilter<"Ticket"> | Date | string
+  inactivityRemindedAt?: Prisma.DateTimeNullableFilter<"Ticket"> | Date | string | null
+  closedVia?: Prisma.EnumTicketCloseSourceNullableFilter<"Ticket"> | $Enums.TicketCloseSource | null
+  inactivityFailedAt?: Prisma.DateTimeNullableFilter<"Ticket"> | Date | string | null
   guild?: Prisma.XOR<Prisma.GuildScalarRelationFilter, Prisma.GuildWhereInput>
+  type?: Prisma.XOR<Prisma.TicketTypeNullableScalarRelationFilter, Prisma.TicketTypeWhereInput> | null
 }, "id" | "channelId" | "guildId_number">
 
 export type TicketOrderByWithAggregationInput = {
@@ -343,6 +454,16 @@ export type TicketOrderByWithAggregationInput = {
   transcriptKey?: Prisma.SortOrderInput | Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   closedAt?: Prisma.SortOrderInput | Prisma.SortOrder
+  claimedById?: Prisma.SortOrderInput | Prisma.SortOrder
+  claimedByName?: Prisma.SortOrderInput | Prisma.SortOrder
+  claimedAt?: Prisma.SortOrderInput | Prisma.SortOrder
+  rating?: Prisma.SortOrderInput | Prisma.SortOrder
+  ratedAt?: Prisma.SortOrderInput | Prisma.SortOrder
+  typeId?: Prisma.SortOrderInput | Prisma.SortOrder
+  lastActivityAt?: Prisma.SortOrder
+  inactivityRemindedAt?: Prisma.SortOrderInput | Prisma.SortOrder
+  closedVia?: Prisma.SortOrderInput | Prisma.SortOrder
+  inactivityFailedAt?: Prisma.SortOrderInput | Prisma.SortOrder
   _count?: Prisma.TicketCountOrderByAggregateInput
   _avg?: Prisma.TicketAvgOrderByAggregateInput
   _max?: Prisma.TicketMaxOrderByAggregateInput
@@ -367,6 +488,16 @@ export type TicketScalarWhereWithAggregatesInput = {
   transcriptKey?: Prisma.StringNullableWithAggregatesFilter<"Ticket"> | string | null
   createdAt?: Prisma.DateTimeWithAggregatesFilter<"Ticket"> | Date | string
   closedAt?: Prisma.DateTimeNullableWithAggregatesFilter<"Ticket"> | Date | string | null
+  claimedById?: Prisma.StringNullableWithAggregatesFilter<"Ticket"> | string | null
+  claimedByName?: Prisma.StringNullableWithAggregatesFilter<"Ticket"> | string | null
+  claimedAt?: Prisma.DateTimeNullableWithAggregatesFilter<"Ticket"> | Date | string | null
+  rating?: Prisma.IntNullableWithAggregatesFilter<"Ticket"> | number | null
+  ratedAt?: Prisma.DateTimeNullableWithAggregatesFilter<"Ticket"> | Date | string | null
+  typeId?: Prisma.IntNullableWithAggregatesFilter<"Ticket"> | number | null
+  lastActivityAt?: Prisma.DateTimeWithAggregatesFilter<"Ticket"> | Date | string
+  inactivityRemindedAt?: Prisma.DateTimeNullableWithAggregatesFilter<"Ticket"> | Date | string | null
+  closedVia?: Prisma.EnumTicketCloseSourceNullableWithAggregatesFilter<"Ticket"> | $Enums.TicketCloseSource | null
+  inactivityFailedAt?: Prisma.DateTimeNullableWithAggregatesFilter<"Ticket"> | Date | string | null
 }
 
 export type TicketCreateInput = {
@@ -381,7 +512,17 @@ export type TicketCreateInput = {
   transcriptKey?: string | null
   createdAt?: Date | string
   closedAt?: Date | string | null
+  claimedById?: string | null
+  claimedByName?: string | null
+  claimedAt?: Date | string | null
+  rating?: number | null
+  ratedAt?: Date | string | null
+  lastActivityAt?: Date | string
+  inactivityRemindedAt?: Date | string | null
+  closedVia?: $Enums.TicketCloseSource | null
+  inactivityFailedAt?: Date | string | null
   guild: Prisma.GuildCreateNestedOneWithoutTicketsInput
+  type?: Prisma.TicketTypeCreateNestedOneWithoutTicketsInput
 }
 
 export type TicketUncheckedCreateInput = {
@@ -398,6 +539,16 @@ export type TicketUncheckedCreateInput = {
   transcriptKey?: string | null
   createdAt?: Date | string
   closedAt?: Date | string | null
+  claimedById?: string | null
+  claimedByName?: string | null
+  claimedAt?: Date | string | null
+  rating?: number | null
+  ratedAt?: Date | string | null
+  typeId?: number | null
+  lastActivityAt?: Date | string
+  inactivityRemindedAt?: Date | string | null
+  closedVia?: $Enums.TicketCloseSource | null
+  inactivityFailedAt?: Date | string | null
 }
 
 export type TicketUpdateInput = {
@@ -412,7 +563,17 @@ export type TicketUpdateInput = {
   transcriptKey?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   closedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  claimedById?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  claimedByName?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  claimedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  rating?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  ratedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  lastActivityAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  inactivityRemindedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  closedVia?: Prisma.NullableEnumTicketCloseSourceFieldUpdateOperationsInput | $Enums.TicketCloseSource | null
+  inactivityFailedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   guild?: Prisma.GuildUpdateOneRequiredWithoutTicketsNestedInput
+  type?: Prisma.TicketTypeUpdateOneWithoutTicketsNestedInput
 }
 
 export type TicketUncheckedUpdateInput = {
@@ -429,6 +590,16 @@ export type TicketUncheckedUpdateInput = {
   transcriptKey?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   closedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  claimedById?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  claimedByName?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  claimedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  rating?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  ratedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  typeId?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  lastActivityAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  inactivityRemindedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  closedVia?: Prisma.NullableEnumTicketCloseSourceFieldUpdateOperationsInput | $Enums.TicketCloseSource | null
+  inactivityFailedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
 }
 
 export type TicketCreateManyInput = {
@@ -445,6 +616,16 @@ export type TicketCreateManyInput = {
   transcriptKey?: string | null
   createdAt?: Date | string
   closedAt?: Date | string | null
+  claimedById?: string | null
+  claimedByName?: string | null
+  claimedAt?: Date | string | null
+  rating?: number | null
+  ratedAt?: Date | string | null
+  typeId?: number | null
+  lastActivityAt?: Date | string
+  inactivityRemindedAt?: Date | string | null
+  closedVia?: $Enums.TicketCloseSource | null
+  inactivityFailedAt?: Date | string | null
 }
 
 export type TicketUpdateManyMutationInput = {
@@ -459,6 +640,15 @@ export type TicketUpdateManyMutationInput = {
   transcriptKey?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   closedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  claimedById?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  claimedByName?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  claimedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  rating?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  ratedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  lastActivityAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  inactivityRemindedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  closedVia?: Prisma.NullableEnumTicketCloseSourceFieldUpdateOperationsInput | $Enums.TicketCloseSource | null
+  inactivityFailedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
 }
 
 export type TicketUncheckedUpdateManyInput = {
@@ -475,6 +665,16 @@ export type TicketUncheckedUpdateManyInput = {
   transcriptKey?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   closedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  claimedById?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  claimedByName?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  claimedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  rating?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  ratedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  typeId?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  lastActivityAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  inactivityRemindedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  closedVia?: Prisma.NullableEnumTicketCloseSourceFieldUpdateOperationsInput | $Enums.TicketCloseSource | null
+  inactivityFailedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
 }
 
 export type TicketListRelationFilter = {
@@ -506,12 +706,24 @@ export type TicketCountOrderByAggregateInput = {
   transcriptKey?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   closedAt?: Prisma.SortOrder
+  claimedById?: Prisma.SortOrder
+  claimedByName?: Prisma.SortOrder
+  claimedAt?: Prisma.SortOrder
+  rating?: Prisma.SortOrder
+  ratedAt?: Prisma.SortOrder
+  typeId?: Prisma.SortOrder
+  lastActivityAt?: Prisma.SortOrder
+  inactivityRemindedAt?: Prisma.SortOrder
+  closedVia?: Prisma.SortOrder
+  inactivityFailedAt?: Prisma.SortOrder
 }
 
 export type TicketAvgOrderByAggregateInput = {
   id?: Prisma.SortOrder
   number?: Prisma.SortOrder
   messageCount?: Prisma.SortOrder
+  rating?: Prisma.SortOrder
+  typeId?: Prisma.SortOrder
 }
 
 export type TicketMaxOrderByAggregateInput = {
@@ -528,6 +740,16 @@ export type TicketMaxOrderByAggregateInput = {
   transcriptKey?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   closedAt?: Prisma.SortOrder
+  claimedById?: Prisma.SortOrder
+  claimedByName?: Prisma.SortOrder
+  claimedAt?: Prisma.SortOrder
+  rating?: Prisma.SortOrder
+  ratedAt?: Prisma.SortOrder
+  typeId?: Prisma.SortOrder
+  lastActivityAt?: Prisma.SortOrder
+  inactivityRemindedAt?: Prisma.SortOrder
+  closedVia?: Prisma.SortOrder
+  inactivityFailedAt?: Prisma.SortOrder
 }
 
 export type TicketMinOrderByAggregateInput = {
@@ -544,12 +766,24 @@ export type TicketMinOrderByAggregateInput = {
   transcriptKey?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   closedAt?: Prisma.SortOrder
+  claimedById?: Prisma.SortOrder
+  claimedByName?: Prisma.SortOrder
+  claimedAt?: Prisma.SortOrder
+  rating?: Prisma.SortOrder
+  ratedAt?: Prisma.SortOrder
+  typeId?: Prisma.SortOrder
+  lastActivityAt?: Prisma.SortOrder
+  inactivityRemindedAt?: Prisma.SortOrder
+  closedVia?: Prisma.SortOrder
+  inactivityFailedAt?: Prisma.SortOrder
 }
 
 export type TicketSumOrderByAggregateInput = {
   id?: Prisma.SortOrder
   number?: Prisma.SortOrder
   messageCount?: Prisma.SortOrder
+  rating?: Prisma.SortOrder
+  typeId?: Prisma.SortOrder
 }
 
 export type TicketCreateNestedManyWithoutGuildInput = {
@@ -598,6 +832,52 @@ export type EnumTicketStatusFieldUpdateOperationsInput = {
   set?: $Enums.TicketStatus
 }
 
+export type NullableEnumTicketCloseSourceFieldUpdateOperationsInput = {
+  set?: $Enums.TicketCloseSource | null
+}
+
+export type TicketCreateNestedManyWithoutTypeInput = {
+  create?: Prisma.XOR<Prisma.TicketCreateWithoutTypeInput, Prisma.TicketUncheckedCreateWithoutTypeInput> | Prisma.TicketCreateWithoutTypeInput[] | Prisma.TicketUncheckedCreateWithoutTypeInput[]
+  connectOrCreate?: Prisma.TicketCreateOrConnectWithoutTypeInput | Prisma.TicketCreateOrConnectWithoutTypeInput[]
+  createMany?: Prisma.TicketCreateManyTypeInputEnvelope
+  connect?: Prisma.TicketWhereUniqueInput | Prisma.TicketWhereUniqueInput[]
+}
+
+export type TicketUncheckedCreateNestedManyWithoutTypeInput = {
+  create?: Prisma.XOR<Prisma.TicketCreateWithoutTypeInput, Prisma.TicketUncheckedCreateWithoutTypeInput> | Prisma.TicketCreateWithoutTypeInput[] | Prisma.TicketUncheckedCreateWithoutTypeInput[]
+  connectOrCreate?: Prisma.TicketCreateOrConnectWithoutTypeInput | Prisma.TicketCreateOrConnectWithoutTypeInput[]
+  createMany?: Prisma.TicketCreateManyTypeInputEnvelope
+  connect?: Prisma.TicketWhereUniqueInput | Prisma.TicketWhereUniqueInput[]
+}
+
+export type TicketUpdateManyWithoutTypeNestedInput = {
+  create?: Prisma.XOR<Prisma.TicketCreateWithoutTypeInput, Prisma.TicketUncheckedCreateWithoutTypeInput> | Prisma.TicketCreateWithoutTypeInput[] | Prisma.TicketUncheckedCreateWithoutTypeInput[]
+  connectOrCreate?: Prisma.TicketCreateOrConnectWithoutTypeInput | Prisma.TicketCreateOrConnectWithoutTypeInput[]
+  upsert?: Prisma.TicketUpsertWithWhereUniqueWithoutTypeInput | Prisma.TicketUpsertWithWhereUniqueWithoutTypeInput[]
+  createMany?: Prisma.TicketCreateManyTypeInputEnvelope
+  set?: Prisma.TicketWhereUniqueInput | Prisma.TicketWhereUniqueInput[]
+  disconnect?: Prisma.TicketWhereUniqueInput | Prisma.TicketWhereUniqueInput[]
+  delete?: Prisma.TicketWhereUniqueInput | Prisma.TicketWhereUniqueInput[]
+  connect?: Prisma.TicketWhereUniqueInput | Prisma.TicketWhereUniqueInput[]
+  update?: Prisma.TicketUpdateWithWhereUniqueWithoutTypeInput | Prisma.TicketUpdateWithWhereUniqueWithoutTypeInput[]
+  updateMany?: Prisma.TicketUpdateManyWithWhereWithoutTypeInput | Prisma.TicketUpdateManyWithWhereWithoutTypeInput[]
+  deleteMany?: Prisma.TicketScalarWhereInput | Prisma.TicketScalarWhereInput[]
+}
+
+export type TicketUncheckedUpdateManyWithoutTypeNestedInput = {
+  create?: Prisma.XOR<Prisma.TicketCreateWithoutTypeInput, Prisma.TicketUncheckedCreateWithoutTypeInput> | Prisma.TicketCreateWithoutTypeInput[] | Prisma.TicketUncheckedCreateWithoutTypeInput[]
+  connectOrCreate?: Prisma.TicketCreateOrConnectWithoutTypeInput | Prisma.TicketCreateOrConnectWithoutTypeInput[]
+  upsert?: Prisma.TicketUpsertWithWhereUniqueWithoutTypeInput | Prisma.TicketUpsertWithWhereUniqueWithoutTypeInput[]
+  createMany?: Prisma.TicketCreateManyTypeInputEnvelope
+  set?: Prisma.TicketWhereUniqueInput | Prisma.TicketWhereUniqueInput[]
+  disconnect?: Prisma.TicketWhereUniqueInput | Prisma.TicketWhereUniqueInput[]
+  delete?: Prisma.TicketWhereUniqueInput | Prisma.TicketWhereUniqueInput[]
+  connect?: Prisma.TicketWhereUniqueInput | Prisma.TicketWhereUniqueInput[]
+  update?: Prisma.TicketUpdateWithWhereUniqueWithoutTypeInput | Prisma.TicketUpdateWithWhereUniqueWithoutTypeInput[]
+  updateMany?: Prisma.TicketUpdateManyWithWhereWithoutTypeInput | Prisma.TicketUpdateManyWithWhereWithoutTypeInput[]
+  deleteMany?: Prisma.TicketScalarWhereInput | Prisma.TicketScalarWhereInput[]
+}
+
 export type TicketCreateWithoutGuildInput = {
   number: number
   channelId: string
@@ -610,6 +890,16 @@ export type TicketCreateWithoutGuildInput = {
   transcriptKey?: string | null
   createdAt?: Date | string
   closedAt?: Date | string | null
+  claimedById?: string | null
+  claimedByName?: string | null
+  claimedAt?: Date | string | null
+  rating?: number | null
+  ratedAt?: Date | string | null
+  lastActivityAt?: Date | string
+  inactivityRemindedAt?: Date | string | null
+  closedVia?: $Enums.TicketCloseSource | null
+  inactivityFailedAt?: Date | string | null
+  type?: Prisma.TicketTypeCreateNestedOneWithoutTicketsInput
 }
 
 export type TicketUncheckedCreateWithoutGuildInput = {
@@ -625,6 +915,16 @@ export type TicketUncheckedCreateWithoutGuildInput = {
   transcriptKey?: string | null
   createdAt?: Date | string
   closedAt?: Date | string | null
+  claimedById?: string | null
+  claimedByName?: string | null
+  claimedAt?: Date | string | null
+  rating?: number | null
+  ratedAt?: Date | string | null
+  typeId?: number | null
+  lastActivityAt?: Date | string
+  inactivityRemindedAt?: Date | string | null
+  closedVia?: $Enums.TicketCloseSource | null
+  inactivityFailedAt?: Date | string | null
 }
 
 export type TicketCreateOrConnectWithoutGuildInput = {
@@ -670,6 +970,91 @@ export type TicketScalarWhereInput = {
   transcriptKey?: Prisma.StringNullableFilter<"Ticket"> | string | null
   createdAt?: Prisma.DateTimeFilter<"Ticket"> | Date | string
   closedAt?: Prisma.DateTimeNullableFilter<"Ticket"> | Date | string | null
+  claimedById?: Prisma.StringNullableFilter<"Ticket"> | string | null
+  claimedByName?: Prisma.StringNullableFilter<"Ticket"> | string | null
+  claimedAt?: Prisma.DateTimeNullableFilter<"Ticket"> | Date | string | null
+  rating?: Prisma.IntNullableFilter<"Ticket"> | number | null
+  ratedAt?: Prisma.DateTimeNullableFilter<"Ticket"> | Date | string | null
+  typeId?: Prisma.IntNullableFilter<"Ticket"> | number | null
+  lastActivityAt?: Prisma.DateTimeFilter<"Ticket"> | Date | string
+  inactivityRemindedAt?: Prisma.DateTimeNullableFilter<"Ticket"> | Date | string | null
+  closedVia?: Prisma.EnumTicketCloseSourceNullableFilter<"Ticket"> | $Enums.TicketCloseSource | null
+  inactivityFailedAt?: Prisma.DateTimeNullableFilter<"Ticket"> | Date | string | null
+}
+
+export type TicketCreateWithoutTypeInput = {
+  number: number
+  channelId: string
+  ownerId: string
+  ownerName?: string | null
+  status?: $Enums.TicketStatus
+  closedById?: string | null
+  closedByName?: string | null
+  messageCount?: number | null
+  transcriptKey?: string | null
+  createdAt?: Date | string
+  closedAt?: Date | string | null
+  claimedById?: string | null
+  claimedByName?: string | null
+  claimedAt?: Date | string | null
+  rating?: number | null
+  ratedAt?: Date | string | null
+  lastActivityAt?: Date | string
+  inactivityRemindedAt?: Date | string | null
+  closedVia?: $Enums.TicketCloseSource | null
+  inactivityFailedAt?: Date | string | null
+  guild: Prisma.GuildCreateNestedOneWithoutTicketsInput
+}
+
+export type TicketUncheckedCreateWithoutTypeInput = {
+  id?: number
+  guildId: string
+  number: number
+  channelId: string
+  ownerId: string
+  ownerName?: string | null
+  status?: $Enums.TicketStatus
+  closedById?: string | null
+  closedByName?: string | null
+  messageCount?: number | null
+  transcriptKey?: string | null
+  createdAt?: Date | string
+  closedAt?: Date | string | null
+  claimedById?: string | null
+  claimedByName?: string | null
+  claimedAt?: Date | string | null
+  rating?: number | null
+  ratedAt?: Date | string | null
+  lastActivityAt?: Date | string
+  inactivityRemindedAt?: Date | string | null
+  closedVia?: $Enums.TicketCloseSource | null
+  inactivityFailedAt?: Date | string | null
+}
+
+export type TicketCreateOrConnectWithoutTypeInput = {
+  where: Prisma.TicketWhereUniqueInput
+  create: Prisma.XOR<Prisma.TicketCreateWithoutTypeInput, Prisma.TicketUncheckedCreateWithoutTypeInput>
+}
+
+export type TicketCreateManyTypeInputEnvelope = {
+  data: Prisma.TicketCreateManyTypeInput | Prisma.TicketCreateManyTypeInput[]
+  skipDuplicates?: boolean
+}
+
+export type TicketUpsertWithWhereUniqueWithoutTypeInput = {
+  where: Prisma.TicketWhereUniqueInput
+  update: Prisma.XOR<Prisma.TicketUpdateWithoutTypeInput, Prisma.TicketUncheckedUpdateWithoutTypeInput>
+  create: Prisma.XOR<Prisma.TicketCreateWithoutTypeInput, Prisma.TicketUncheckedCreateWithoutTypeInput>
+}
+
+export type TicketUpdateWithWhereUniqueWithoutTypeInput = {
+  where: Prisma.TicketWhereUniqueInput
+  data: Prisma.XOR<Prisma.TicketUpdateWithoutTypeInput, Prisma.TicketUncheckedUpdateWithoutTypeInput>
+}
+
+export type TicketUpdateManyWithWhereWithoutTypeInput = {
+  where: Prisma.TicketScalarWhereInput
+  data: Prisma.XOR<Prisma.TicketUpdateManyMutationInput, Prisma.TicketUncheckedUpdateManyWithoutTypeInput>
 }
 
 export type TicketCreateManyGuildInput = {
@@ -685,6 +1070,16 @@ export type TicketCreateManyGuildInput = {
   transcriptKey?: string | null
   createdAt?: Date | string
   closedAt?: Date | string | null
+  claimedById?: string | null
+  claimedByName?: string | null
+  claimedAt?: Date | string | null
+  rating?: number | null
+  ratedAt?: Date | string | null
+  typeId?: number | null
+  lastActivityAt?: Date | string
+  inactivityRemindedAt?: Date | string | null
+  closedVia?: $Enums.TicketCloseSource | null
+  inactivityFailedAt?: Date | string | null
 }
 
 export type TicketUpdateWithoutGuildInput = {
@@ -699,6 +1094,16 @@ export type TicketUpdateWithoutGuildInput = {
   transcriptKey?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   closedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  claimedById?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  claimedByName?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  claimedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  rating?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  ratedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  lastActivityAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  inactivityRemindedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  closedVia?: Prisma.NullableEnumTicketCloseSourceFieldUpdateOperationsInput | $Enums.TicketCloseSource | null
+  inactivityFailedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  type?: Prisma.TicketTypeUpdateOneWithoutTicketsNestedInput
 }
 
 export type TicketUncheckedUpdateWithoutGuildInput = {
@@ -714,6 +1119,16 @@ export type TicketUncheckedUpdateWithoutGuildInput = {
   transcriptKey?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   closedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  claimedById?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  claimedByName?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  claimedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  rating?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  ratedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  typeId?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  lastActivityAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  inactivityRemindedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  closedVia?: Prisma.NullableEnumTicketCloseSourceFieldUpdateOperationsInput | $Enums.TicketCloseSource | null
+  inactivityFailedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
 }
 
 export type TicketUncheckedUpdateManyWithoutGuildInput = {
@@ -729,6 +1144,115 @@ export type TicketUncheckedUpdateManyWithoutGuildInput = {
   transcriptKey?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   closedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  claimedById?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  claimedByName?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  claimedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  rating?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  ratedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  typeId?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  lastActivityAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  inactivityRemindedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  closedVia?: Prisma.NullableEnumTicketCloseSourceFieldUpdateOperationsInput | $Enums.TicketCloseSource | null
+  inactivityFailedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+}
+
+export type TicketCreateManyTypeInput = {
+  id?: number
+  guildId: string
+  number: number
+  channelId: string
+  ownerId: string
+  ownerName?: string | null
+  status?: $Enums.TicketStatus
+  closedById?: string | null
+  closedByName?: string | null
+  messageCount?: number | null
+  transcriptKey?: string | null
+  createdAt?: Date | string
+  closedAt?: Date | string | null
+  claimedById?: string | null
+  claimedByName?: string | null
+  claimedAt?: Date | string | null
+  rating?: number | null
+  ratedAt?: Date | string | null
+  lastActivityAt?: Date | string
+  inactivityRemindedAt?: Date | string | null
+  closedVia?: $Enums.TicketCloseSource | null
+  inactivityFailedAt?: Date | string | null
+}
+
+export type TicketUpdateWithoutTypeInput = {
+  number?: Prisma.IntFieldUpdateOperationsInput | number
+  channelId?: Prisma.StringFieldUpdateOperationsInput | string
+  ownerId?: Prisma.StringFieldUpdateOperationsInput | string
+  ownerName?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  status?: Prisma.EnumTicketStatusFieldUpdateOperationsInput | $Enums.TicketStatus
+  closedById?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  closedByName?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  messageCount?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  transcriptKey?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  closedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  claimedById?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  claimedByName?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  claimedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  rating?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  ratedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  lastActivityAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  inactivityRemindedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  closedVia?: Prisma.NullableEnumTicketCloseSourceFieldUpdateOperationsInput | $Enums.TicketCloseSource | null
+  inactivityFailedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  guild?: Prisma.GuildUpdateOneRequiredWithoutTicketsNestedInput
+}
+
+export type TicketUncheckedUpdateWithoutTypeInput = {
+  id?: Prisma.IntFieldUpdateOperationsInput | number
+  guildId?: Prisma.StringFieldUpdateOperationsInput | string
+  number?: Prisma.IntFieldUpdateOperationsInput | number
+  channelId?: Prisma.StringFieldUpdateOperationsInput | string
+  ownerId?: Prisma.StringFieldUpdateOperationsInput | string
+  ownerName?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  status?: Prisma.EnumTicketStatusFieldUpdateOperationsInput | $Enums.TicketStatus
+  closedById?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  closedByName?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  messageCount?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  transcriptKey?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  closedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  claimedById?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  claimedByName?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  claimedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  rating?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  ratedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  lastActivityAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  inactivityRemindedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  closedVia?: Prisma.NullableEnumTicketCloseSourceFieldUpdateOperationsInput | $Enums.TicketCloseSource | null
+  inactivityFailedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+}
+
+export type TicketUncheckedUpdateManyWithoutTypeInput = {
+  id?: Prisma.IntFieldUpdateOperationsInput | number
+  guildId?: Prisma.StringFieldUpdateOperationsInput | string
+  number?: Prisma.IntFieldUpdateOperationsInput | number
+  channelId?: Prisma.StringFieldUpdateOperationsInput | string
+  ownerId?: Prisma.StringFieldUpdateOperationsInput | string
+  ownerName?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  status?: Prisma.EnumTicketStatusFieldUpdateOperationsInput | $Enums.TicketStatus
+  closedById?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  closedByName?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  messageCount?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  transcriptKey?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  closedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  claimedById?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  claimedByName?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  claimedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  rating?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  ratedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  lastActivityAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  inactivityRemindedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  closedVia?: Prisma.NullableEnumTicketCloseSourceFieldUpdateOperationsInput | $Enums.TicketCloseSource | null
+  inactivityFailedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
 }
 
 
@@ -747,7 +1271,18 @@ export type TicketSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs =
   transcriptKey?: boolean
   createdAt?: boolean
   closedAt?: boolean
+  claimedById?: boolean
+  claimedByName?: boolean
+  claimedAt?: boolean
+  rating?: boolean
+  ratedAt?: boolean
+  typeId?: boolean
+  lastActivityAt?: boolean
+  inactivityRemindedAt?: boolean
+  closedVia?: boolean
+  inactivityFailedAt?: boolean
   guild?: boolean | Prisma.GuildDefaultArgs<ExtArgs>
+  type?: boolean | Prisma.Ticket$typeArgs<ExtArgs>
 }, ExtArgs["result"]["ticket"]>
 
 export type TicketSelectCreateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetSelect<{
@@ -764,7 +1299,18 @@ export type TicketSelectCreateManyAndReturn<ExtArgs extends runtime.Types.Extens
   transcriptKey?: boolean
   createdAt?: boolean
   closedAt?: boolean
+  claimedById?: boolean
+  claimedByName?: boolean
+  claimedAt?: boolean
+  rating?: boolean
+  ratedAt?: boolean
+  typeId?: boolean
+  lastActivityAt?: boolean
+  inactivityRemindedAt?: boolean
+  closedVia?: boolean
+  inactivityFailedAt?: boolean
   guild?: boolean | Prisma.GuildDefaultArgs<ExtArgs>
+  type?: boolean | Prisma.Ticket$typeArgs<ExtArgs>
 }, ExtArgs["result"]["ticket"]>
 
 export type TicketSelectUpdateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetSelect<{
@@ -781,7 +1327,18 @@ export type TicketSelectUpdateManyAndReturn<ExtArgs extends runtime.Types.Extens
   transcriptKey?: boolean
   createdAt?: boolean
   closedAt?: boolean
+  claimedById?: boolean
+  claimedByName?: boolean
+  claimedAt?: boolean
+  rating?: boolean
+  ratedAt?: boolean
+  typeId?: boolean
+  lastActivityAt?: boolean
+  inactivityRemindedAt?: boolean
+  closedVia?: boolean
+  inactivityFailedAt?: boolean
   guild?: boolean | Prisma.GuildDefaultArgs<ExtArgs>
+  type?: boolean | Prisma.Ticket$typeArgs<ExtArgs>
 }, ExtArgs["result"]["ticket"]>
 
 export type TicketSelectScalar = {
@@ -798,23 +1355,37 @@ export type TicketSelectScalar = {
   transcriptKey?: boolean
   createdAt?: boolean
   closedAt?: boolean
+  claimedById?: boolean
+  claimedByName?: boolean
+  claimedAt?: boolean
+  rating?: boolean
+  ratedAt?: boolean
+  typeId?: boolean
+  lastActivityAt?: boolean
+  inactivityRemindedAt?: boolean
+  closedVia?: boolean
+  inactivityFailedAt?: boolean
 }
 
-export type TicketOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "guildId" | "number" | "channelId" | "ownerId" | "ownerName" | "status" | "closedById" | "closedByName" | "messageCount" | "transcriptKey" | "createdAt" | "closedAt", ExtArgs["result"]["ticket"]>
+export type TicketOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "guildId" | "number" | "channelId" | "ownerId" | "ownerName" | "status" | "closedById" | "closedByName" | "messageCount" | "transcriptKey" | "createdAt" | "closedAt" | "claimedById" | "claimedByName" | "claimedAt" | "rating" | "ratedAt" | "typeId" | "lastActivityAt" | "inactivityRemindedAt" | "closedVia" | "inactivityFailedAt", ExtArgs["result"]["ticket"]>
 export type TicketInclude<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   guild?: boolean | Prisma.GuildDefaultArgs<ExtArgs>
+  type?: boolean | Prisma.Ticket$typeArgs<ExtArgs>
 }
 export type TicketIncludeCreateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   guild?: boolean | Prisma.GuildDefaultArgs<ExtArgs>
+  type?: boolean | Prisma.Ticket$typeArgs<ExtArgs>
 }
 export type TicketIncludeUpdateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   guild?: boolean | Prisma.GuildDefaultArgs<ExtArgs>
+  type?: boolean | Prisma.Ticket$typeArgs<ExtArgs>
 }
 
 export type $TicketPayload<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   name: "Ticket"
   objects: {
     guild: Prisma.$GuildPayload<ExtArgs>
+    type: Prisma.$TicketTypePayload<ExtArgs> | null
   }
   scalars: runtime.Types.Extensions.GetPayloadResult<{
     id: number
@@ -830,6 +1401,16 @@ export type $TicketPayload<ExtArgs extends runtime.Types.Extensions.InternalArgs
     transcriptKey: string | null
     createdAt: Date
     closedAt: Date | null
+    claimedById: string | null
+    claimedByName: string | null
+    claimedAt: Date | null
+    rating: number | null
+    ratedAt: Date | null
+    typeId: number | null
+    lastActivityAt: Date
+    inactivityRemindedAt: Date | null
+    closedVia: $Enums.TicketCloseSource | null
+    inactivityFailedAt: Date | null
   }, ExtArgs["result"]["ticket"]>
   composites: {}
 }
@@ -1225,6 +1806,7 @@ readonly fields: TicketFieldRefs;
 export interface Prisma__TicketClient<T, Null = never, ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs, GlobalOmitOptions = {}> extends Prisma.PrismaPromise<T> {
   readonly [Symbol.toStringTag]: "PrismaPromise"
   guild<T extends Prisma.GuildDefaultArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.GuildDefaultArgs<ExtArgs>>): Prisma.Prisma__GuildClient<runtime.Types.Result.GetResult<Prisma.$GuildPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | Null, Null, ExtArgs, GlobalOmitOptions>
+  type<T extends Prisma.Ticket$typeArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.Ticket$typeArgs<ExtArgs>>): Prisma.Prisma__TicketTypeClient<runtime.Types.Result.GetResult<Prisma.$TicketTypePayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
   /**
    * Attaches callbacks for the resolution and/or rejection of the Promise.
    * @param onfulfilled The callback to execute when the Promise is resolved.
@@ -1267,6 +1849,16 @@ export interface TicketFieldRefs {
   readonly transcriptKey: Prisma.FieldRef<"Ticket", 'String'>
   readonly createdAt: Prisma.FieldRef<"Ticket", 'DateTime'>
   readonly closedAt: Prisma.FieldRef<"Ticket", 'DateTime'>
+  readonly claimedById: Prisma.FieldRef<"Ticket", 'String'>
+  readonly claimedByName: Prisma.FieldRef<"Ticket", 'String'>
+  readonly claimedAt: Prisma.FieldRef<"Ticket", 'DateTime'>
+  readonly rating: Prisma.FieldRef<"Ticket", 'Int'>
+  readonly ratedAt: Prisma.FieldRef<"Ticket", 'DateTime'>
+  readonly typeId: Prisma.FieldRef<"Ticket", 'Int'>
+  readonly lastActivityAt: Prisma.FieldRef<"Ticket", 'DateTime'>
+  readonly inactivityRemindedAt: Prisma.FieldRef<"Ticket", 'DateTime'>
+  readonly closedVia: Prisma.FieldRef<"Ticket", 'TicketCloseSource'>
+  readonly inactivityFailedAt: Prisma.FieldRef<"Ticket", 'DateTime'>
 }
     
 
@@ -1665,6 +2257,25 @@ export type TicketDeleteManyArgs<ExtArgs extends runtime.Types.Extensions.Intern
    * Limit how many Tickets to delete.
    */
   limit?: number
+}
+
+/**
+ * Ticket.type
+ */
+export type Ticket$typeArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  /**
+   * Select specific fields to fetch from the TicketType
+   */
+  select?: Prisma.TicketTypeSelect<ExtArgs> | null
+  /**
+   * Omit specific fields from the TicketType
+   */
+  omit?: Prisma.TicketTypeOmit<ExtArgs> | null
+  /**
+   * Choose, which related nodes to fetch as well
+   */
+  include?: Prisma.TicketTypeInclude<ExtArgs> | null
+  where?: Prisma.TicketTypeWhereInput
 }
 
 /**

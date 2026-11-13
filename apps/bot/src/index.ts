@@ -66,6 +66,7 @@ import {
   createTicketChannelDeleteHandler,
   createTicketPanelPublisher,
   publishPendingTicketPanels,
+  registerTicketAutomation,
   ticketComponents,
 } from './modules/tickets/index.js';
 import {
@@ -185,6 +186,10 @@ const unsubscribe = subscribeToBotEvents(env.REDIS_URL, {
   logModeration: (event) => publishDashboardLog(client, context, event),
   logger,
 });
+// Les tickets sans activité : suivi des messages (MessageCreate), rappel puis fermeture
+// automatique, un passage toutes les 5 minutes. Le processeur ferme avec transcript : il lui faut
+// le contexte complet, créé juste au-dessus
+const ticketAutomation = registerTicketAutomation({ client, context, redisUrl: env.REDIS_URL });
 let stopBanExpiry: (() => void) | undefined;
 let stopHeartbeat: (() => void) | undefined;
 
@@ -257,6 +262,7 @@ client.once(Events.ClientReady, (ready) => {
   moderationWorker
     .run()
     .catch((err: unknown) => logger.error({ err }, 'Moderation worker stopped'));
+  ticketAutomation.start();
   resumeTd2Events(ready, prisma, context.td2, logger).catch((err: unknown) =>
     logger.error({ err }, 'Échec de la reprise des sorties TD2'),
   );
@@ -280,6 +286,7 @@ async function shutdown(signal: string): Promise<void> {
   await metricsQueue.close();
   await moderationWorker.close();
   await moderationQueue.close();
+  await ticketAutomation.stop();
   // Le dernier lot des commandes comptées, avant de fermer la base
   await usage.stop();
   await unsubscribe();

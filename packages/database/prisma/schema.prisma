@@ -41,6 +41,7 @@ model Guild {
   marriages      Marriage[]
   tickets        Ticket[]
   ticketPanel    TicketPanel?
+  ticketTypes    TicketType[]
   giveaways      Giveaway[]
   rolePanels     RolePanel[]
   td2Events      Td2Event[]
@@ -127,9 +128,9 @@ enum RevocationSource {
 }
 
 model Case {
-  id          Int       @id @default(autoincrement())
+  id          Int               @id @default(autoincrement())
   guildId     String
-  guild       Guild     @relation(fields: [guildId], references: [id], onDelete: Cascade)
+  guild       Guild             @relation(fields: [guildId], references: [id], onDelete: Cascade)
   number      Int // #1, #2… propre à la guilde
   type        CaseType
   targetId    String
@@ -139,7 +140,7 @@ model Case {
   revokedAt   DateTime? // clearwarn, unban, unmute
   revokedById String?
   revokedVia  RevocationSource?
-  createdAt   DateTime  @default(now())
+  createdAt   DateTime          @default(now())
 
   @@unique([guildId, number])
   @@index([guildId, targetId])
@@ -184,25 +185,93 @@ enum TicketStatus {
   CLOSED
 }
 
+/**
+ * Comment un ticket a été fermé : le bouton, la fermeture automatique, ou la suppression du salon.
+ */
+enum TicketCloseSource {
+  BUTTON
+  INACTIVITY
+  CHANNEL_DELETED
+}
+
 model Ticket {
-  id            Int          @id @default(autoincrement())
-  guildId       String
-  guild         Guild        @relation(fields: [guildId], references: [id], onDelete: Cascade)
-  number        Int
-  channelId     String       @unique
-  ownerId       String
-  ownerName     String? // pseudo à l'ouverture, pour la liste du site
-  status        TicketStatus @default(OPEN)
-  closedById    String?
-  closedByName  String?
-  messageCount  Int? // messages dans le transcript
-  transcriptKey String? // clé S3 du transcript
-  createdAt     DateTime     @default(now())
-  closedAt      DateTime?
+  id                   Int                @id @default(autoincrement())
+  guildId              String
+  guild                Guild              @relation(fields: [guildId], references: [id], onDelete: Cascade)
+  number               Int
+  channelId            String             @unique
+  ownerId              String
+  ownerName            String? // pseudo à l'ouverture, pour la liste du site
+  status               TicketStatus       @default(OPEN)
+  closedById           String?
+  closedByName         String?
+  messageCount         Int? // messages dans le transcript
+  transcriptKey        String? // clé S3 du transcript
+  createdAt            DateTime           @default(now())
+  closedAt             DateTime?
+  claimedById          String? // qui a pris le ticket en charge (null : personne)
+  claimedByName        String? // pseudo à la prise en charge, pour la liste du site
+  claimedAt            DateTime?
+  rating               Int? // note de 1 à 5 donnée par l'auteur après fermeture (CHECK en base) ; jamais exposée seule
+  ratedAt              DateTime?
+  typeId               Int? // type choisi à l'ouverture ; null si le type a été supprimé (ticket ancien ou type effacé)
+  type                 TicketType?        @relation(fields: [typeId], references: [id], onDelete: SetNull)
+  lastActivityAt       DateTime           @default(now()) // dernier message d'un membre dans le salon ; point de départ du délai d'inactivité
+  inactivityRemindedAt DateTime? // rappel d'inactivité envoyé (effacé par la moindre activité) ; null : pas de rappel en cours
+  closedVia            TicketCloseSource? // null : ticket ouvert, ou fermé avant ce suivi
+  inactivityFailedAt   DateTime? // dernier échec de la fermeture automatique (Discord, Garage…) : nouvel essai 1 h plus tard
 
   @@unique([guildId, number])
   @@index([guildId, status])
   @@index([guildId, ownerId, status])
+  @@index([guildId, typeId])
+  @@index([status, lastActivityAt])
+}
+
+enum TicketTypeQuestionStyle {
+  SHORT
+  PARAGRAPH
+}
+
+/**
+ * Un type de ticket d'un serveur : sa catégorie Discord, les rôles qui voient ses salons et son
+ * formulaire d'ouverture. Les réponses au formulaire ne sont JAMAIS stockées : le bot les poste
+ * dans le salon du ticket (voir ADR-0011).
+ */
+model TicketType {
+  id              Int                  @id @default(autoincrement())
+  guildId         String
+  guild           Guild                @relation(fields: [guildId], references: [id], onDelete: Cascade)
+  name            String // 80 caractères au plus (validé par @phenix/shared)
+  description     String? // 100 caractères au plus : le menu de choix du panel
+  emoji           String?
+  categoryId      String // catégorie Discord où le bot range les salons de ce type
+  staffRoleIds    String[]
+  inactivityHours Int? // heures sans message avant la fermeture automatique (choix de TICKET_INACTIVITY_CHOICES) ; null : jamais
+  position        Int                  @default(0)
+  questions       TicketTypeQuestion[]
+  tickets         Ticket[]
+  createdAt       DateTime             @default(now())
+  updatedAt       DateTime             @updatedAt
+
+  @@index([guildId, position])
+}
+
+/**
+ * Une question du formulaire d'un type (0 à 5, dans l'ordre de position).
+ */
+model TicketTypeQuestion {
+  id          Int                     @id @default(autoincrement())
+  typeId      Int
+  type        TicketType              @relation(fields: [typeId], references: [id], onDelete: Cascade)
+  label       String // 45 caractères au plus
+  placeholder String? // 100 caractères au plus
+  style       TicketTypeQuestionStyle @default(SHORT)
+  required    Boolean                 @default(true)
+  maxLength   Int                     @default(1000) // 1000 au plus (limite de Discord)
+  position    Int                     @default(0)
+
+  @@index([typeId, position])
 }
 
 /**

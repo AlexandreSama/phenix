@@ -4,10 +4,18 @@ import { Icon } from '../../../components/icon';
 import { buttonClass } from '../../../components/ui/button';
 import { EmptyState } from '../../../components/ui/empty-state';
 import { PageHeader } from '../../../components/ui/panel';
-import { ticketSettingsQuery, ticketsQuery, type TicketStatusFilter } from '../api';
+import { ApiError } from '../../../lib/api';
+import {
+  ticketMemberStatsQuery,
+  ticketSettingsQuery,
+  ticketsQuery,
+  ticketStatsQuery,
+  type TicketStatusFilter,
+} from '../api';
 import { pagerLinkClass, segmentActiveClass, segmentClass, segmentedClass } from '../list-controls';
 import { LoadError, PageSkeleton } from '../query-state';
 import { TicketRow } from './ticket-row';
+import { TicketStatsPanel } from './ticket-stats';
 
 const TABS: { status: TicketStatusFilter; label: string; empty: string; hint: string }[] = [
   {
@@ -35,6 +43,13 @@ export function TicketsPage() {
   const { status = 'open', page = 1 } = useSearch({ from: '/dashboard/$guildId/tickets/' });
   const settings = useQuery(ticketSettingsQuery(guildId));
   const tickets = useQuery(ticketsQuery(guildId, status, page));
+  const stats = useQuery(ticketStatsQuery(guildId));
+  // Réservé aux administrateurs : un accès délégué reçoit 403, le bloc reste simplement masqué
+  const memberStats = useQuery(ticketMemberStatsQuery(guildId));
+  const memberStatsError =
+    memberStats.error instanceof ApiError && memberStats.error.status === 403
+      ? null
+      : memberStats.error;
   const tab = TABS.find((entry) => entry.status === status) ?? TABS[0]!;
   const data = tickets.data;
   const current = settings.data?.settings;
@@ -97,6 +112,14 @@ export function TicketsPage() {
             Voir les réglages
           </Link>
         </div>
+      )}
+
+      {stats.error && <LoadError error={stats.error} onRetry={() => void stats.refetch()} />}
+      {memberStatsError && (
+        <LoadError error={memberStatsError} onRetry={() => void memberStats.refetch()} />
+      )}
+      {stats.data && (
+        <TicketStatsPanel types={stats.data.types} members={memberStats.data?.members} />
       )}
 
       <div className="flex flex-wrap items-center justify-between gap-3">

@@ -28,6 +28,7 @@ import { RolePanelEditorPage } from './features/dashboard/roles/role-panel-edito
 import { RolePanelsPage } from './features/dashboard/roles/role-panels-page';
 import { WelcomeSettingsPage } from './features/dashboard/welcome/welcome-settings-page';
 import { Td2Page } from './features/dashboard/td2/td2-page';
+import { TicketTypeEditorPage } from './features/dashboard/tickets/ticket-type-editor-page';
 import { TicketSettingsPage } from './features/dashboard/tickets/ticket-settings-page';
 import { TicketsPage } from './features/dashboard/tickets/tickets-page';
 import { TranscriptPage } from './features/dashboard/tickets/transcript-page';
@@ -138,6 +139,19 @@ const ticketSettingsRoute = createRoute({
   getParentRoute: () => guildTicketsRoute,
   path: 'reglages',
   component: TicketSettingsPage,
+});
+
+/** `nouveau` pour créer, l'ID du type pour le modifier. Deux segments : aucun conflit avec $ticketId. */
+const ticketTypeNewRoute = createRoute({
+  getParentRoute: () => guildTicketsRoute,
+  path: 'types/nouveau',
+  component: TicketTypeEditorPage,
+});
+
+const ticketTypeEditRoute = createRoute({
+  getParentRoute: () => guildTicketsRoute,
+  path: 'types/$typeId',
+  component: TicketTypeEditorPage,
 });
 
 const transcriptRoute = createRoute({
@@ -361,7 +375,13 @@ export const routeTree = rootRoute.addChildren([
       guildGeneralRoute,
       guildLevelingRoute,
       guildRolesRoute.addChildren([rolePanelsRoute, rolePanelEditorRoute]),
-      guildTicketsRoute.addChildren([ticketsRoute, ticketSettingsRoute, transcriptRoute]),
+      guildTicketsRoute.addChildren([
+        ticketsRoute,
+        ticketSettingsRoute,
+        ticketTypeNewRoute,
+        ticketTypeEditRoute,
+        transcriptRoute,
+      ]),
       guildModerationRoute.addChildren([moderationRoute, moderationMemberRoute]),
       guildGiveawaysRoute.addChildren([giveawaysRoute, giveawayCreateRoute]),
       td2Route,

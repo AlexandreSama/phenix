@@ -1,6 +1,7 @@
 import {
   findPendingTicketPanels,
   findTicketPanel,
+  listTicketTypes,
   markTicketPanelFailed,
   markTicketPanelPublished,
   type PrismaClient,
@@ -10,10 +11,17 @@ import { describePublishError, postOrEditMessage } from '../../core/publish.js';
 import type { Logger } from '../../logger.js';
 import { ticketPanelMessage } from './messages.js';
 
-type Db = Pick<PrismaClient, 'ticketPanel'>;
+type Db = Pick<PrismaClient, 'ticketPanel' | 'ticketType'>;
 type Log = Pick<Logger, 'info' | 'warn'>;
 
-/** Poste le panel « Ouvrir un ticket » du serveur, ou modifie son message. Même règle que les panels de rôles. */
+/** Montré sur le site quand on publie un panneau dont aucun bouton n'ouvrirait de ticket. */
+export const NO_TYPE_ERROR =
+  'Aucun type de ticket : ajoute-en au moins un dans l’onglet Tickets avant de publier le Panel';
+
+/**
+ * Poste le panneau « Ouvrir un ticket » du serveur, avec un bouton (ou un choix de menu) par type,
+ * ou modifie son message. Même règle que les panels de rôles.
+ */
 export async function publishTicketPanel(
   client: Client,
   db: Db,
@@ -23,8 +31,15 @@ export async function publishTicketPanel(
   const panel = await findTicketPanel(db, guildId);
   if (!panel) return;
 
+  const types = await listTicketTypes(db, guildId);
+  if (types.length === 0) {
+    logger.warn({ guildId }, 'Panel de tickets sans type : publication refusée');
+    await markTicketPanelFailed(db, guildId, NO_TYPE_ERROR);
+    return;
+  }
+
   try {
-    const messageId = await postOrEditMessage(client, panel, ticketPanelMessage(panel));
+    const messageId = await postOrEditMessage(client, panel, ticketPanelMessage(panel, types));
     await markTicketPanelPublished(db, guildId, messageId);
     logger.info({ guildId }, 'Panel de tickets publié');
   } catch (err) {

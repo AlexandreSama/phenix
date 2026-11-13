@@ -25,10 +25,15 @@ import type {
   Td2EventSummary,
   Td2Settings,
   Td2SettingsInput,
+  TicketMemberStats,
   TicketPage,
   TicketSettings,
   TicketSettingsInput,
   TicketSettingsResponse,
+  TicketTypeDetail,
+  TicketTypeInput,
+  TicketTypeStats,
+  TicketTypeSummary,
   WelcomeSettings,
 } from '@phenix/shared';
 import { keepPreviousData, queryOptions, useMutation, useQueryClient } from '@tanstack/react-query';
@@ -180,6 +185,63 @@ export function useSaveTicketSettings(guildId: string) {
       queryClient.setQueryData(ticketSettingsQuery(guildId).queryKey, { settings }),
   });
 }
+
+export const ticketTypesQuery = (guildId: string) =>
+  queryOptions({
+    queryKey: ['guilds', guildId, 'tickets', 'types'],
+    queryFn: () => api<TicketTypeSummary[]>(`/guilds/${guildId}/tickets/types`),
+  });
+
+export const ticketTypeQuery = (guildId: string, typeId: number) =>
+  queryOptions({
+    queryKey: ['guilds', guildId, 'tickets', 'types', typeId],
+    queryFn: () => api<TicketTypeDetail>(`/guilds/${guildId}/tickets/types/${typeId}`),
+  });
+
+/** Crée le type (sans id) ou le remplace ; l'API demande alors au bot de republier le panel. */
+export function useSaveTicketType(guildId: string, typeId?: number) {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (input: TicketTypeInput) =>
+      api<TicketTypeDetail>(
+        typeId === undefined
+          ? `/guilds/${guildId}/tickets/types`
+          : `/guilds/${guildId}/tickets/types/${typeId}`,
+        { method: typeId === undefined ? 'POST' : 'PUT', body: JSON.stringify(input) },
+      ),
+    // Le panel repasse « en attente » : les réglages se relisent aussi
+    onSuccess: () =>
+      queryClient
+        .invalidateQueries({ queryKey: ['guilds', guildId, 'tickets', 'types'] })
+        .then(() =>
+          queryClient.invalidateQueries({ queryKey: ['guilds', guildId, 'tickets', 'settings'] }),
+        ),
+  });
+}
+
+/** Refusé (409) tant qu'un ticket de ce type est ouvert : le message de l'API est affiché tel quel. */
+export function useDeleteTicketType(guildId: string) {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (typeId: number) =>
+      api<void>(`/guilds/${guildId}/tickets/types/${typeId}`, { method: 'DELETE' }),
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: ['guilds', guildId, 'tickets'] }),
+  });
+}
+
+/** Moyennes des notes par type ; l'API masque celles de moins de 5 notes et arrondit les autres. */
+export const ticketStatsQuery = (guildId: string) =>
+  queryOptions({
+    queryKey: ['guilds', guildId, 'tickets', 'stats'],
+    queryFn: () => api<TicketTypeStats>(`/guilds/${guildId}/tickets/stats`),
+  });
+
+/** Moyennes par membre de l'équipe : réservées aux administrateurs du serveur (403 sinon). */
+export const ticketMemberStatsQuery = (guildId: string) =>
+  queryOptions({
+    queryKey: ['guilds', guildId, 'tickets', 'stats', 'members'],
+    queryFn: () => api<TicketMemberStats>(`/guilds/${guildId}/tickets/stats/members`),
+  });
 
 export type TicketStatusFilter = 'open' | 'closed';
 

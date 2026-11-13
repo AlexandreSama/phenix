@@ -3,12 +3,13 @@ import { createTranscriptStorage } from '@phenix/storage';
 import { ENV, TRANSCRIPTS } from '../../core/tokens.js';
 import type { Env } from '../../env.js';
 import { GuildsModule } from '../guilds/guilds.module.js';
-import { TicketsController } from './tickets.controller.js';
+import { TicketMemberStatsController, TicketsController } from './tickets.controller.js';
 import { TicketsService } from './tickets.service.js';
 
 @Module({
   imports: [GuildsModule],
-  controllers: [TicketsController],
+  // Les routes fixes (stats/members) avant celles à paramètre (:ticketId/transcript)
+  controllers: [TicketMemberStatsController, TicketsController],
   providers: [
     TicketsService,
     // Le client S3 est créé une fois ; les tests le remplacent par un faux

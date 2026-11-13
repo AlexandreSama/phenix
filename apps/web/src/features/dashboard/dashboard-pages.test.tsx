@@ -130,6 +130,27 @@ const API: Record<string, unknown> = {
     goodbyeMessage: null,
   },
   [`/api/guilds/${GUILD}/tickets/settings`]: { settings: null },
+  [`/api/guilds/${GUILD}/tickets/types`]: [
+    {
+      id: 5,
+      name: 'Support technique',
+      description: null,
+      emoji: null,
+      categoryId: CATEGORY,
+      staffRoleIds: [ROLE],
+      inactivityHours: null,
+      questionCount: 2,
+    },
+  ],
+  [`/api/guilds/${GUILD}/tickets/types/5`]: {
+    id: 5,
+    name: 'Support technique',
+    description: null,
+    emoji: null,
+    categoryId: CATEGORY,
+    staffRoleIds: [ROLE],
+    questions: [],
+  },
   [`/api/guilds/${GUILD}/moderation/cases?page=1`]: {
     items: [
       {
@@ -150,6 +171,15 @@ const API: Record<string, unknown> = {
     pageSize: 20,
   },
   [`/api/guilds/${GUILD}/delegates`]: [],
+  [`/api/guilds/${GUILD}/tickets/stats`]: {
+    types: [
+      { typeId: 5, typeName: 'Support technique', average: 4.3 },
+      { typeId: 6, typeName: 'Recrutement', average: null },
+    ],
+  },
+  [`/api/guilds/${GUILD}/tickets/stats/members`]: {
+    members: [{ claimedByName: 'Faye', average: 4.3 }],
+  },
   [`/api/guilds/${GUILD}/tickets?status=open&page=1`]: {
     tickets: [
       {
@@ -157,12 +187,15 @@ const API: Record<string, unknown> = {
         number: 31,
         ownerId: '600000000000000001',
         ownerName: 'Rook',
+        typeName: 'Support technique',
+        claimedByName: 'Faye',
         status: 'OPEN',
         createdAt: '2026-11-10T18:00:00.000Z',
         closedAt: null,
         closedByName: null,
         messageCount: null,
         hasTranscript: false,
+        closedVia: null,
       },
     ],
     page: 1,
@@ -221,7 +254,17 @@ describe('pages du tableau de bord', () => {
     [
       `${base}/tickets/reglages`,
       'Réglages des tickets',
-      () => screen.findByLabelText('Catégorie des tickets'),
+      () => screen.findByRole('list', { name: 'Types de ticket' }),
+    ],
+    [
+      `${base}/tickets/types/nouveau`,
+      'Nouveau type de ticket',
+      () => screen.findByLabelText('Nom'),
+    ],
+    [
+      `${base}/tickets/types/5`,
+      'Modifier le type de ticket',
+      () => screen.findByDisplayValue('Support technique'),
     ],
     [`${base}/tickets/7`, 'Transcript', () => screen.findByTitle('Transcript du ticket')],
     [`${base}/moderation`, 'Modération', () => screen.findByText('Spam dans #général')],
@@ -246,6 +289,42 @@ describe('pages du tableau de bord', () => {
       .getAllByRole('link')
       .map((link) => link.textContent);
     expect(labels.slice(-2)).toEqual(['Bienvenue', 'Accès']);
+  });
+
+  it('affiche les moyennes de satisfaction et qui a pris le ticket en charge', async () => {
+    open(`${base}/tickets`);
+
+    expect(await screen.findByText('Pris en charge par Faye')).toBeTruthy();
+    const types = await screen.findByRole('list', { name: 'Moyennes par type' });
+    expect(within(types).getByText('Support technique').closest('li')!.textContent).toBe(
+      'Support technique4,3 / 5 (au moins 5 notes)',
+    );
+    const members = await screen.findByRole('list', { name: 'Moyennes par membre de l’équipe' });
+    expect(within(members).getByText('Faye')).toBeTruthy();
+    expect(screen.queryByText('Chargement impossible')).toBeNull();
+  });
+
+  it('masque les moyennes par membre, sans erreur, quand l’API les refuse (403)', async () => {
+    const respond = vi.mocked(globalThis.fetch).getMockImplementation()!;
+    vi.mocked(globalThis.fetch).mockImplementation(async (input, init) =>
+      String(input).endsWith('/tickets/stats/members')
+        ? new Response('{"statusCode":403,"message":"Réservé aux administrateurs du serveur"}', {
+            status: 403,
+          })
+        : respond(input, init),
+    );
+    open(`${base}/tickets`);
+
+    expect(await screen.findByRole('list', { name: 'Moyennes par type' })).toBeTruthy();
+    await vi.waitFor(() =>
+      expect(vi.mocked(globalThis.fetch)).toHaveBeenCalledWith(
+        `/api/guilds/${GUILD}/tickets/stats/members`,
+        expect.anything(),
+      ),
+    );
+    expect(screen.queryByRole('list', { name: 'Moyennes par membre de l’équipe' })).toBeNull();
+    expect(screen.queryByText('Chargement impossible')).toBeNull();
+    expect(screen.queryByText('Réservé aux administrateurs du serveur')).toBeNull();
   });
 
   it('propose de régler les tickets tant que rien ne l’est', async () => {

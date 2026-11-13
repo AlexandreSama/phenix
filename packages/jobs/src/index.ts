@@ -4,6 +4,7 @@ export * from './lock.js';
 export * from './metrics.js';
 export * from './moderation.js';
 export * from './td2.js';
+export * from './tickets.js';
 
 /** Le nom de la file : le bot (qui traite) et l'API (qui ajoute) doivent dire le même. */
 export const GIVEAWAY_QUEUE = 'giveaways';

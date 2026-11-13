@@ -260,6 +260,13 @@ export type EnumTicketStatusFilter<$PrismaModel = never> = {
   not?: Prisma.NestedEnumTicketStatusFilter<$PrismaModel> | $Enums.TicketStatus
 }
 
+export type EnumTicketCloseSourceNullableFilter<$PrismaModel = never> = {
+  equals?: $Enums.TicketCloseSource | Prisma.EnumTicketCloseSourceFieldRefInput<$PrismaModel> | null
+  in?: $Enums.TicketCloseSource[] | Prisma.ListEnumTicketCloseSourceFieldRefInput<$PrismaModel> | null
+  notIn?: $Enums.TicketCloseSource[] | Prisma.ListEnumTicketCloseSourceFieldRefInput<$PrismaModel> | null
+  not?: Prisma.NestedEnumTicketCloseSourceNullableFilter<$PrismaModel> | $Enums.TicketCloseSource | null
+}
+
 export type EnumTicketStatusWithAggregatesFilter<$PrismaModel = never> = {
   equals?: $Enums.TicketStatus | Prisma.EnumTicketStatusFieldRefInput<$PrismaModel>
   in?: $Enums.TicketStatus[] | Prisma.ListEnumTicketStatusFieldRefInput<$PrismaModel>
@@ -268,6 +275,33 @@ export type EnumTicketStatusWithAggregatesFilter<$PrismaModel = never> = {
   _count?: Prisma.NestedIntFilter<$PrismaModel>
   _min?: Prisma.NestedEnumTicketStatusFilter<$PrismaModel>
   _max?: Prisma.NestedEnumTicketStatusFilter<$PrismaModel>
+}
+
+export type EnumTicketCloseSourceNullableWithAggregatesFilter<$PrismaModel = never> = {
+  equals?: $Enums.TicketCloseSource | Prisma.EnumTicketCloseSourceFieldRefInput<$PrismaModel> | null
+  in?: $Enums.TicketCloseSource[] | Prisma.ListEnumTicketCloseSourceFieldRefInput<$PrismaModel> | null
+  notIn?: $Enums.TicketCloseSource[] | Prisma.ListEnumTicketCloseSourceFieldRefInput<$PrismaModel> | null
+  not?: Prisma.NestedEnumTicketCloseSourceNullableWithAggregatesFilter<$PrismaModel> | $Enums.TicketCloseSource | null
+  _count?: Prisma.NestedIntNullableFilter<$PrismaModel>
+  _min?: Prisma.NestedEnumTicketCloseSourceNullableFilter<$PrismaModel>
+  _max?: Prisma.NestedEnumTicketCloseSourceNullableFilter<$PrismaModel>
+}
+
+export type EnumTicketTypeQuestionStyleFilter<$PrismaModel = never> = {
+  equals?: $Enums.TicketTypeQuestionStyle | Prisma.EnumTicketTypeQuestionStyleFieldRefInput<$PrismaModel>
+  in?: $Enums.TicketTypeQuestionStyle[] | Prisma.ListEnumTicketTypeQuestionStyleFieldRefInput<$PrismaModel>
+  notIn?: $Enums.TicketTypeQuestionStyle[] | Prisma.ListEnumTicketTypeQuestionStyleFieldRefInput<$PrismaModel>
+  not?: Prisma.NestedEnumTicketTypeQuestionStyleFilter<$PrismaModel> | $Enums.TicketTypeQuestionStyle
+}
+
+export type EnumTicketTypeQuestionStyleWithAggregatesFilter<$PrismaModel = never> = {
+  equals?: $Enums.TicketTypeQuestionStyle | Prisma.EnumTicketTypeQuestionStyleFieldRefInput<$PrismaModel>
+  in?: $Enums.TicketTypeQuestionStyle[] | Prisma.ListEnumTicketTypeQuestionStyleFieldRefInput<$PrismaModel>
+  notIn?: $Enums.TicketTypeQuestionStyle[] | Prisma.ListEnumTicketTypeQuestionStyleFieldRefInput<$PrismaModel>
+  not?: Prisma.NestedEnumTicketTypeQuestionStyleWithAggregatesFilter<$PrismaModel> | $Enums.TicketTypeQuestionStyle
+  _count?: Prisma.NestedIntFilter<$PrismaModel>
+  _min?: Prisma.NestedEnumTicketTypeQuestionStyleFilter<$PrismaModel>
+  _max?: Prisma.NestedEnumTicketTypeQuestionStyleFilter<$PrismaModel>
 }
 
 export type EnumRolePanelModeFilter<$PrismaModel = never> = {
@@ -675,6 +709,13 @@ export type NestedEnumTicketStatusFilter<$PrismaModel = never> = {
   not?: Prisma.NestedEnumTicketStatusFilter<$PrismaModel> | $Enums.TicketStatus
 }
 
+export type NestedEnumTicketCloseSourceNullableFilter<$PrismaModel = never> = {
+  equals?: $Enums.TicketCloseSource | Prisma.EnumTicketCloseSourceFieldRefInput<$PrismaModel> | null
+  in?: $Enums.TicketCloseSource[] | Prisma.ListEnumTicketCloseSourceFieldRefInput<$PrismaModel> | null
+  notIn?: $Enums.TicketCloseSource[] | Prisma.ListEnumTicketCloseSourceFieldRefInput<$PrismaModel> | null
+  not?: Prisma.NestedEnumTicketCloseSourceNullableFilter<$PrismaModel> | $Enums.TicketCloseSource | null
+}
+
 export type NestedEnumTicketStatusWithAggregatesFilter<$PrismaModel = never> = {
   equals?: $Enums.TicketStatus | Prisma.EnumTicketStatusFieldRefInput<$PrismaModel>
   in?: $Enums.TicketStatus[] | Prisma.ListEnumTicketStatusFieldRefInput<$PrismaModel>
@@ -683,6 +724,33 @@ export type NestedEnumTicketStatusWithAggregatesFilter<$PrismaModel = never> = {
   _count?: Prisma.NestedIntFilter<$PrismaModel>
   _min?: Prisma.NestedEnumTicketStatusFilter<$PrismaModel>
   _max?: Prisma.NestedEnumTicketStatusFilter<$PrismaModel>
+}
+
+export type NestedEnumTicketCloseSourceNullableWithAggregatesFilter<$PrismaModel = never> = {
+  equals?: $Enums.TicketCloseSource | Prisma.EnumTicketCloseSourceFieldRefInput<$PrismaModel> | null
+  in?: $Enums.TicketCloseSource[] | Prisma.ListEnumTicketCloseSourceFieldRefInput<$PrismaModel> | null
+  notIn?: $Enums.TicketCloseSource[] | Prisma.ListEnumTicketCloseSourceFieldRefInput<$PrismaModel> | null
+  not?: Prisma.NestedEnumTicketCloseSourceNullableWithAggregatesFilter<$PrismaModel> | $Enums.TicketCloseSource | null
+  _count?: Prisma.NestedIntNullableFilter<$PrismaModel>
+  _min?: Prisma.NestedEnumTicketCloseSourceNullableFilter<$PrismaModel>
+  _max?: Prisma.NestedEnumTicketCloseSourceNullableFilter<$PrismaModel>
+}
+
+export type NestedEnumTicketTypeQuestionStyleFilter<$PrismaModel = never> = {
+  equals?: $Enums.TicketTypeQuestionStyle | Prisma.EnumTicketTypeQuestionStyleFieldRefInput<$PrismaModel>
+  in?: $Enums.TicketTypeQuestionStyle[] | Prisma.ListEnumTicketTypeQuestionStyleFieldRefInput<$PrismaModel>
+  notIn?: $Enums.TicketTypeQuestionStyle[] | Prisma.ListEnumTicketTypeQuestionStyleFieldRefInput<$PrismaModel>
+  not?: Prisma.NestedEnumTicketTypeQuestionStyleFilter<$PrismaModel> | $Enums.TicketTypeQuestionStyle
+}
+
+export type NestedEnumTicketTypeQuestionStyleWithAggregatesFilter<$PrismaModel = never> = {
+  equals?: $Enums.TicketTypeQuestionStyle | Prisma.EnumTicketTypeQuestionStyleFieldRefInput<$PrismaModel>
+  in?: $Enums.TicketTypeQuestionStyle[] | Prisma.ListEnumTicketTypeQuestionStyleFieldRefInput<$PrismaModel>
+  notIn?: $Enums.TicketTypeQuestionStyle[] | Prisma.ListEnumTicketTypeQuestionStyleFieldRefInput<$PrismaModel>
+  not?: Prisma.NestedEnumTicketTypeQuestionStyleWithAggregatesFilter<$PrismaModel> | $Enums.TicketTypeQuestionStyle
+  _count?: Prisma.NestedIntFilter<$PrismaModel>
+  _min?: Prisma.NestedEnumTicketTypeQuestionStyleFilter<$PrismaModel>
+  _max?: Prisma.NestedEnumTicketTypeQuestionStyleFilter<$PrismaModel>
 }
 
 export type NestedEnumRolePanelModeFilter<$PrismaModel = never> = {
