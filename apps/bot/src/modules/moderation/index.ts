@@ -13,6 +13,8 @@ import { warn } from './commands/warn.js';
 
 export { startBanExpiry } from './ban-expiry.js';
 export { publishDashboardLog } from './dashboard-log.js';
+export { createLockReleaseLogger } from './lock-release-logger.js';
+export { createModerationProcessor } from './purge.js';
 
 export const moderationCommands: SlashCommand[] = [
   warn,

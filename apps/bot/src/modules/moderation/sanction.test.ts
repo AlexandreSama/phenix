@@ -1,5 +1,12 @@
 import type { Case } from '@phenix/database';
-import type { ChatInputCommandInteraction, EmbedBuilder, User } from 'discord.js';
+import { LockBusyError, LockUnavailableError } from '@phenix/jobs';
+import { MODERATION_BUSY_MESSAGE } from '@phenix/shared';
+import {
+  MessageFlags,
+  type ChatInputCommandInteraction,
+  type EmbedBuilder,
+  type User,
+} from 'discord.js';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import type { BotContext } from '../../core/context.js';
 import { applySanction, type Sanction } from './sanction.js';
@@ -37,14 +44,23 @@ function fakeInteraction() {
     user: { id: '333333333333333333', username: 'modo' },
     deferReply: vi.fn(),
     editReply: vi.fn(),
+    reply: vi.fn(),
   };
 }
+
+const LOCK_KEY = 'moderation:lock:111111111111111111:222222222222222222';
+
+// Le verrou par membre : par défaut, il exécute la sanction tout de suite
+const locks = {
+  withLock: vi.fn(async (_key: string, fn: () => Promise<unknown>) => fn()),
+};
 
 // Pas de salon de logs configuré : sendModLog s'arrête tout de suite
 const context = {
   db: {},
   configs: { get: vi.fn().mockResolvedValue(null) },
   logger: { warn: vi.fn(), info: vi.fn() },
+  locks,
 } as unknown as BotContext;
 
 function run(interaction: ReturnType<typeof fakeInteraction>, sanction: Sanction) {
@@ -59,6 +75,10 @@ function footerOf(interaction: ReturnType<typeof fakeInteraction>) {
   const [payload] = interaction.editReply.mock.calls[0] ?? [];
   return (payload as { embeds: EmbedBuilder[] } | undefined)?.embeds[0]?.data.footer?.text;
 }
+
+/** Rang d'appel de chaque fonction : vérifie l'ordre réel, pas seulement la présence. */
+const order = (...mocks: { mock: { invocationCallOrder: number[] } }[]) =>
+  mocks.map((mock) => mock.mock.invocationCallOrder[0] ?? Number.NaN);
 
 beforeEach(() => {
   calls.length = 0;
@@ -241,5 +261,135 @@ describe('applySanction', () => {
       }),
     ).rejects.toThrow('Missing Permissions');
     expect(database.createCase).not.toHaveBeenCalled();
+  });
+
+  describe('verrou par membre', () => {
+    it.each([
+      ['BAN', database.createCase],
+      ['MUTE', database.createCase],
+      ['UNBAN', database.liftSanction],
+      ['UNMUTE', database.liftSanction],
+    ] as const)(
+      '%s : verrou pris avant deferReply, puis MP, action Discord et case dans le verrou (ordre ; la libération réelle est prouvée par lock.test.ts)',
+      async (type, write) => {
+        const released = vi.fn();
+        locks.withLock.mockImplementationOnce(async (_key, fn) => {
+          try {
+            return await fn();
+          } finally {
+            released();
+          }
+        });
+        const interaction = fakeInteraction();
+        const target = fakeUser();
+        const act = vi.fn(async () => {});
+
+        await run(interaction, {
+          type,
+          target: target as unknown as User,
+          reason: null,
+          notify: true,
+          act,
+        });
+
+        expect(locks.withLock).toHaveBeenCalledTimes(1);
+        expect(locks.withLock).toHaveBeenCalledWith(LOCK_KEY, expect.any(Function));
+        const ranks = order(
+          locks.withLock,
+          interaction.deferReply,
+          target.send,
+          act,
+          write,
+          released,
+        );
+        expect(ranks.every(Number.isFinite)).toBe(true);
+        expect(ranks).toEqual(ranks.toSorted((a, b) => a - b));
+      },
+    );
+
+    it.each(['WARN', 'KICK'] as const)('%s ne prend pas le verrou', async (type) => {
+      await run(fakeInteraction(), {
+        type,
+        target: fakeUser() as unknown as User,
+        reason: null,
+        notify: false,
+        act: vi.fn(async () => {}),
+      });
+
+      expect(locks.withLock).not.toHaveBeenCalled();
+      expect(database.createCase).toHaveBeenCalled();
+    });
+
+    it('verrou déjà pris : réponse éphémère, sans MP, sans action Discord, sans case', async () => {
+      locks.withLock.mockRejectedValueOnce(new LockBusyError(LOCK_KEY));
+      const interaction = fakeInteraction();
+      const target = fakeUser();
+      const act = vi.fn(async () => {});
+
+      await run(interaction, {
+        type: 'BAN',
+        target: target as unknown as User,
+        reason: null,
+        notify: true,
+        revokes: 'BAN',
+        act,
+      });
+
+      expect(interaction.reply).toHaveBeenCalledWith({
+        content: MODERATION_BUSY_MESSAGE,
+        flags: MessageFlags.Ephemeral,
+      });
+      expect(interaction.deferReply).not.toHaveBeenCalled();
+      expect(target.send).not.toHaveBeenCalled();
+      expect(act).not.toHaveBeenCalled();
+      expect(database.revokeCases).not.toHaveBeenCalled();
+      expect(database.createCase).not.toHaveBeenCalled();
+    });
+
+    it('Discord refuse : l’erreur traverse le verrou sans créer de case (la libération réelle est prouvée par lock.test.ts)', async () => {
+      const released = vi.fn();
+      locks.withLock.mockImplementationOnce(async (_key, fn) => {
+        try {
+          return await fn();
+        } finally {
+          released();
+        }
+      });
+      const act = vi.fn().mockRejectedValue(new Error('Missing Permissions'));
+
+      await expect(
+        run(fakeInteraction(), {
+          type: 'MUTE',
+          target: fakeUser() as unknown as User,
+          reason: null,
+          notify: false,
+          act,
+        }),
+      ).rejects.toThrow('Missing Permissions');
+      expect(released).toHaveBeenCalledTimes(1);
+      expect(database.createCase).not.toHaveBeenCalled();
+    });
+
+    it('Valkey indisponible : la commande agit quand même, avec un avertissement sans la cible', async () => {
+      locks.withLock.mockRejectedValueOnce(new LockUnavailableError(LOCK_KEY));
+      const interaction = fakeInteraction();
+      const act = vi.fn(async () => {});
+
+      await run(interaction, {
+        type: 'BAN',
+        target: fakeUser() as unknown as User,
+        reason: null,
+        notify: false,
+        act,
+      });
+
+      expect(interaction.deferReply).toHaveBeenCalledTimes(1);
+      expect(act).toHaveBeenCalledTimes(1);
+      expect(database.createCase).toHaveBeenCalledTimes(1);
+      expect(context.logger.warn).toHaveBeenCalledTimes(1);
+      const logged = JSON.stringify(vi.mocked(context.logger.warn).mock.calls);
+      expect(logged).toContain('111111111111111111');
+      expect(logged).not.toContain('222222222222222222');
+    });
   });
 });

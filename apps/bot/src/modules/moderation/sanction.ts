@@ -1,10 +1,12 @@
 import { createCase, liftSanction, revokeCases, type Case, type CaseType } from '@phenix/database';
-import { auditReason } from '@phenix/shared';
+import { LockBusyError, LockUnavailableError, moderationLockKey } from '@phenix/jobs';
+import { auditReason, MODERATION_BUSY_MESSAGE } from '@phenix/shared';
 import type { ChatInputCommandInteraction, User } from 'discord.js';
 import type { BotContext } from '../../core/context.js';
 import { baseEmbed } from '../../core/embeds.js';
 import { formatDuration } from '../../core/format.js';
 import { CASE_COLORS, caseEmbed, caseLabel, NO_REASON } from './case-format.js';
+import { refuse } from './common.js';
 import { actionEmbed, sendModLog } from './modlog.js';
 import { notifyMember } from './notify.js';
 
@@ -21,8 +23,51 @@ export interface Sanction {
   act?: (auditReason: string) => Promise<unknown>;
 }
 
-/** Le déroulé commun à toutes les sanctions : MP, action Discord, case numérotée, log, réponse. */
+/**
+ * Les sanctions qui posent ou lèvent un état sur le membre (ban, sourdine) : deux actions
+ * simultanées sur lui (deux modérateurs, une commande et le site, une commande et la levée
+ * automatique) pourraient laisser Discord et les cases en désaccord. WARN et KICK n'en laissent pas.
+ */
+const LOCKED_TYPES: ReadonlySet<CaseType> = new Set(['BAN', 'MUTE', 'UNBAN', 'UNMUTE']);
+
+/**
+ * Le déroulé commun à toutes les sanctions : MP, action Discord, case numérotée, log, réponse.
+ * Pour un ban, une sourdine et leurs levées, le tout se fait sous le verrou du membre, pris avant
+ * `deferReply` (l'attente est bornée à une seconde : Discord veut une réponse en trois).
+ */
 export async function applySanction(
+  interaction: ChatInputCommandInteraction<'cached'>,
+  sanction: Sanction,
+  context: BotContext,
+): Promise<void> {
+  if (!LOCKED_TYPES.has(sanction.type)) return carryOut(interaction, sanction, context);
+
+  const { guild } = interaction;
+  try {
+    await context.locks.withLock(moderationLockKey(guild.id, sanction.target.id), () =>
+      carryOut(interaction, sanction, context),
+    );
+  } catch (err) {
+    // Ces deux erreurs viennent de la prise du verrou : la sanction n'a pas commencé
+    if (err instanceof LockBusyError) {
+      await refuse(interaction, MODERATION_BUSY_MESSAGE);
+      return;
+    }
+    if (err instanceof LockUnavailableError) {
+      // Décision : Valkey en panne ne bloque pas la modération. Ni l'erreur ni la cible au log :
+      // la clé du verrou contient l'identifiant du membre
+      context.logger.warn(
+        { guildId: guild.id, type: sanction.type },
+        'Moderation lock unavailable: acting without it',
+      );
+      await carryOut(interaction, sanction, context);
+      return;
+    }
+    throw err;
+  }
+}
+
+async function carryOut(
   interaction: ChatInputCommandInteraction<'cached'>,
   sanction: Sanction,
   context: BotContext,
