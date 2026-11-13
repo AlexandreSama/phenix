@@ -3,7 +3,7 @@ import { DiscordAPIError } from '@discordjs/rest';
 import { Logger } from '@nestjs/common';
 import type { NestExpressApplication } from '@nestjs/platform-express';
 import { Test } from '@nestjs/testing';
-import { PrismaClient } from '@phenix/database';
+import { Prisma, PrismaClient } from '@phenix/database';
 import { LockBusyError, LockUnavailableError } from '@phenix/jobs';
 import { Redis } from 'ioredis';
 import sharp from 'sharp';
@@ -130,9 +130,41 @@ const ticket = {
   closedById: '500000000000000002',
   closedByName: 'Modo',
   messageCount: 8,
+  claimedById: '500000000000000003' as string | null,
+  claimedByName: 'Beta' as string | null,
+  claimedAt: new Date('2026-11-07T12:10:00Z') as Date | null,
+  rating: 4 as number | null,
+  ratedAt: new Date('2026-11-07T13:05:00Z') as Date | null,
+  type: { name: 'Support' } as { name: string } | null,
   transcriptKey: `${MANAGED}/ticket-0042.html`,
   createdAt: new Date('2026-11-07T12:00:00Z'),
   closedAt: new Date('2026-11-07T13:00:00Z'),
+  closedVia: 'INACTIVITY' as string | null,
+};
+/** Un type de ticket de MANAGED, avec une question. */
+const TYPE_ID = 3;
+const ticketType = {
+  id: TYPE_ID,
+  guildId: MANAGED,
+  name: 'Support',
+  description: null as string | null,
+  emoji: '🎫' as string | null,
+  categoryId: CATEGORY,
+  staffRoleIds: [MOD_ROLE],
+  inactivityHours: 48 as number | null,
+  position: 0,
+  questions: [
+    {
+      id: 1,
+      typeId: TYPE_ID,
+      label: 'Ton pseudo en jeu',
+      placeholder: null,
+      style: 'SHORT',
+      required: true,
+      maxLength: 100,
+      position: 0,
+    },
+  ],
 };
 const ticketPanel = {
   guildId: MANAGED,
@@ -478,6 +510,7 @@ const db = {
     count: vi.fn(async () => 25),
     findMany: vi.fn(async () => [ticket]),
     findUnique: vi.fn(async () => ticket as typeof ticket | null),
+    groupBy: vi.fn(async (_args?: object) => [] as object[]),
   },
   case: {
     findMany: vi.fn(async (_args?: object) => [modCase]),
@@ -487,6 +520,25 @@ const db = {
     findUnique: vi.fn(async (_args?: object) => modCase as typeof modCase | null),
     updateMany: vi.fn(async (_args?: object) => ({ count: 1 })),
     create: vi.fn(async ({ data }: { data: object }) => ({ ...modCase, id: 99, ...data })),
+  },
+  ticketType: {
+    findMany: vi.fn(async () => [ticketType]),
+    findUnique: vi.fn(async () => ticketType as typeof ticketType | null),
+    count: vi.fn(async () => 1),
+    aggregate: vi.fn(async () => ({ _max: { position: 0 } })),
+    // Prisma reçoit les questions en écriture imbriquée et les renvoie en liste
+    create: vi.fn(async ({ data }: { data: { questions: { create: object[] } } }) => ({
+      ...ticketType,
+      ...data,
+      id: 4,
+      questions: data.questions.create,
+    })),
+    update: vi.fn(async ({ data }: { data: { questions: { create: object[] } } }) => ({
+      ...ticketType,
+      ...data,
+      questions: data.questions.create,
+    })),
+    deleteMany: vi.fn(async () => ({ count: 1 })),
   },
   ticketPanel: {
     findUnique: vi.fn(async () => ticketPanel as typeof ticketPanel | null),
@@ -952,8 +1004,6 @@ describe('panels de rôles', () => {
 
 describe('tickets', () => {
   const settings = {
-    categoryId: CATEGORY,
-    staffRoleIds: [MOD_ROLE],
     logChannelId: null,
     panel: { channelId: CHANNEL, title: 'Support', description: null, buttonLabel: 'Ouvrir' },
   };
@@ -974,16 +1024,41 @@ describe('tickets', () => {
     expect(response.body).toEqual({ settings: null });
   });
 
-  it('refuse une catégorie et un rôle qui ne sont pas sur ce serveur', async () => {
+  it('lit les réglages : le salon de logs et le panel, sans catégorie ni rôles', async () => {
+    db.guildConfig.findUnique.mockResolvedValueOnce({ ticketLogChannelId: OTHER_CHANNEL });
+
+    const response = await request(app.getHttpServer())
+      .get(`/api/guilds/${MANAGED}/tickets/settings`)
+      .set('Cookie', cookie);
+
+    expect(response.body).toEqual({
+      settings: {
+        logChannelId: OTHER_CHANNEL,
+        panel: {
+          channelId: CHANNEL,
+          title: 'Support',
+          description: null,
+          buttonLabel: 'Ouvrir un ticket',
+        },
+        panelStatus: 'published',
+        panelError: null,
+      },
+    });
+  });
+
+  it('refuse un salon de logs ou un salon de panel qui ne sont pas sur ce serveur', async () => {
     const response = await request(app.getHttpServer())
       .put(`/api/guilds/${MANAGED}/tickets/settings`)
       .set('Cookie', cookie)
-      .send({ ...settings, categoryId: CHANNEL, staffRoleIds: ['600000000000000099'] });
+      .send({
+        logChannelId: '400000000000000099',
+        panel: { ...settings.panel, channelId: '400000000000000098' },
+      });
 
     expect(response.status).toBe(400);
     expect(response.body.message).toEqual([
-      'Catégorie inconnue sur ce serveur',
-      'Rôle inconnu sur ce serveur',
+      'Salon de logs inconnu sur ce serveur',
+      'Salon du panel inconnu sur ce serveur',
     ]);
     expect(db.$transaction).not.toHaveBeenCalled();
   });
@@ -995,7 +1070,9 @@ describe('tickets', () => {
       .send({ ...settings, panel: { ...settings.panel, channelId: OTHER_CHANNEL } });
 
     expect(response.status).toBe(200);
-    expect(response.body).toMatchObject({ categoryId: CATEGORY, panelStatus: 'pending' });
+    expect(response.body).toMatchObject({ logChannelId: null, panelStatus: 'pending' });
+    expect(response.body).not.toHaveProperty('categoryId');
+    expect(response.body).not.toHaveProperty('staffRoleIds');
     expect(db.ticketPanel.upsert).toHaveBeenCalledWith(
       expect.objectContaining({ update: expect.objectContaining({ messageId: null }) }),
     );
@@ -1012,10 +1089,38 @@ describe('tickets', () => {
       .set('Cookie', cookie);
 
     expect(response.body).toMatchObject({ page: 2, pageCount: 2, total: 25 });
-    expect(response.body.tickets[0]).toMatchObject({ number: 42, hasTranscript: true });
+    expect(response.body.tickets[0]).toMatchObject({
+      number: 42,
+      hasTranscript: true,
+      typeName: 'Support',
+      closedVia: 'INACTIVITY',
+    });
     expect(db.ticket.findMany).toHaveBeenCalledWith(
       expect.objectContaining({ orderBy: { closedAt: 'desc' }, skip: 20, take: 20 }),
     );
+  });
+
+  it('indique qui a pris le ticket en charge, sans jamais exposer sa note ni l’identifiant', async () => {
+    const response = await request(app.getHttpServer())
+      .get(`/api/guilds/${MANAGED}/tickets?status=closed`)
+      .set('Cookie', cookie);
+
+    expect(response.body.tickets[0]).toMatchObject({ claimedByName: 'Beta' });
+    expect(response.body.tickets[0]).not.toHaveProperty('rating');
+    expect(response.body.tickets[0]).not.toHaveProperty('ratedAt');
+    expect(response.body.tickets[0]).not.toHaveProperty('claimedById');
+    expect(response.body.tickets[0]).not.toHaveProperty('claimedAt');
+  });
+
+  it('répond claimedByName: null pour un ticket que personne n’a pris en charge', async () => {
+    db.ticket.findMany.mockResolvedValueOnce([
+      { ...ticket, claimedById: null, claimedByName: null, claimedAt: null },
+    ]);
+    const response = await request(app.getHttpServer())
+      .get(`/api/guilds/${MANAGED}/tickets?status=closed`)
+      .set('Cookie', cookie);
+
+    expect(response.body.tickets[0].claimedByName).toBeNull();
   });
 
   it('sert le transcript sous une politique de sécurité stricte', async () => {
@@ -1046,6 +1151,412 @@ describe('tickets', () => {
     expect([other.status, none.status]).toEqual([404, 404]);
     expect(other.headers['content-type']).toContain('application/json');
     expect(transcripts.getText).not.toHaveBeenCalled();
+  });
+});
+
+const get = (path: string, session = cookie) =>
+  request(app.getHttpServer()).get(path).set('Cookie', session);
+
+describe('statistiques des notes de satisfaction', () => {
+  const url = `/api/guilds/${MANAGED}/tickets/stats`;
+  const membersUrl = `${url}/members`;
+  const OTHER_TYPE = 4;
+  const MEMBER = '500000000000000003';
+  const OTHER_MEMBER = '500000000000000004';
+
+  interface GroupByArgs {
+    by: string[];
+    where: { guildId: string };
+  }
+
+  /**
+   * Valeurs brutes de la base, choisies selon `by` : indépendant de l'ordre des deux appels.
+   * Par défaut : Recrutement 6 notes (4,333…), Support 5 notes (4,2), sans type 4 notes (5) ;
+   * l'équipe : un membre sans pseudo à 6 notes (4,25), Beta à 4 notes (4).
+   */
+  function rawRows({
+    types = [
+      { typeId: OTHER_TYPE, _count: { rating: 6 }, _avg: { rating: 26 / 6 } },
+      { typeId: TYPE_ID, _count: { rating: 5 }, _avg: { rating: 4.2 } },
+      { typeId: null, _count: { rating: 4 }, _avg: { rating: 5 } },
+    ],
+    members = [
+      { claimedById: OTHER_MEMBER, _count: { rating: 6 }, _avg: { rating: 4.25 } },
+      { claimedById: MEMBER, _count: { rating: 4 }, _avg: { rating: 4 } },
+    ],
+  }: { types?: object[]; members?: object[] } = {}) {
+    db.ticket.groupBy.mockImplementation(async (args?: object) =>
+      (args as GroupByArgs).by[0] === 'typeId' ? types : members,
+    );
+    db.ticketType.findMany.mockImplementation(async () => [
+      { ...ticketType, id: TYPE_ID, name: 'Support' },
+      { ...ticketType, id: OTHER_TYPE, name: 'Recrutement' },
+    ]);
+    db.ticket.findMany.mockImplementation(async () => [
+      { ...ticket, claimedById: MEMBER, claimedByName: 'Beta' },
+      { ...ticket, claimedById: OTHER_MEMBER, claimedByName: null },
+    ]);
+  }
+
+  afterEach(() => {
+    db.ticket.groupBy.mockImplementation(async () => []);
+    db.ticketType.findMany.mockImplementation(async () => [ticketType]);
+    db.ticket.findMany.mockImplementation(async () => [ticket]);
+  });
+
+  it('par type : moyennes arrondies au dixième, masquées sous 5 notes, sans nombre de notes', async () => {
+    rawRows();
+    const response = await get(url);
+
+    expect(response.status).toBe(200);
+    expect(response.body).toEqual({
+      types: [
+        { typeId: OTHER_TYPE, typeName: 'Recrutement', average: 4.3 },
+        { typeId: TYPE_ID, typeName: 'Support', average: 4.2 },
+        { typeId: null, typeName: null, average: null },
+      ],
+    });
+  });
+
+  it('par membre de l’équipe : pseudo et moyenne seulement, masquée sous 5 notes', async () => {
+    rawRows();
+    const response = await get(membersUrl);
+
+    expect(response.status).toBe(200);
+    expect(response.body).toEqual({
+      // Triés par pseudo, sans pseudo en dernier : jamais par nombre de notes
+      members: [
+        { claimedByName: 'Beta', average: null },
+        { claimedByName: null, average: 4.3 },
+      ],
+    });
+  });
+
+  it('ne renvoie jamais de nombre de notes, d’identifiant Discord ni de note individuelle', async () => {
+    rawRows();
+    const responses = [await get(url), await get(membersUrl)];
+
+    for (const response of responses) {
+      expect(JSON.stringify(response.body)).not.toMatch(/count|claimedById|"rating"|"ratedAt"/);
+    }
+    // La requête ne lit que des moyennes et des nombres, jamais une note par ticket
+    expect(db.ticket.findMany).toHaveBeenCalledWith(
+      expect.objectContaining({ select: { claimedById: true, claimedByName: true } }),
+    );
+  });
+
+  it('rejoue l’attaque par différence : un type à 5 notes, un membre à 4, la 5e note reste introuvable', async () => {
+    // Beta a pris 4 tickets notés 4 ; le 5e, non pris en charge, a reçu 5. Avant : 5 × 4,2 − 4 × 4 = 5
+    rawRows({
+      types: [{ typeId: TYPE_ID, _count: { rating: 5 }, _avg: { rating: 4.2 } }],
+      members: [{ claimedById: MEMBER, _count: { rating: 4 }, _avg: { rating: 4 } }],
+    });
+    const [types, members] = [await get(url), await get(membersUrl)];
+
+    expect(types.body).toEqual({ types: [{ typeId: TYPE_ID, typeName: 'Support', average: 4.2 }] });
+    expect(members.body).toEqual({ members: [{ claimedByName: 'Beta', average: null }] });
+    // Aucun nombre de notes à multiplier, aucune moyenne du membre à retrancher
+    const values = JSON.stringify([types.body, members.body]);
+    expect(values).not.toMatch(/count|claimedById/);
+  });
+
+  it('interroge le serveur de l’adresse, et lui seul', async () => {
+    rawRows();
+    await get(url);
+    await get(membersUrl);
+
+    const groupByCalls = db.ticket.groupBy.mock.calls.map(([args]) => args as GroupByArgs);
+    expect(groupByCalls.length).toBeGreaterThan(0);
+    expect(groupByCalls.every((args) => args.where.guildId === MANAGED)).toBe(true);
+    const typeCalls = db.ticketType.findMany.mock.calls as unknown as [GroupByArgs][];
+    expect(typeCalls.length).toBeGreaterThan(0);
+    expect(typeCalls.every(([args]) => args.where.guildId === MANAGED)).toBe(true);
+  });
+
+  it('répond des listes vides quand personne n’a été noté', async () => {
+    expect((await get(url)).body).toEqual({ types: [] });
+    expect((await get(membersUrl)).body).toEqual({ members: [] });
+  });
+
+  it('demande une session : 401 sans connexion, sur les deux adresses', async () => {
+    expect((await request(app.getHttpServer()).get(url)).status).toBe(401);
+    expect((await request(app.getHttpServer()).get(membersUrl)).status).toBe(401);
+  });
+
+  it('par type : l’onglet Tickets suffit ; par membre : réservé aux administrateurs', async () => {
+    // La liste des serveurs de Faye est mise en cache après le premier appel
+    discord.getCurrentUserGuilds.mockResolvedValueOnce([
+      { id: MANAGED, name: 'Les Agents', icon: null, owner: false, permissions: '0' },
+    ]);
+    const asFayeWithTabs = (path: string, modules: string[]) => {
+      db.guildDelegate.findMany.mockResolvedValueOnce([{ ...delegateRow, modules }]);
+      return get(path, faye);
+    };
+
+    expect((await asFayeWithTabs(url, ['TD2'])).status).toBe(403);
+    expect((await asFayeWithTabs(url, ['TICKETS'])).status).toBe(200);
+    expect((await asFayeWithTabs(membersUrl, ['TICKETS'])).status).toBe(403);
+    // L'administrateur du serveur lit les deux
+    expect((await get(url)).status).toBe(200);
+    expect((await get(membersUrl)).status).toBe(200);
+  });
+});
+
+describe('types de tickets', () => {
+  const url = `/api/guilds/${MANAGED}/tickets/types`;
+  const input = {
+    name: 'Recrutement',
+    description: 'Candidater',
+    emoji: null,
+    categoryId: CATEGORY,
+    staffRoleIds: [MOD_ROLE],
+    inactivityHours: null as number | null,
+    questions: [
+      { label: 'Ton âge', placeholder: null, style: 'SHORT', required: true, maxLength: 3 },
+      {
+        label: 'Ta motivation',
+        placeholder: 'Dis-nous',
+        style: 'PARAGRAPH',
+        required: false,
+        maxLength: 1000,
+      },
+    ],
+  };
+  const published = () =>
+    redis.publish.mock.calls.map(([, message]) => JSON.parse(message).type as string);
+
+  it('liste les types du serveur avec leur nombre de questions', async () => {
+    const response = await request(app.getHttpServer()).get(url).set('Cookie', cookie);
+
+    expect(response.status).toBe(200);
+    expect(response.body).toEqual([
+      {
+        id: TYPE_ID,
+        name: 'Support',
+        description: null,
+        emoji: '🎫',
+        categoryId: CATEGORY,
+        staffRoleIds: [MOD_ROLE],
+        inactivityHours: 48,
+        questionCount: 1,
+      },
+    ]);
+    expect(db.ticketType.findMany).toHaveBeenCalledWith(
+      expect.objectContaining({ where: { guildId: MANAGED } }),
+    );
+  });
+
+  it('renvoie un type en entier, questions dans l’ordre', async () => {
+    const response = await request(app.getHttpServer())
+      .get(`${url}/${TYPE_ID}`)
+      .set('Cookie', cookie);
+
+    expect(response.status).toBe(200);
+    expect(response.body).toEqual({
+      id: TYPE_ID,
+      name: 'Support',
+      description: null,
+      emoji: '🎫',
+      categoryId: CATEGORY,
+      staffRoleIds: [MOD_ROLE],
+      inactivityHours: 48,
+      questions: [
+        {
+          label: 'Ton pseudo en jeu',
+          placeholder: null,
+          style: 'SHORT',
+          required: true,
+          maxLength: 100,
+        },
+      ],
+    });
+  });
+
+  it('répond 404 pour le type d’un autre serveur, un type inexistant ou un identifiant illisible', async () => {
+    db.ticketType.findUnique.mockResolvedValueOnce({ ...ticketType, guildId: NOT_MANAGED });
+    const other = await request(app.getHttpServer()).get(`${url}/${TYPE_ID}`).set('Cookie', cookie);
+    db.ticketType.findUnique.mockResolvedValueOnce(null);
+    const missing = await request(app.getHttpServer()).get(`${url}/99`).set('Cookie', cookie);
+    const unreadable = await request(app.getHttpServer()).get(`${url}/abc`).set('Cookie', cookie);
+
+    expect([other.status, missing.status, unreadable.status]).toEqual([404, 404, 404]);
+    expect(other.body.message).toBe('Type de ticket introuvable');
+  });
+
+  it('crée un type (201), l’écrit pour ce serveur et fait republier le panneau', async () => {
+    const response = await request(app.getHttpServer()).post(url).set('Cookie', cookie).send(input);
+
+    expect(response.status).toBe(201);
+    expect(response.body).toMatchObject({ id: 4, name: 'Recrutement', categoryId: CATEGORY });
+    expect(response.body.questions).toHaveLength(2);
+    expect(db.ticketType.create).toHaveBeenCalledWith(
+      expect.objectContaining({
+        data: expect.objectContaining({ guildId: MANAGED, name: 'Recrutement' }),
+      }),
+    );
+    expect(published()).toEqual(['ticketPanel.publish']);
+  });
+
+  it('refuse une catégorie et un rôle qui ne sont pas sur ce serveur (400), sans rien écrire', async () => {
+    const response = await request(app.getHttpServer())
+      .post(url)
+      .set('Cookie', cookie)
+      .send({ ...input, categoryId: CHANNEL, staffRoleIds: ['600000000000000099'] });
+
+    expect(response.status).toBe(400);
+    expect(response.body.message).toEqual([
+      'Catégorie inconnue sur ce serveur',
+      'Rôle inconnu sur ce serveur',
+    ]);
+    expect(db.ticketType.create).not.toHaveBeenCalled();
+    expect(published()).toEqual([]);
+  });
+
+  it('refuse un corps invalide, en français (400)', async () => {
+    const response = await request(app.getHttpServer())
+      .post(url)
+      .set('Cookie', cookie)
+      .send({ ...input, name: '  ', questions: Array(6).fill(input.questions[0]) });
+
+    expect(response.status).toBe(400);
+    expect(JSON.stringify(response.body.message)).toContain('Le nom est obligatoire');
+    expect(db.ticketType.create).not.toHaveBeenCalled();
+  });
+
+  it('refuse un délai d’inactivité hors des choix proposés, en français (400)', async () => {
+    const created = await request(app.getHttpServer())
+      .post(url)
+      .set('Cookie', cookie)
+      .send({ ...input, inactivityHours: 5 });
+    const updated = await request(app.getHttpServer())
+      .put(`${url}/${TYPE_ID}`)
+      .set('Cookie', cookie)
+      .send({ ...input, inactivityHours: 100 });
+
+    expect([created.status, updated.status]).toEqual([400, 400]);
+    expect(db.ticketType.create).not.toHaveBeenCalled();
+    expect(db.ticketType.update).not.toHaveBeenCalled();
+  });
+
+  it('accepte une fermeture automatique désactivée (null) ou un délai proposé', async () => {
+    const off = await request(app.getHttpServer()).post(url).set('Cookie', cookie).send(input);
+    const on = await request(app.getHttpServer())
+      .post(url)
+      .set('Cookie', cookie)
+      .send({ ...input, inactivityHours: 168 });
+
+    expect([off.status, on.status]).toEqual([201, 201]);
+  });
+
+  it('refuse un 26e type (400)', async () => {
+    db.ticketType.count.mockResolvedValueOnce(25);
+
+    const response = await request(app.getHttpServer()).post(url).set('Cookie', cookie).send(input);
+
+    expect(response.status).toBe(400);
+    expect(response.body.message).toBe('25 types au plus par serveur');
+    expect(db.ticketType.create).not.toHaveBeenCalled();
+  });
+
+  it('modifie un type de ce serveur et fait republier le panneau', async () => {
+    const response = await request(app.getHttpServer())
+      .put(`${url}/${TYPE_ID}`)
+      .set('Cookie', cookie)
+      .send(input);
+
+    expect(response.status).toBe(200);
+    expect(response.body).toMatchObject({ id: TYPE_ID, name: 'Recrutement' });
+    expect(db.ticketType.update).toHaveBeenCalledWith(
+      expect.objectContaining({ where: { id: TYPE_ID, guildId: MANAGED } }),
+    );
+    expect(published()).toEqual(['ticketPanel.publish']);
+  });
+
+  it('ne modifie pas le type d’un autre serveur (404) et valide avant d’écrire', async () => {
+    db.ticketType.findUnique.mockResolvedValueOnce({ ...ticketType, guildId: NOT_MANAGED });
+    const other = await request(app.getHttpServer())
+      .put(`${url}/${TYPE_ID}`)
+      .set('Cookie', cookie)
+      .send(input);
+    const unknownCategory = await request(app.getHttpServer())
+      .put(`${url}/${TYPE_ID}`)
+      .set('Cookie', cookie)
+      .send({ ...input, categoryId: CHANNEL });
+
+    expect([other.status, unknownCategory.status]).toEqual([404, 400]);
+    expect(db.ticketType.update).not.toHaveBeenCalled();
+    expect(published()).toEqual([]);
+  });
+
+  it('répond 404, pas 500, si le type est supprimé entre la vérification et l’écriture', async () => {
+    db.ticketType.update.mockRejectedValueOnce(
+      new Prisma.PrismaClientKnownRequestError('Record not found', {
+        code: 'P2025',
+        clientVersion: 'test',
+      }),
+    );
+
+    const response = await request(app.getHttpServer())
+      .put(`${url}/${TYPE_ID}`)
+      .set('Cookie', cookie)
+      .send(input);
+
+    expect(response.status).toBe(404);
+    expect(response.body).toMatchObject({ message: 'Type de ticket introuvable' });
+    expect(published()).toEqual([]);
+  });
+
+  it('supprime un type (204) et fait republier le panneau', async () => {
+    const response = await request(app.getHttpServer())
+      .delete(`${url}/${TYPE_ID}`)
+      .set('Cookie', cookie);
+
+    expect(response.status).toBe(204);
+    expect(db.ticketType.deleteMany).toHaveBeenCalledWith({
+      where: { id: TYPE_ID, guildId: MANAGED, tickets: { none: { status: 'OPEN' } } },
+    });
+    expect(published()).toEqual(['ticketPanel.publish']);
+  });
+
+  it('refuse de supprimer un type qui a un ticket ouvert (409)', async () => {
+    db.ticketType.deleteMany.mockResolvedValueOnce({ count: 0 });
+
+    const response = await request(app.getHttpServer())
+      .delete(`${url}/${TYPE_ID}`)
+      .set('Cookie', cookie);
+
+    expect(response.status).toBe(409);
+    expect(response.body.message).toBe(
+      'Ce type a encore un ticket ouvert : ferme-le avant de supprimer le type',
+    );
+    expect(published()).toEqual([]);
+  });
+
+  it('répond 404 en supprimant un type absent ou d’un autre serveur', async () => {
+    db.ticketType.deleteMany.mockResolvedValueOnce({ count: 0 });
+    db.ticketType.count.mockResolvedValueOnce(0);
+
+    const response = await request(app.getHttpServer())
+      .delete(`${url}/${TYPE_ID}`)
+      .set('Cookie', cookie);
+
+    expect(response.status).toBe(404);
+    expect(published()).toEqual([]);
+  });
+
+  it('suit les mêmes accès que l’onglet : refusé à un délégué sans Tickets, accepté avec', async () => {
+    // La liste des serveurs de Faye est mise en cache après le premier appel
+    discord.getCurrentUserGuilds.mockResolvedValueOnce([
+      { id: MANAGED, name: 'Les Agents', icon: null, owner: false, permissions: '0' },
+    ]);
+    const asFayeWithTabs = (modules: string[]) => {
+      db.guildDelegate.findMany.mockResolvedValueOnce([{ ...delegateRow, modules }]);
+      return request(app.getHttpServer()).get(url).set('Cookie', faye);
+    };
+
+    expect((await asFayeWithTabs(['TD2'])).status).toBe(403);
+    expect((await asFayeWithTabs(['TICKETS'])).status).toBe(200);
+    expect((await request(app.getHttpServer()).get(url)).status).toBe(401);
   });
 });
 
