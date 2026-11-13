@@ -82,6 +82,20 @@ export type Marriage = Prisma.MarriageModel
  */
 export type Ticket = Prisma.TicketModel
 /**
+ * Model TicketType
+ * *
+ *  * Un type de ticket d'un serveur : sa catégorie Discord, les rôles qui voient ses salons et son
+ *  * formulaire d'ouverture. Les réponses au formulaire ne sont JAMAIS stockées : le bot les poste
+ *  * dans le salon du ticket (voir ADR-0011).
+ */
+export type TicketType = Prisma.TicketTypeModel
+/**
+ * Model TicketTypeQuestion
+ * *
+ *  * Une question du formulaire d'un type (0 à 5, dans l'ordre de position).
+ */
+export type TicketTypeQuestion = Prisma.TicketTypeQuestionModel
+/**
  * Model TicketPanel
  * *
  *  * Le message « Ouvrir un ticket » d'un serveur : un seul par serveur.

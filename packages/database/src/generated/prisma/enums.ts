@@ -61,6 +61,23 @@ export const TicketStatus = {
 export type TicketStatus = (typeof TicketStatus)[keyof typeof TicketStatus]
 
 
+export const TicketCloseSource = {
+  BUTTON: 'BUTTON',
+  INACTIVITY: 'INACTIVITY',
+  CHANNEL_DELETED: 'CHANNEL_DELETED'
+} as const
+
+export type TicketCloseSource = (typeof TicketCloseSource)[keyof typeof TicketCloseSource]
+
+
+export const TicketTypeQuestionStyle = {
+  SHORT: 'SHORT',
+  PARAGRAPH: 'PARAGRAPH'
+} as const
+
+export type TicketTypeQuestionStyle = (typeof TicketTypeQuestionStyle)[keyof typeof TicketTypeQuestionStyle]
+
+
 export const RolePanelMode = {
   MULTIPLE: 'MULTIPLE',
   UNIQUE: 'UNIQUE'

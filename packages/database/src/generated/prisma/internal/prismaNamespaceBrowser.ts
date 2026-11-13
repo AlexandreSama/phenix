@@ -59,6 +59,8 @@ export const ModelName = {
   MemberLevel: 'MemberLevel',
   Marriage: 'Marriage',
   Ticket: 'Ticket',
+  TicketType: 'TicketType',
+  TicketTypeQuestion: 'TicketTypeQuestion',
   TicketPanel: 'TicketPanel',
   Giveaway: 'Giveaway',
   GiveawayEntry: 'GiveawayEntry',
@@ -225,10 +227,51 @@ export const TicketScalarFieldEnum = {
   messageCount: 'messageCount',
   transcriptKey: 'transcriptKey',
   createdAt: 'createdAt',
-  closedAt: 'closedAt'
+  closedAt: 'closedAt',
+  claimedById: 'claimedById',
+  claimedByName: 'claimedByName',
+  claimedAt: 'claimedAt',
+  rating: 'rating',
+  ratedAt: 'ratedAt',
+  typeId: 'typeId',
+  lastActivityAt: 'lastActivityAt',
+  inactivityRemindedAt: 'inactivityRemindedAt',
+  closedVia: 'closedVia',
+  inactivityFailedAt: 'inactivityFailedAt'
 } as const
 
 export type TicketScalarFieldEnum = (typeof TicketScalarFieldEnum)[keyof typeof TicketScalarFieldEnum]
+
+
+export const TicketTypeScalarFieldEnum = {
+  id: 'id',
+  guildId: 'guildId',
+  name: 'name',
+  description: 'description',
+  emoji: 'emoji',
+  categoryId: 'categoryId',
+  staffRoleIds: 'staffRoleIds',
+  inactivityHours: 'inactivityHours',
+  position: 'position',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt'
+} as const
+
+export type TicketTypeScalarFieldEnum = (typeof TicketTypeScalarFieldEnum)[keyof typeof TicketTypeScalarFieldEnum]
+
+
+export const TicketTypeQuestionScalarFieldEnum = {
+  id: 'id',
+  typeId: 'typeId',
+  label: 'label',
+  placeholder: 'placeholder',
+  style: 'style',
+  required: 'required',
+  maxLength: 'maxLength',
+  position: 'position'
+} as const
+
+export type TicketTypeQuestionScalarFieldEnum = (typeof TicketTypeQuestionScalarFieldEnum)[keyof typeof TicketTypeQuestionScalarFieldEnum]
 
 
 export const TicketPanelScalarFieldEnum = {
