@@ -41,14 +41,14 @@ beforeEach(() => {
 });
 
 describe('publier le panneau des tickets', () => {
-  it('publie le panneau avec les types du serveur', async () => {
+  it('publie le panneau à bouton unique quand le serveur a au moins un type', async () => {
     await publishTicketPanel(client, db, GUILD, logger);
 
     expect(database.listTicketTypes).toHaveBeenCalledWith(db, GUILD);
     const message = core.postOrEditMessage.mock.calls[0]?.[2] as {
       components: { toJSON(): { components: { custom_id: string }[] } }[];
     };
-    expect(message.components[0]?.toJSON().components[0]?.custom_id).toBe('ticket:open:1');
+    expect(message.components[0]?.toJSON().components[0]?.custom_id).toBe('ticket:open');
     expect(database.markTicketPanelPublished).toHaveBeenCalledWith(db, GUILD, '500000000000000001');
     expect(database.markTicketPanelFailed).not.toHaveBeenCalled();
   });

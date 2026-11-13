@@ -14,13 +14,13 @@ import { ticketPanelMessage } from './messages.js';
 type Db = Pick<PrismaClient, 'ticketPanel' | 'ticketType'>;
 type Log = Pick<Logger, 'info' | 'warn'>;
 
-/** Montré sur le site quand on publie un panneau dont aucun bouton n'ouvrirait de ticket. */
+/** Montré sur le site quand on publie un panneau dont le bouton n'ouvrirait aucun ticket : il n'y a aucun type à choisir. */
 export const NO_TYPE_ERROR =
   'Aucun type de ticket : ajoute-en au moins un dans l’onglet Tickets avant de publier le Panel';
 
 /**
- * Poste le panneau « Ouvrir un ticket » du serveur, avec un bouton (ou un choix de menu) par type,
- * ou modifie son message. Même règle que les panels de rôles.
+ * Poste le panneau « Ouvrir un ticket » du serveur (un seul bouton ; les types se choisissent au
+ * clic), ou modifie son message. Même règle que les panels de rôles.
  */
 export async function publishTicketPanel(
   client: Client,
@@ -39,7 +39,7 @@ export async function publishTicketPanel(
   }
 
   try {
-    const messageId = await postOrEditMessage(client, panel, ticketPanelMessage(panel, types));
+    const messageId = await postOrEditMessage(client, panel, ticketPanelMessage(panel));
     await markTicketPanelPublished(db, guildId, messageId);
     logger.info({ guildId }, 'Panel de tickets publié');
   } catch (err) {

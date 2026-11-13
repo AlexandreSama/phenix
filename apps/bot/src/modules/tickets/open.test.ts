@@ -2,6 +2,7 @@ import {
   ChannelType,
   ComponentType,
   DiscordAPIError,
+  MessageFlags,
   RESTJSONErrorCodes,
   type MessageComponentInteraction,
   type ModalSubmitInteraction,
@@ -84,14 +85,26 @@ interface FakeOptions {
   channels?: string[];
   fields?: [string, string][];
   values?: string[];
+  /** Le message portant le composant : le menu des types (éphémère) ou le panneau (public) */
+  message?: 'menu' | 'panel';
 }
 
-function fakeInteraction({ categoryType, channels, fields = [], values }: FakeOptions = {}) {
+function fakeInteraction({
+  categoryType,
+  channels,
+  fields = [],
+  values,
+  message = 'panel',
+}: FakeOptions = {}) {
   const { guild, channel } = fakeGuild(categoryType, channels);
   return {
     isButton: () => values === undefined && fields.length === 0,
     isStringSelectMenu: () => values !== undefined,
     isModalSubmit: () => fields.length > 0,
+    isFromMessage: () => true,
+    message: {
+      flags: { has: (flag: MessageFlags) => message === 'menu' && flag === MessageFlags.Ephemeral },
+    },
     inCachedGuild: () => true,
     guildId: GUILD,
     guild,
@@ -109,7 +122,8 @@ function fakeInteraction({ categoryType, channels, fields = [], values }: FakeOp
     },
     reply: vi.fn(async (_payload: unknown) => {}),
     showModal: vi.fn(async (_modal: unknown) => {}),
-    deferReply: vi.fn(async () => {}),
+    deferReply: vi.fn(async (_options?: unknown) => {}),
+    deferUpdate: vi.fn(async () => {}),
     editReply: vi.fn(async (_payload: unknown) => {}),
     channel,
   };
@@ -158,6 +172,136 @@ beforeEach(() => {
   }));
 });
 
+describe('le bouton unique « Ouvrir un ticket »', () => {
+  it('propose le menu des types, en réponse visible de lui seul, sans salon ni formulaire', async () => {
+    const { clickLegacy } = setup();
+    const interaction = fakeInteraction();
+
+    await clickLegacy(interaction);
+
+    expect(database.listTicketTypes).toHaveBeenCalledWith({}, GUILD);
+    const reply = interaction.reply.mock.calls[0]?.[0] as {
+      content: string;
+      flags: number;
+      components: { toJSON(): { components: { custom_id: string; options: unknown[] }[] } }[];
+    };
+    expect(reply.flags).toBe(MessageFlags.Ephemeral);
+    const menu = reply.components[0]?.toJSON().components[0];
+    expect(menu?.custom_id).toBe('ticket:choose');
+    expect(menu?.options).toHaveLength(2);
+    expect(interaction.showModal).not.toHaveBeenCalled();
+    expect(interaction.deferReply).not.toHaveBeenCalled();
+    expect(interaction.guild.channels.create).not.toHaveBeenCalled();
+  });
+
+  it('ouvre tout de suite le type unique d’un serveur qui n’en a qu’un, sans menu', async () => {
+    database.listTicketTypes.mockResolvedValue([plainType]);
+    const { clickLegacy } = setup();
+    const interaction = fakeInteraction();
+
+    await clickLegacy(interaction);
+
+    expect(interaction.reply).not.toHaveBeenCalled();
+    expect(database.createTicket).toHaveBeenCalledWith({}, expect.objectContaining({ typeId: 1 }));
+  });
+
+  it('montre le formulaire du type unique quand il a des questions', async () => {
+    database.listTicketTypes.mockResolvedValue([formType]);
+    const { clickLegacy } = setup();
+    const interaction = fakeInteraction();
+
+    await clickLegacy(interaction);
+
+    expect(interaction.showModal).toHaveBeenCalled();
+    expect(interaction.reply).not.toHaveBeenCalled();
+  });
+
+  it('ne montre pas le formulaire du type unique à qui a déjà un ticket ouvert', async () => {
+    database.listTicketTypes.mockResolvedValue([formType]);
+    database.findOpenTicket.mockResolvedValue({ id: 3, channelId: '400000000000000009' });
+    const { clickLegacy } = setup();
+    const interaction = fakeInteraction({ channels: ['400000000000000009'] });
+
+    await clickLegacy(interaction);
+
+    expect(interaction.showModal).not.toHaveBeenCalled();
+    expect(lastText(interaction.reply)).toBe('Tu as déjà un ticket ouvert : <#400000000000000009>');
+  });
+
+  it('le type choisi dans le menu ouvre le salon d’un type sans question', async () => {
+    const { choose } = setup();
+    const interaction = fakeInteraction({ values: ['1'] });
+
+    await choose(interaction);
+
+    expect(database.createTicket).toHaveBeenCalledWith({}, expect.objectContaining({ typeId: 1 }));
+  });
+});
+
+describe('le menu des types est remplacé par le résultat', () => {
+  const lastReply = (interaction: Fake) =>
+    interaction.editReply.mock.calls.at(-1)?.[0] as { content: string; components: unknown[] };
+
+  it('un type sans question choisi dans le menu éphémère remplace le menu par le salon', async () => {
+    const { choose } = setup();
+    const interaction = fakeInteraction({ values: ['1'], message: 'menu' });
+
+    await choose(interaction);
+
+    expect(interaction.deferUpdate).toHaveBeenCalled();
+    expect(interaction.deferReply).not.toHaveBeenCalled();
+    expect(lastReply(interaction)).toEqual({
+      content: 'Ton ticket est ouvert : <#400000000000000001>',
+      components: [],
+    });
+  });
+
+  it('le formulaire envoyé depuis le menu éphémère remplace le menu par le salon', async () => {
+    const { submit } = setup();
+    const interaction = fakeInteraction({ fields: [['11', 'Alex']], message: 'menu' });
+
+    await submit(interaction);
+
+    expect(interaction.deferUpdate).toHaveBeenCalled();
+    expect(interaction.deferReply).not.toHaveBeenCalled();
+    expect(lastReply(interaction)).toEqual({
+      content: 'Ton ticket est ouvert : <#400000000000000001>',
+      components: [],
+    });
+  });
+
+  it('un message d’erreur du formulaire remplace aussi le menu', async () => {
+    database.findOpenTicket.mockResolvedValue({ id: 3, channelId: '400000000000000009' });
+    const { submit } = setup();
+    const interaction = fakeInteraction({
+      fields: [['11', 'Alex']],
+      channels: ['400000000000000009'],
+      message: 'menu',
+    });
+
+    await submit(interaction);
+
+    expect(lastReply(interaction)).toEqual({
+      content: 'Tu as déjà un ticket ouvert : <#400000000000000009>',
+      components: [],
+    });
+  });
+
+  it('ne touche jamais au message public du panneau : réponse à part, éphémère', async () => {
+    const { choose, submit } = setup();
+    const picked = fakeInteraction({ values: ['1'], message: 'panel' });
+    const sent = fakeInteraction({ fields: [['11', 'Alex']], message: 'panel' });
+
+    await choose(picked);
+    await submit(sent);
+
+    for (const interaction of [picked, sent]) {
+      expect(interaction.deferUpdate).not.toHaveBeenCalled();
+      expect(interaction.deferReply).toHaveBeenCalledWith({ flags: MessageFlags.Ephemeral });
+    }
+  });
+});
+
 describe('ouvrir un ticket d’un type sans question', () => {
   it('crée un salon privé dans la catégorie du type, l’enregistre et y accueille l’auteur', async () => {
     const { clickType } = setup();
@@ -195,16 +339,6 @@ describe('ouvrir un ticket d’un type sans question', () => {
     expect(welcome.embeds[0]?.toJSON().fields[0]?.value).toBe('Support');
     expect(interaction.channel.send).toHaveBeenCalledTimes(1);
     expect(lastText(interaction.editReply)).toBe('Ton ticket est ouvert : <#400000000000000001>');
-  });
-
-  it('ouvre le premier type pour un ancien bouton « ticket:open » sans id', async () => {
-    const { clickLegacy } = setup();
-    const interaction = fakeInteraction();
-
-    await clickLegacy(interaction);
-
-    expect(database.listTicketTypes).toHaveBeenCalledWith({}, GUILD);
-    expect(database.createTicket).toHaveBeenCalledWith({}, expect.objectContaining({ typeId: 1 }));
   });
 
   it('refuse d’ouvrir un ticket si le serveur n’a aucun type', async () => {
