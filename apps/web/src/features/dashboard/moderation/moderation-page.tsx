@@ -58,7 +58,7 @@ export function ModerationPage() {
           <Field
             id="moderation-q"
             label="Rechercher"
-            hint="Un numéro de sanction (#12), un identifiant Discord ou un mot de la raison."
+            hint="Un numéro de sanction (#12), un identifiant Discord, le début d’un pseudo (membres encore sur le serveur) ou un mot de la raison."
           >
             <input
               id="moderation-q"
@@ -165,6 +165,13 @@ export function ModerationPage() {
           )}
         </div>
       </form>
+
+      {data?.nameSearch === 'unavailable' && (
+        <p role="status" className="text-sm text-stone-400">
+          La recherche par pseudo est indisponible pour l’instant : résultats sur le numéro,
+          l’identifiant et la raison.
+        </p>
+      )}
 
       {cases.error && <LoadError error={cases.error} onRetry={() => void cases.refetch()} />}
       {!cases.error && !data && <PageSkeleton label="Chargement des sanctions…" panels={1} />}

@@ -48,11 +48,16 @@ const warn: CaseSummary = {
   revokedBy: modo,
 };
 
-const page = (items: CaseSummary[], total = items.length): CasePage => ({
+const page = (
+  items: CaseSummary[],
+  total = items.length,
+  nameSearch: CasePage['nameSearch'] = 'not-applicable',
+): CasePage => ({
   items,
   total,
   page: 1,
   pageSize: 20,
+  nameSearch,
 });
 const member: MemberModeration = {
   user: rook,
@@ -114,6 +119,41 @@ function open(url: string) {
 }
 
 describe('liste des sanctions', () => {
+  describe('recherche par pseudo', () => {
+    const initial = API[`${CASES}?page=1`];
+    afterEach(() => {
+      API[`${CASES}?page=1`] = initial;
+    });
+
+    const NOTICE =
+      'La recherche par pseudo est indisponible pour l’instant : résultats sur le numéro, l’identifiant et la raison.';
+
+    it('explique ce que la recherche accepte', async () => {
+      open(base);
+      expect(
+        await screen.findByText(
+          'Un numéro de sanction (#12), un identifiant Discord, le début d’un pseudo (membres encore sur le serveur) ou un mot de la raison.',
+        ),
+      ).toBeTruthy();
+    });
+
+    it('avertit quand la recherche par pseudo est indisponible', async () => {
+      API[`${CASES}?page=1`] = page([ban], 1, 'unavailable');
+      open(base);
+      expect((await screen.findByText(NOTICE)).getAttribute('role')).toBe('status');
+    });
+
+    it.each(['used', 'not-applicable'] as const)(
+      'ne dit rien quand nameSearch vaut %s',
+      async (value) => {
+        API[`${CASES}?page=1`] = page([ban], 1, value);
+        open(base);
+        await screen.findByRole('list', { name: 'Sanctions' });
+        expect(screen.queryByText(NOTICE)).toBeNull();
+      },
+    );
+  });
+
   it('affiche chaque sanction : numéro, type, statut, personnes, raison', async () => {
     open(base);
 

@@ -39,7 +39,13 @@ const kick = sanction({ number: 7, type: 'KICK', status: null });
 const kickActive = sanction({ number: 6, type: 'KICK', status: 'active' });
 
 let items: CaseSummary[] = [];
-const page = (): CasePage => ({ items, total: items.length, page: 1, pageSize: 20 });
+const page = (): CasePage => ({
+  items,
+  total: items.length,
+  page: 1,
+  pageSize: 20,
+  nameSearch: 'not-applicable',
+});
 
 interface Call {
   method: string;

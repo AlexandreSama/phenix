@@ -1,21 +1,40 @@
 import { zodResolver } from '@hookform/resolvers/zod';
-import type { GeneralConfig, GuildChannelSummary, GuildRoleSummary } from '@phenix/shared';
+import type {
+  GeneralConfig,
+  GeneralConfigPatch,
+  GuildChannelSummary,
+  GuildRoleSummary,
+} from '@phenix/shared';
 import { useForm } from 'react-hook-form';
 import { Field, inputClass } from '../../../components/ui/field';
 import { FormActions } from '../../../components/ui/form-actions';
 import { Panel } from '../../../components/ui/panel';
 import { ChannelOptions, RoleChecklist } from '../form-parts';
-import { generalFormSchema, TIMEZONES, toFormValues, type GeneralFormInput } from './form-values';
+import {
+  generalFormSchema,
+  RETENTION_OPTIONS,
+  TIMEZONES,
+  toFormValues,
+  type GeneralFormInput,
+} from './form-values';
 
 interface Props {
   config: GeneralConfig;
   channels: GuildChannelSummary[];
   roles: GuildRoleSummary[];
-  onSubmit: (config: GeneralConfig) => Promise<unknown>;
+  /** Seul un administrateur du serveur règle la conservation des sanctions. */
+  canEditRetention: boolean;
+  onSubmit: (patch: GeneralConfigPatch) => Promise<unknown>;
 }
 
 /** Le formulaire seul : il reçoit ses données et ne sait rien de l'API, donc il se teste facilement. */
-export function GeneralSettingsForm({ config, channels, roles, onSubmit }: Props) {
+export function GeneralSettingsForm({
+  config,
+  channels,
+  roles,
+  canEditRetention,
+  onSubmit,
+}: Props) {
   const {
     register,
     handleSubmit,
@@ -29,9 +48,17 @@ export function GeneralSettingsForm({ config, channels, roles, onSubmit }: Props
 
   const save = async (values: GeneralConfig) => {
     try {
-      await onSubmit(values);
+      // Un délégué n'envoie pas la conservation : l'API la refuserait (403) si un administrateur
+      // l'a changée entre-temps, et rien d'autre ne serait enregistré.
+      const { caseRetentionMonths: _ignored, ...rest } = values;
+      await onSubmit(canEditRetention ? values : rest);
       // Les valeurs enregistrées deviennent la nouvelle référence du formulaire
-      reset(toFormValues(values), { keepIsSubmitSuccessful: true });
+      reset(
+        toFormValues(
+          canEditRetention ? values : { ...rest, caseRetentionMonths: config.caseRetentionMonths },
+        ),
+        { keepIsSubmitSuccessful: true },
+      );
     } catch (error) {
       setError('root.server', {
         message: error instanceof Error ? error.message : 'Enregistrement impossible',
@@ -103,6 +130,36 @@ export function GeneralSettingsForm({ config, channels, roles, onSubmit }: Props
             {timezones.map((zone) => (
               <option key={zone} value={zone}>
                 {zone}
+              </option>
+            ))}
+          </select>
+        </Field>
+      </Panel>
+
+      <Panel
+        icon="shield"
+        title="Données"
+        description="Combien de temps le bot garde l'historique de modération."
+      >
+        <Field
+          id="caseRetentionMonths"
+          label="Conservation des sanctions"
+          hint={
+            canEditRetention
+              ? 'Les sanctions closes (levées, sourdines terminées, expulsions) sont supprimées après cette durée ; les sanctions actives ne le sont jamais.'
+              : 'Réservé aux administrateurs du serveur.'
+          }
+          error={errors.caseRetentionMonths?.message}
+        >
+          <select
+            id="caseRetentionMonths"
+            className={inputClass}
+            disabled={!canEditRetention}
+            {...register('caseRetentionMonths')}
+          >
+            {RETENTION_OPTIONS.map(({ value, label }) => (
+              <option key={value} value={value}>
+                {label}
               </option>
             ))}
           </select>
