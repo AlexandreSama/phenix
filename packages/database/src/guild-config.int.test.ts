@@ -59,3 +59,23 @@ describe('GuildConfig : bienvenue et au revoir', () => {
     });
   });
 });
+
+describe('GuildConfig : conservation des sanctions', () => {
+  it('une config neuve garde les sanctions 12 mois', async () => {
+    const guildId = await newGuild();
+
+    const config = await prisma.guildConfig.create({ data: { guildId } });
+
+    expect(config.caseRetentionMonths).toBe(12);
+  });
+
+  it('null (jamais) est accepté et relu', async () => {
+    const guildId = await newGuild();
+    await prisma.guildConfig.create({ data: { guildId, caseRetentionMonths: 6 } });
+
+    await prisma.guildConfig.update({ where: { guildId }, data: { caseRetentionMonths: null } });
+
+    const config = await prisma.guildConfig.findUnique({ where: { guildId } });
+    expect(config?.caseRetentionMonths).toBeNull();
+  });
+});

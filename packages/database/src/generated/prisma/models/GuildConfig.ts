@@ -30,12 +30,14 @@ export type GuildConfigAvgAggregateOutputType = {
   xpMin: number | null
   xpMax: number | null
   xpCooldownSec: number | null
+  caseRetentionMonths: number | null
 }
 
 export type GuildConfigSumAggregateOutputType = {
   xpMin: number | null
   xpMax: number | null
   xpCooldownSec: number | null
+  caseRetentionMonths: number | null
 }
 
 export type GuildConfigMinAggregateOutputType = {
@@ -62,6 +64,7 @@ export type GuildConfigMinAggregateOutputType = {
   goodbyeEnabled: boolean | null
   goodbyeChannelId: string | null
   goodbyeMessage: string | null
+  caseRetentionMonths: number | null
   updatedAt: Date | null
 }
 
@@ -89,6 +92,7 @@ export type GuildConfigMaxAggregateOutputType = {
   goodbyeEnabled: boolean | null
   goodbyeChannelId: string | null
   goodbyeMessage: string | null
+  caseRetentionMonths: number | null
   updatedAt: Date | null
 }
 
@@ -119,6 +123,7 @@ export type GuildConfigCountAggregateOutputType = {
   goodbyeEnabled: number
   goodbyeChannelId: number
   goodbyeMessage: number
+  caseRetentionMonths: number
   updatedAt: number
   _all: number
 }
@@ -128,12 +133,14 @@ export type GuildConfigAvgAggregateInputType = {
   xpMin?: true
   xpMax?: true
   xpCooldownSec?: true
+  caseRetentionMonths?: true
 }
 
 export type GuildConfigSumAggregateInputType = {
   xpMin?: true
   xpMax?: true
   xpCooldownSec?: true
+  caseRetentionMonths?: true
 }
 
 export type GuildConfigMinAggregateInputType = {
@@ -160,6 +167,7 @@ export type GuildConfigMinAggregateInputType = {
   goodbyeEnabled?: true
   goodbyeChannelId?: true
   goodbyeMessage?: true
+  caseRetentionMonths?: true
   updatedAt?: true
 }
 
@@ -187,6 +195,7 @@ export type GuildConfigMaxAggregateInputType = {
   goodbyeEnabled?: true
   goodbyeChannelId?: true
   goodbyeMessage?: true
+  caseRetentionMonths?: true
   updatedAt?: true
 }
 
@@ -217,6 +226,7 @@ export type GuildConfigCountAggregateInputType = {
   goodbyeEnabled?: true
   goodbyeChannelId?: true
   goodbyeMessage?: true
+  caseRetentionMonths?: true
   updatedAt?: true
   _all?: true
 }
@@ -334,6 +344,7 @@ export type GuildConfigGroupByOutputType = {
   goodbyeEnabled: boolean
   goodbyeChannelId: string | null
   goodbyeMessage: string | null
+  caseRetentionMonths: number | null
   updatedAt: Date
   _count: GuildConfigCountAggregateOutputType | null
   _avg: GuildConfigAvgAggregateOutputType | null
@@ -387,6 +398,7 @@ export type GuildConfigWhereInput = {
   goodbyeEnabled?: Prisma.BoolFilter<"GuildConfig"> | boolean
   goodbyeChannelId?: Prisma.StringNullableFilter<"GuildConfig"> | string | null
   goodbyeMessage?: Prisma.StringNullableFilter<"GuildConfig"> | string | null
+  caseRetentionMonths?: Prisma.IntNullableFilter<"GuildConfig"> | number | null
   updatedAt?: Prisma.DateTimeFilter<"GuildConfig"> | Date | string
   guild?: Prisma.XOR<Prisma.GuildScalarRelationFilter, Prisma.GuildWhereInput>
 }
@@ -418,6 +430,7 @@ export type GuildConfigOrderByWithRelationInput = {
   goodbyeEnabled?: Prisma.SortOrder
   goodbyeChannelId?: Prisma.SortOrderInput | Prisma.SortOrder
   goodbyeMessage?: Prisma.SortOrderInput | Prisma.SortOrder
+  caseRetentionMonths?: Prisma.SortOrderInput | Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
   guild?: Prisma.GuildOrderByWithRelationInput
 }
@@ -452,6 +465,7 @@ export type GuildConfigWhereUniqueInput = Prisma.AtLeast<{
   goodbyeEnabled?: Prisma.BoolFilter<"GuildConfig"> | boolean
   goodbyeChannelId?: Prisma.StringNullableFilter<"GuildConfig"> | string | null
   goodbyeMessage?: Prisma.StringNullableFilter<"GuildConfig"> | string | null
+  caseRetentionMonths?: Prisma.IntNullableFilter<"GuildConfig"> | number | null
   updatedAt?: Prisma.DateTimeFilter<"GuildConfig"> | Date | string
   guild?: Prisma.XOR<Prisma.GuildScalarRelationFilter, Prisma.GuildWhereInput>
 }, "guildId">
@@ -483,6 +497,7 @@ export type GuildConfigOrderByWithAggregationInput = {
   goodbyeEnabled?: Prisma.SortOrder
   goodbyeChannelId?: Prisma.SortOrderInput | Prisma.SortOrder
   goodbyeMessage?: Prisma.SortOrderInput | Prisma.SortOrder
+  caseRetentionMonths?: Prisma.SortOrderInput | Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
   _count?: Prisma.GuildConfigCountOrderByAggregateInput
   _avg?: Prisma.GuildConfigAvgOrderByAggregateInput
@@ -521,6 +536,7 @@ export type GuildConfigScalarWhereWithAggregatesInput = {
   goodbyeEnabled?: Prisma.BoolWithAggregatesFilter<"GuildConfig"> | boolean
   goodbyeChannelId?: Prisma.StringNullableWithAggregatesFilter<"GuildConfig"> | string | null
   goodbyeMessage?: Prisma.StringNullableWithAggregatesFilter<"GuildConfig"> | string | null
+  caseRetentionMonths?: Prisma.IntNullableWithAggregatesFilter<"GuildConfig"> | number | null
   updatedAt?: Prisma.DateTimeWithAggregatesFilter<"GuildConfig"> | Date | string
 }
 
@@ -550,6 +566,7 @@ export type GuildConfigCreateInput = {
   goodbyeEnabled?: boolean
   goodbyeChannelId?: string | null
   goodbyeMessage?: string | null
+  caseRetentionMonths?: number | null
   updatedAt?: Date | string
   guild: Prisma.GuildCreateNestedOneWithoutConfigInput
 }
@@ -581,6 +598,7 @@ export type GuildConfigUncheckedCreateInput = {
   goodbyeEnabled?: boolean
   goodbyeChannelId?: string | null
   goodbyeMessage?: string | null
+  caseRetentionMonths?: number | null
   updatedAt?: Date | string
 }
 
@@ -610,6 +628,7 @@ export type GuildConfigUpdateInput = {
   goodbyeEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
   goodbyeChannelId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   goodbyeMessage?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  caseRetentionMonths?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   guild?: Prisma.GuildUpdateOneRequiredWithoutConfigNestedInput
 }
@@ -641,6 +660,7 @@ export type GuildConfigUncheckedUpdateInput = {
   goodbyeEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
   goodbyeChannelId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   goodbyeMessage?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  caseRetentionMonths?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
 }
 
@@ -671,6 +691,7 @@ export type GuildConfigCreateManyInput = {
   goodbyeEnabled?: boolean
   goodbyeChannelId?: string | null
   goodbyeMessage?: string | null
+  caseRetentionMonths?: number | null
   updatedAt?: Date | string
 }
 
@@ -700,6 +721,7 @@ export type GuildConfigUpdateManyMutationInput = {
   goodbyeEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
   goodbyeChannelId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   goodbyeMessage?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  caseRetentionMonths?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
 }
 
@@ -730,6 +752,7 @@ export type GuildConfigUncheckedUpdateManyInput = {
   goodbyeEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
   goodbyeChannelId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   goodbyeMessage?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  caseRetentionMonths?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
 }
 
@@ -773,6 +796,7 @@ export type GuildConfigCountOrderByAggregateInput = {
   goodbyeEnabled?: Prisma.SortOrder
   goodbyeChannelId?: Prisma.SortOrder
   goodbyeMessage?: Prisma.SortOrder
+  caseRetentionMonths?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
 }
 
@@ -780,6 +804,7 @@ export type GuildConfigAvgOrderByAggregateInput = {
   xpMin?: Prisma.SortOrder
   xpMax?: Prisma.SortOrder
   xpCooldownSec?: Prisma.SortOrder
+  caseRetentionMonths?: Prisma.SortOrder
 }
 
 export type GuildConfigMaxOrderByAggregateInput = {
@@ -806,6 +831,7 @@ export type GuildConfigMaxOrderByAggregateInput = {
   goodbyeEnabled?: Prisma.SortOrder
   goodbyeChannelId?: Prisma.SortOrder
   goodbyeMessage?: Prisma.SortOrder
+  caseRetentionMonths?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
 }
 
@@ -833,6 +859,7 @@ export type GuildConfigMinOrderByAggregateInput = {
   goodbyeEnabled?: Prisma.SortOrder
   goodbyeChannelId?: Prisma.SortOrder
   goodbyeMessage?: Prisma.SortOrder
+  caseRetentionMonths?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
 }
 
@@ -840,6 +867,7 @@ export type GuildConfigSumOrderByAggregateInput = {
   xpMin?: Prisma.SortOrder
   xpMax?: Prisma.SortOrder
   xpCooldownSec?: Prisma.SortOrder
+  caseRetentionMonths?: Prisma.SortOrder
 }
 
 export type GuildConfigCreateNestedOneWithoutGuildInput = {
@@ -905,6 +933,14 @@ export type GuildConfigUpdatetd2ReportViewerRoleIdsInput = {
   push?: string | string[]
 }
 
+export type NullableIntFieldUpdateOperationsInput = {
+  set?: number | null
+  increment?: number
+  decrement?: number
+  multiply?: number
+  divide?: number
+}
+
 export type GuildConfigCreateWithoutGuildInput = {
   timezone?: string
   modLogChannelId?: string | null
@@ -931,6 +967,7 @@ export type GuildConfigCreateWithoutGuildInput = {
   goodbyeEnabled?: boolean
   goodbyeChannelId?: string | null
   goodbyeMessage?: string | null
+  caseRetentionMonths?: number | null
   updatedAt?: Date | string
 }
 
@@ -960,6 +997,7 @@ export type GuildConfigUncheckedCreateWithoutGuildInput = {
   goodbyeEnabled?: boolean
   goodbyeChannelId?: string | null
   goodbyeMessage?: string | null
+  caseRetentionMonths?: number | null
   updatedAt?: Date | string
 }
 
@@ -1005,6 +1043,7 @@ export type GuildConfigUpdateWithoutGuildInput = {
   goodbyeEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
   goodbyeChannelId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   goodbyeMessage?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  caseRetentionMonths?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
 }
 
@@ -1034,6 +1073,7 @@ export type GuildConfigUncheckedUpdateWithoutGuildInput = {
   goodbyeEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
   goodbyeChannelId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   goodbyeMessage?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  caseRetentionMonths?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
 }
 
@@ -1066,6 +1106,7 @@ export type GuildConfigSelect<ExtArgs extends runtime.Types.Extensions.InternalA
   goodbyeEnabled?: boolean
   goodbyeChannelId?: boolean
   goodbyeMessage?: boolean
+  caseRetentionMonths?: boolean
   updatedAt?: boolean
   guild?: boolean | Prisma.GuildDefaultArgs<ExtArgs>
 }, ExtArgs["result"]["guildConfig"]>
@@ -1097,6 +1138,7 @@ export type GuildConfigSelectCreateManyAndReturn<ExtArgs extends runtime.Types.E
   goodbyeEnabled?: boolean
   goodbyeChannelId?: boolean
   goodbyeMessage?: boolean
+  caseRetentionMonths?: boolean
   updatedAt?: boolean
   guild?: boolean | Prisma.GuildDefaultArgs<ExtArgs>
 }, ExtArgs["result"]["guildConfig"]>
@@ -1128,6 +1170,7 @@ export type GuildConfigSelectUpdateManyAndReturn<ExtArgs extends runtime.Types.E
   goodbyeEnabled?: boolean
   goodbyeChannelId?: boolean
   goodbyeMessage?: boolean
+  caseRetentionMonths?: boolean
   updatedAt?: boolean
   guild?: boolean | Prisma.GuildDefaultArgs<ExtArgs>
 }, ExtArgs["result"]["guildConfig"]>
@@ -1159,10 +1202,11 @@ export type GuildConfigSelectScalar = {
   goodbyeEnabled?: boolean
   goodbyeChannelId?: boolean
   goodbyeMessage?: boolean
+  caseRetentionMonths?: boolean
   updatedAt?: boolean
 }
 
-export type GuildConfigOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"guildId" | "timezone" | "modLogChannelId" | "staffRoleIds" | "announceChannelId" | "xpEnabled" | "xpMin" | "xpMax" | "xpCooldownSec" | "levelUpChannelId" | "leaderboardPublic" | "ticketCategoryId" | "ticketStaffRoleIds" | "ticketLogChannelId" | "td2ChannelId" | "td2ReportChannelId" | "td2ReportViewerRoleIds" | "td2ReportFeedChannelId" | "td2PublicListing" | "welcomeEnabled" | "welcomeChannelId" | "welcomeMessage" | "welcomeRoleId" | "goodbyeEnabled" | "goodbyeChannelId" | "goodbyeMessage" | "updatedAt", ExtArgs["result"]["guildConfig"]>
+export type GuildConfigOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"guildId" | "timezone" | "modLogChannelId" | "staffRoleIds" | "announceChannelId" | "xpEnabled" | "xpMin" | "xpMax" | "xpCooldownSec" | "levelUpChannelId" | "leaderboardPublic" | "ticketCategoryId" | "ticketStaffRoleIds" | "ticketLogChannelId" | "td2ChannelId" | "td2ReportChannelId" | "td2ReportViewerRoleIds" | "td2ReportFeedChannelId" | "td2PublicListing" | "welcomeEnabled" | "welcomeChannelId" | "welcomeMessage" | "welcomeRoleId" | "goodbyeEnabled" | "goodbyeChannelId" | "goodbyeMessage" | "caseRetentionMonths" | "updatedAt", ExtArgs["result"]["guildConfig"]>
 export type GuildConfigInclude<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   guild?: boolean | Prisma.GuildDefaultArgs<ExtArgs>
 }
@@ -1205,6 +1249,7 @@ export type $GuildConfigPayload<ExtArgs extends runtime.Types.Extensions.Interna
     goodbyeEnabled: boolean
     goodbyeChannelId: string | null
     goodbyeMessage: string | null
+    caseRetentionMonths: number | null
     updatedAt: Date
   }, ExtArgs["result"]["guildConfig"]>
   composites: {}
@@ -1656,6 +1701,7 @@ export interface GuildConfigFieldRefs {
   readonly goodbyeEnabled: Prisma.FieldRef<"GuildConfig", 'Boolean'>
   readonly goodbyeChannelId: Prisma.FieldRef<"GuildConfig", 'String'>
   readonly goodbyeMessage: Prisma.FieldRef<"GuildConfig", 'String'>
+  readonly caseRetentionMonths: Prisma.FieldRef<"GuildConfig", 'Int'>
   readonly updatedAt: Prisma.FieldRef<"GuildConfig", 'DateTime'>
 }
     

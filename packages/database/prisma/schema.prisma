@@ -76,6 +76,7 @@ model GuildConfig {
   goodbyeEnabled         Boolean  @default(false) // message de départ actif
   goodbyeChannelId       String? // salon du message de départ ; obligatoire si activé
   goodbyeMessage         String? // vide = texte par défaut (WELCOME_DEFAULTS.goodbyeMessage)
+  caseRetentionMonths    Int?     @default(12) // conservation des sanctions closes, en mois ; null = jamais purgées
   updatedAt              DateTime @updatedAt
 }
 

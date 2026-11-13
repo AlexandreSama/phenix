@@ -2606,6 +2606,7 @@ export const GuildConfigScalarFieldEnum = {
   goodbyeEnabled: 'goodbyeEnabled',
   goodbyeChannelId: 'goodbyeChannelId',
   goodbyeMessage: 'goodbyeMessage',
+  caseRetentionMonths: 'caseRetentionMonths',
   updatedAt: 'updatedAt'
 } as const
 

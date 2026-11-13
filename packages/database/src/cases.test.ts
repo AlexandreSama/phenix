@@ -73,6 +73,51 @@ describe('caseSearchWhere', () => {
   });
 });
 
+describe('caseSearchWhere avec des identifiants (pseudos trouvés)', () => {
+  const A = '111111111111111111';
+  const B = '222222222222222222';
+
+  it('cherche dans la raison OU parmi les cibles et les modérateurs trouvés', () => {
+    expect(caseSearchWhere('ali', [A, B])).toEqual({
+      OR: [
+        { reason: { contains: 'ali', mode: 'insensitive' } },
+        { targetId: { in: [A, B] } },
+        { moderatorId: { in: [A, B] } },
+      ],
+    });
+  });
+
+  it('sans identifiant (liste vide ou absente), garde la recherche dans la raison seule', () => {
+    const reasonOnly = { reason: { contains: 'ali', mode: 'insensitive' } };
+    expect(caseSearchWhere('ali', [])).toEqual(reasonOnly);
+    expect(caseSearchWhere('ali', undefined)).toEqual(reasonOnly);
+  });
+
+  it('ignore les identifiants quand le texte est un numéro ou un identifiant Discord', () => {
+    expect(caseSearchWhere('#12', [A])).toEqual({ number: 12 });
+    expect(caseSearchWhere(B, [A])).toEqual({ OR: [{ targetId: B }, { moderatorId: B }] });
+  });
+
+  it('ne filtre rien sans texte, même avec des identifiants', () => {
+    expect(caseSearchWhere('  ', [A])).toBeUndefined();
+  });
+
+  it('dédoublonne les identifiants et en garde 50 au plus', () => {
+    const ids = Array.from({ length: 60 }, (_, i) => String(10n ** 17n + BigInt(i)));
+
+    const where = caseSearchWhere('ali', [A, A, ...ids]);
+
+    const expected = [A, ...ids].slice(0, 50);
+    expect(where).toEqual({
+      OR: [
+        { reason: { contains: 'ali', mode: 'insensitive' } },
+        { targetId: { in: expected } },
+        { moderatorId: { in: expected } },
+      ],
+    });
+  });
+});
+
 describe('caseStatus', () => {
   const now = new Date('2026-11-07T12:00:00Z');
   const past = new Date('2026-11-07T11:00:00Z');
