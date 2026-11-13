@@ -1,4 +1,5 @@
 import { z } from 'zod';
+import { CASE_RETENTION_CHOICES } from '../moderation.js';
 
 /** ID Discord (snowflake) : 17 à 20 chiffres. */
 export const snowflakeSchema = z.string().regex(/^\d{17,20}$/, 'ID Discord invalide');
@@ -16,12 +17,21 @@ export function isValidTimeZone(timeZone: string): boolean {
   }
 }
 
+const CASE_RETENTION_VALUES: readonly (number | null)[] = CASE_RETENTION_CHOICES.map(
+  (choice) => choice.months,
+);
+
 /** Réglages généraux d'un serveur : la page « Général » du tableau de bord. */
 export const generalConfigSchema = z.object({
   timezone: z.string().refine(isValidTimeZone, 'Fuseau horaire inconnu'),
   modLogChannelId: snowflakeSchema.nullable(),
   announceChannelId: snowflakeSchema.nullable(),
   staffRoleIds: z.array(snowflakeSchema).max(25, '25 rôles au plus'),
+  /** Durée de conservation des sanctions, en mois ; null = jamais purgées. */
+  caseRetentionMonths: z.custom<(typeof CASE_RETENTION_CHOICES)[number]['months']>(
+    (value) => CASE_RETENTION_VALUES.includes(value as number | null),
+    'Durée de conservation invalide',
+  ),
 });
 
 /** Une modification envoyée par le site : seulement les champs qui changent. */

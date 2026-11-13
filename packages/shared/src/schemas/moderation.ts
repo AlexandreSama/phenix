@@ -28,7 +28,10 @@ function day(endOfDay: boolean) {
     });
 }
 
-/** ?page=&type=&status=&moderatorId=&targetId=&q=&from=&to= de la liste des sanctions. */
+/**
+ * ?page=&type=&status=&moderatorId=&targetId=&q=&from=&to= de la liste des sanctions.
+ * `q` cherche dans la raison, le numéro, et aussi le début d'un pseudo.
+ */
 export const caseListQuerySchema = z
   .object({
     page: z.coerce
@@ -83,6 +86,8 @@ export interface CasePage {
   total: number;
   page: number;
   pageSize: number;
+  /** Comment `q` a été traité : pseudo cherché, indisponible (Discord ne répond pas), ou sans objet. */
+  nameSearch: 'used' | 'unavailable' | 'not-applicable';
 }
 
 /** L'en-tête de la fiche d'un membre ; son historique est la liste filtrée par `targetId`. */

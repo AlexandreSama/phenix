@@ -1,6 +1,23 @@
 /** Ce qu'on écrit quand une sanction n'a pas de raison : le bot, le journal d'audit et le site le disent pareil. */
 export const NO_REASON = 'Aucune raison fournie';
 
+/** Durées de conservation des sanctions proposées à l'admin (en mois) ; null = jamais purgées. */
+export const CASE_RETENTION_CHOICES = [
+  { months: 6, label: '6 mois' },
+  { months: 12, label: '12 mois (par défaut)' },
+  { months: 24, label: '24 mois' },
+  { months: null, label: 'Jamais' },
+] as const;
+
+export type CaseRetentionMonths = (typeof CASE_RETENTION_CHOICES)[number]['months'];
+
+/** Rétention appliquée tant que l'admin n'a rien choisi. */
+export const CASE_RETENTION_DEFAULT_MONTHS = 12 satisfies CaseRetentionMonths;
+
+/** Réponse quand une autre action de modération tient déjà le verrou du membre. */
+export const MODERATION_BUSY_MESSAGE =
+  'Une autre action de modération vise déjà ce membre : réessaie dans quelques secondes.';
+
 export interface TargetCheck {
   moderatorId: string;
   targetId: string;
