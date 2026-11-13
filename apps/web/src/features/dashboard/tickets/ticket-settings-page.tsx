@@ -1,33 +1,43 @@
+import { TICKET_LIMITS } from '@phenix/shared';
 import { useQueries } from '@tanstack/react-query';
 import { Link, useParams } from '@tanstack/react-router';
 import { Icon } from '../../../components/icon';
-import { PageHeader } from '../../../components/ui/panel';
+import { buttonClass } from '../../../components/ui/button';
+import { Panel, PageHeader } from '../../../components/ui/panel';
 import {
-  categoriesQuery,
   channelsQuery,
-  rolesQuery,
   ticketSettingsQuery,
+  ticketTypesQuery,
+  useDeleteTicketType,
   useSaveTicketSettings,
 } from '../api';
 import { PublicationBadge } from '../publication-badge';
 import { firstFailure, LoadError, PageSkeleton } from '../query-state';
 import { TicketSettingsForm } from './ticket-settings-form';
+import { TicketTypeList } from './ticket-type-list';
 
 export function TicketSettingsPage() {
   const { guildId } = useParams({ from: '/dashboard/$guildId/tickets/reglages' });
   const queries = useQueries({
-    queries: [
-      categoriesQuery(guildId),
-      channelsQuery(guildId),
-      rolesQuery(guildId),
-      ticketSettingsQuery(guildId),
-    ],
+    queries: [channelsQuery(guildId), ticketSettingsQuery(guildId), ticketTypesQuery(guildId)],
   });
-  const [categories, channels, roles, settings] = queries;
+  const [channels, settings, types] = queries;
   const save = useSaveTicketSettings(guildId);
+  const remove = useDeleteTicketType(guildId);
 
   const { error, retry } = firstFailure(queries);
   const current = settings.data?.settings;
+
+  const addType = (
+    <Link
+      to="/dashboard/$guildId/tickets/types/nouveau"
+      params={{ guildId }}
+      className={buttonClass('primary')}
+    >
+      <Icon name="plus" className="size-4" />
+      Ajouter un type
+    </Link>
+  );
 
   return (
     <div className="flex flex-col gap-6">
@@ -41,7 +51,7 @@ export function TicketSettingsPage() {
       </Link>
       <PageHeader
         title="Réglages des tickets"
-        description="Où s'ouvrent les tickets, qui y répond, et le message avec le bouton pour en ouvrir un."
+        description="Les types de ticket, le journal, et le message avec les boutons pour en ouvrir un."
         actions={current && <PublicationBadge status={current.panelStatus} />}
       />
       {current?.panelError && (
@@ -56,18 +66,45 @@ export function TicketSettingsPage() {
         </div>
       )}
       {error && <LoadError error={error} onRetry={retry} />}
-      {!error && (!categories.data || !channels.data || !roles.data || !settings.data) && (
+      {!error && (!channels.data || !settings.data || !types.data) && (
         <PageSkeleton label="Chargement des réglages…" panels={3} />
       )}
-      {!error && categories.data && channels.data && roles.data && settings.data && (
-        <TicketSettingsForm
-          // Les relectures toutes les 2 s ne remontent pas le formulaire : seul l'état du panel change
-          settings={settings.data.settings}
-          categories={categories.data}
-          channels={channels.data}
-          roles={roles.data}
-          onSubmit={(input) => save.mutateAsync(input)}
-        />
+      {!error && channels.data && settings.data && types.data && (
+        <>
+          <Panel
+            icon="ticket"
+            title="Types de ticket"
+            description={`Un type par motif d’ouverture, avec sa catégorie, son équipe et son formulaire. ${TICKET_LIMITS.types} au plus.`}
+          >
+            {remove.error && (
+              <p role="alert" className="text-sm text-flame">
+                {remove.error.message}
+              </p>
+            )}
+            <TicketTypeList
+              types={types.data}
+              add={addType}
+              edit={(type) => (
+                <Link
+                  to="/dashboard/$guildId/tickets/types/$typeId"
+                  params={{ guildId, typeId: String(type.id) }}
+                  className={buttonClass('ghost')}
+                >
+                  <Icon name="pencil" className="size-4" />
+                  Modifier <span className="sr-only">{type.name}</span>
+                </Link>
+              )}
+              onDelete={(typeId) => remove.mutateAsync(typeId)}
+            />
+          </Panel>
+          <TicketSettingsForm
+            // Les relectures toutes les 2 s ne remontent pas le formulaire : seul l'état du panel change
+            settings={settings.data.settings}
+            types={types.data}
+            channels={channels.data}
+            onSubmit={(input) => save.mutateAsync(input)}
+          />
+        </>
       )}
     </div>
   );

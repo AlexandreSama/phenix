@@ -1,29 +1,28 @@
 import { zodResolver } from '@hookform/resolvers/zod';
 import type {
-  GuildCategorySummary,
   GuildChannelSummary,
-  GuildRoleSummary,
   TicketSettings,
   TicketSettingsInput,
+  TicketTypeSummary,
 } from '@phenix/shared';
 import { useForm, useWatch } from 'react-hook-form';
 import { Field, inputClass } from '../../../components/ui/field';
 import { FormActions } from '../../../components/ui/form-actions';
 import { Panel } from '../../../components/ui/panel';
-import { ChannelOptions, RoleChecklist } from '../form-parts';
+import { ChannelOptions } from '../form-parts';
 import { ticketFormSchema, toFormValues, type TicketFormInput } from './form-values';
 import { TicketPanelPreview } from './ticket-panel-preview';
 
 interface Props {
   settings: TicketSettings | null;
-  categories: GuildCategorySummary[];
+  /** Pour l'aperçu du panel : boutons ou menu selon leur nombre */
+  types: TicketTypeSummary[];
   channels: GuildChannelSummary[];
-  roles: GuildRoleSummary[];
   onSubmit: (input: TicketSettingsInput) => Promise<unknown>;
 }
 
 /** Les réglages des tickets et leur panel, avec l'aperçu. Il reçoit ses données et ne sait rien de l'API. */
-export function TicketSettingsForm({ settings, categories, channels, roles, onSubmit }: Props) {
+export function TicketSettingsForm({ settings, types, channels, onSubmit }: Props) {
   const {
     register,
     handleSubmit,
@@ -59,25 +58,9 @@ export function TicketSettingsForm({ settings, categories, channels, roles, onSu
       <div className="flex min-w-0 flex-col gap-6">
         <Panel
           icon="lock"
-          title="Salons privés"
-          description="Chaque ticket devient un salon visible du membre et de l’équipe seulement."
+          title="Journal"
+          description="La catégorie des salons et l’équipe se règlent dans chaque type de ticket."
         >
-          <Field
-            id="categoryId"
-            label="Catégorie des tickets"
-            hint="Les salons des tickets y sont créés. Le bot doit pouvoir y gérer les salons."
-            error={errors.categoryId?.message}
-          >
-            <select id="categoryId" className={inputClass} {...register('categoryId')}>
-              <option value="">Choisis une catégorie</option>
-              {categories.map((category) => (
-                <option key={category.id} value={category.id}>
-                  {category.name}
-                </option>
-              ))}
-            </select>
-          </Field>
-
           <Field
             id="logChannelId"
             label="Salon de logs des tickets"
@@ -91,25 +74,9 @@ export function TicketSettingsForm({ settings, categories, channels, roles, onSu
         </Panel>
 
         <Panel
-          icon="users"
-          title="Équipe"
-          description="Ces rôles voient tous les tickets, y répondent et peuvent les fermer."
-        >
-          <fieldset className="flex flex-col gap-3">
-            <legend className="sr-only">Équipe des tickets</legend>
-            <RoleChecklist roles={roles} registration={register('staffRoleIds')} />
-            {errors.staffRoleIds && (
-              <p role="alert" className="text-[13px] text-flame">
-                {errors.staffRoleIds.message}
-              </p>
-            )}
-          </fieldset>
-        </Panel>
-
-        <Panel
           icon="ticket"
           title="Panel « Ouvrir un ticket »"
-          description="Le message que le bot publie, avec le bouton qui ouvre un ticket."
+          description="Le message que le bot publie : un bouton par type de ticket (jusqu’à 5), un menu au-delà."
         >
           <Field
             id="panelChannelId"
@@ -139,6 +106,7 @@ export function TicketSettingsForm({ settings, categories, channels, roles, onSu
           <Field
             id="panelButtonLabel"
             label="Texte du bouton"
+            hint="Devient l’invite du menu déroulant quand il y a plus de 5 types."
             error={errors.panel?.buttonLabel?.message}
           >
             <input
@@ -170,6 +138,7 @@ export function TicketSettingsForm({ settings, categories, channels, roles, onSu
           title={panel.title}
           description={typeof panel.description === 'string' ? panel.description : ''}
           buttonLabel={panel.buttonLabel}
+          types={types}
         />
       </div>
     </form>

@@ -22,19 +22,14 @@ export const DEFAULT_PANEL = {
   buttonLabel: 'Ouvrir un ticket',
 };
 
-/** staffRoleIds part d'une liste, même vide : react-hook-form renvoie alors toujours une liste, même avec une seule case. */
 export function toFormValues(settings: TicketSettings | null): TicketFormInput {
   if (!settings) {
     return {
-      categoryId: '',
-      staffRoleIds: [],
       logChannelId: '',
       panel: { channelId: '', ...DEFAULT_PANEL },
     };
   }
   return {
-    categoryId: settings.categoryId,
-    staffRoleIds: settings.staffRoleIds,
     logChannelId: settings.logChannelId ?? '',
     panel: { ...settings.panel, description: settings.panel.description ?? '' },
   };
