@@ -4,12 +4,15 @@ import { Logger } from '@nestjs/common';
 import type { NestExpressApplication } from '@nestjs/platform-express';
 import { Test } from '@nestjs/testing';
 import { PrismaClient } from '@phenix/database';
+import { LockBusyError, LockUnavailableError } from '@phenix/jobs';
 import { Redis } from 'ioredis';
 import sharp from 'sharp';
 import request from 'supertest';
-import { afterAll, beforeAll, beforeEach, describe, expect, it, vi } from 'vitest';
+import { afterAll, afterEach, beforeAll, beforeEach, describe, expect, it, vi } from 'vitest';
 import { AppModule } from './app.module.js';
 import { configureApp } from './app.setup.js';
+import { JSON_ONLY_MESSAGE } from './common/json-only.js';
+import { LockService } from './core/lock.service.js';
 import { EVIDENCE, GIVEAWAY_QUEUE, MEDIA, TRANSCRIPTS } from './core/tokens.js';
 import { DiscordService } from './discord/discord.service.js';
 import type { Env } from './env.js';
@@ -592,6 +595,23 @@ const discord = {
   })),
 };
 
+/**
+ * Le verrou partagé avec le bot, sans Valkey (le faux Valkey ignore NX et PX et n'a pas `eval`) :
+ * les clés tenues, refusées à un second preneur comme le ferait NX, libérées quoi qu'il arrive.
+ */
+const heldLocks = new Set<string>();
+const lock = {
+  withLock: vi.fn(async <T>(key: string, fn: () => Promise<T>): Promise<T> => {
+    if (heldLocks.has(key)) throw new LockBusyError(key);
+    heldLocks.add(key);
+    try {
+      return await fn();
+    } finally {
+      heldLocks.delete(key);
+    }
+  }),
+};
+
 /** L'erreur que Discord renvoie quand le bot n'a pas une permission. */
 const missingPermissions = () =>
   new DiscordAPIError(
@@ -614,6 +634,8 @@ beforeAll(async () => {
     .useValue(redis)
     .overrideProvider(DiscordService)
     .useValue(discord)
+    .overrideProvider(LockService)
+    .useValue(lock)
     .overrideProvider(TRANSCRIPTS)
     .useValue(transcripts)
     .overrideProvider(EVIDENCE)
@@ -634,6 +656,7 @@ afterAll(async () => {
 
 beforeEach(() => {
   store.clear();
+  heldLocks.clear();
   store.set(`session:${SESSION_ID}`, JSON.stringify({ userId: '1', accessToken: 'tok' }));
   store.set(
     `session:${OWNER_SESSION_ID}`,
@@ -684,6 +707,41 @@ describe('protection CSRF', () => {
       .set('Origin', 'https://evil.example');
 
     expect(response.status).toBe(200);
+  });
+});
+
+describe('écritures en JSON seulement (ADR-0004, résidu CSRF)', () => {
+  it('refuse un formulaire HTML sur une écriture, avant toute route (415)', async () => {
+    const response = await request(app.getHttpServer())
+      .patch(`/api/guilds/${MANAGED}/config`)
+      .set('Cookie', cookie)
+      .type('form')
+      .send(`modLogChannelId=${CHANNEL}`);
+
+    expect(response.status).toBe(415);
+    expect(response.body.message).toBe('Cette action n’accepte que du JSON');
+    expect(db.guildConfig.upsert).not.toHaveBeenCalled();
+    expect(db.guildConfig.update).not.toHaveBeenCalled();
+    expect(redis.publish).not.toHaveBeenCalled();
+  });
+
+  it('refuse aussi un formulaire sans champ (Content-Length: 0)', async () => {
+    const response = await request(app.getHttpServer())
+      .post('/api/auth/logout')
+      .set('Cookie', cookie)
+      .set('Content-Type', 'application/x-www-form-urlencoded');
+
+    expect(response.status).toBe(415);
+    expect(store.has(`session:${SESSION_ID}`)).toBe(true);
+  });
+
+  it('laisse passer une écriture sans corps ni Content-Type (déconnexion, curl)', async () => {
+    const response = await request(app.getHttpServer())
+      .post('/api/auth/logout')
+      .set('Cookie', cookie);
+
+    expect(response.status).toBe(204);
+    expect(store.has(`session:${SESSION_ID}`)).toBe(false);
   });
 });
 
@@ -1804,6 +1862,7 @@ describe('modération', () => {
       total: 1,
       page: 1,
       pageSize: 20,
+      nameSearch: 'not-applicable',
     });
     const args = db.case.findMany.mock.calls[0]?.[0] as unknown as {
       where: { AND: object[] };
@@ -1814,6 +1873,8 @@ describe('modération', () => {
   });
 
   it('transmet les filtres lus dans l’URL à la requête, en gardant ce serveur', async () => {
+    // aucun membre ne s'appelle « spam » : la recherche reste celle de la raison
+    discord.searchGuildMembers.mockResolvedValueOnce([]);
     const response = await cases(
       `?type=BAN&status=active&moderatorId=${MOD_MODERATOR}&targetId=${MOD_TARGET}&q=spam&from=2026-11-01&to=2026-11-09&page=2`,
     );
@@ -1839,6 +1900,74 @@ describe('modération', () => {
     // la clause de statut, puis celle de la recherche (la raison, sans tenir compte de la casse)
     expect(args.where.AND[2]).toMatchObject({ revokedAt: null });
     expect(args.where.AND[3]).toEqual({ reason: { contains: 'spam', mode: 'insensitive' } });
+  });
+
+  describe('recherche par pseudo', () => {
+    const FOUND_BOT = '700000000000000010';
+    const searchClause = () => {
+      const args = db.case.findMany.mock.calls[0]?.[0] as unknown as {
+        where: { AND: object[] };
+      };
+      expect(args.where.AND[0]).toEqual({ guildId: MANAGED });
+      return args.where.AND.at(-1);
+    };
+
+    it('?q=Fa rend les sanctions des membres trouvés (Discord et profils en cache) et celles dont la raison correspond, sur ce serveur', async () => {
+      // une personne sanctionnée ici, dont le profil est déjà en cache
+      db.case.groupBy.mockResolvedValueOnce([{ targetId: MOD_TARGET }] as never);
+      store.set(
+        `discord:users:${MOD_TARGET}`,
+        JSON.stringify({ id: MOD_TARGET, name: 'Fabien', avatarUrl: null }),
+      );
+
+      const response = await cases('?q=Fa');
+
+      expect(response.status).toBe(200);
+      expect(response.body.nameSearch).toBe('used');
+      const ids = [DELEGATE, FOUND_BOT, MOD_TARGET];
+      expect(searchClause()).toEqual({
+        OR: [
+          { reason: { contains: 'Fa', mode: 'insensitive' } },
+          { targetId: { in: ids } },
+          { moderatorId: { in: ids } },
+        ],
+      });
+      // jamais un autre serveur : la recherche Discord et les cibles lues sont celles de MANAGED
+      expect(discord.searchGuildMembers).toHaveBeenCalledWith(
+        MANAGED,
+        'Fa',
+        25,
+        expect.any(AbortSignal),
+      );
+      expect(db.case.groupBy).toHaveBeenCalledWith(
+        expect.objectContaining({ by: ['targetId'], where: { guildId: MANAGED } }),
+      );
+    });
+
+    it('Discord en panne : 200, la recherche par raison seule, nameSearch « unavailable »', async () => {
+      discord.searchGuildMembers.mockRejectedValueOnce(
+        new DiscordAPIError({ code: 0, message: 'x' }, 0, 503, 'GET', '/x', {
+          body: undefined,
+          files: undefined,
+        }),
+      );
+
+      const response = await cases('?q=Fa');
+
+      expect(response.status).toBe(200);
+      expect(response.body.nameSearch).toBe('unavailable');
+      expect(searchClause()).toEqual({ reason: { contains: 'Fa', mode: 'insensitive' } });
+    });
+
+    it('une recherche par numéro : not-applicable, aucun appel Discord', async () => {
+      const response = await cases('?q=%2312');
+
+      expect(response.status).toBe(200);
+      expect(response.body.nameSearch).toBe('not-applicable');
+      expect(searchClause()).toEqual({ number: 12 });
+      expect(discord.searchGuildMembers).not.toHaveBeenCalled();
+      expect(db.case.groupBy).not.toHaveBeenCalled();
+    });
   });
 
   it.each(['?page=0', '?type=NOPE', '?status=x', '?targetId=12', '?from=2026-02-30'])(
@@ -1970,8 +2099,9 @@ const withPermissions = (permissions: bigint) =>
       permissions: String(permissions | 32n),
     },
   ]);
+/** La sanction lue, puis relue sous le verrou : la même, jusqu'à la fin du test. */
 const theCase = (over: object) =>
-  db.case.findUnique.mockResolvedValueOnce({ ...modCase, ...over } as typeof modCase);
+  db.case.findUnique.mockResolvedValue({ ...modCase, ...over } as typeof modCase);
 /** Le modérateur (« 1 ») puis la cible, dans l'ordre où l'API les demande. */
 const members = (actorRoles: string[], target: { roles: string[] } | null) => {
   discord.getGuildMember.mockResolvedValueOnce({ roles: actorRoles, user: { id: '1' } } as never);
@@ -2002,6 +2132,10 @@ describe('levée d’une sanction depuis le site', () => {
   const REASON = 'Erreur de modération';
   const FUTURE = new Date('2099-01-01T00:00:00Z');
 
+  afterEach(() => {
+    db.case.findUnique.mockImplementation(async () => modCase);
+  });
+
   describe('abus', () => {
     it('limite à 10 levées par minute et par compte : la 11e répond 429 sans interroger la base', async () => {
       for (let i = 0; i < 10; i += 1) db.case.findUnique.mockResolvedValueOnce(null);
@@ -2018,12 +2152,28 @@ describe('levée d’une sanction depuis le site', () => {
 
     it('limite aussi à 30 levées par minute pour tout un serveur', async () => {
       store.set(`ratelimit:moderation-revoke:guild:${MANAGED}`, '30');
+      withPermissions(MODERATE_MEMBERS);
 
       const response = await revoke(7);
 
       expect(response.status).toBe(429);
-      expect(db.case.findUnique).not.toHaveBeenCalled();
+      expect(lock.withLock).not.toHaveBeenCalled();
       untouched();
+    });
+
+    it('laisse passer la 30e levée du serveur (frontière)', async () => {
+      store.set(`ratelimit:moderation-revoke:guild:${MANAGED}`, '29');
+      withPermissions(MODERATE_MEMBERS);
+
+      expect((await revoke(7)).status).toBe(200);
+      expect(store.get(`ratelimit:moderation-revoke:guild:${MANAGED}`)).toBe('30');
+    });
+
+    it('ne compte pas une levée refusée faute de permission Discord dans la limite du serveur', async () => {
+      // Sinon des délégués sans la permission épuiseraient la limite des vrais modérateurs
+      expect((await asDelegate(0n, { type: 'BAN' })).status).toBe(403);
+
+      expect(store.get(`ratelimit:moderation-revoke:guild:${MANAGED}`)).toBeUndefined();
     });
 
     it('ne compte pas un refus d’accès : un délégué sans l’onglet ne remplit pas la limite du serveur', async () => {
@@ -2054,6 +2204,30 @@ describe('levée d’une sanction depuis le site', () => {
         untouched();
       },
     );
+
+    it('exige toujours un corps JSON : sans Content-Type ni corps, la levée répond 415', async () => {
+      const response = await request(app.getHttpServer())
+        .post(`/api/guilds/${MANAGED}/moderation/cases/7/revoke`)
+        .set('Cookie', cookie);
+
+      expect(response.status).toBe(415);
+      expect(response.body.message).toBe('Cette action n’accepte que du JSON');
+      expect(db.case.findUnique).not.toHaveBeenCalled();
+      untouched();
+    });
+
+    it('exige un corps même annoncé en JSON : Content-Length à 0 répond 415', async () => {
+      const response = await request(app.getHttpServer())
+        .post(`/api/guilds/${MANAGED}/moderation/cases/7/revoke`)
+        .set('Cookie', cookie)
+        .set('Content-Type', 'application/json')
+        .set('Content-Length', '0');
+
+      expect(response.status).toBe(415);
+      expect(response.body.message).toBe(JSON_ONLY_MESSAGE);
+      expect(db.case.findUnique).not.toHaveBeenCalled();
+      untouched();
+    });
   });
 
   describe('accès', () => {
@@ -2475,6 +2649,127 @@ describe('levée d’une sanction depuis le site', () => {
     });
   });
 
+  describe('verrou partagé avec le bot (ADR-0004, résidu connu)', () => {
+    /** Un autre membre : la clé du verrou ne peut venir que de la sanction lue en base. */
+    const OTHER_TARGET = '500000000000000077';
+    const lockKey = `moderation:lock:${MANAGED}:${OTHER_TARGET}`;
+
+    beforeEach(() => {
+      withPermissions(BAN_MEMBERS);
+      theCase({ type: 'BAN', targetId: OTHER_TARGET });
+    });
+
+    it('prend le verrou du membre visé par la sanction, et agit sur Discord en le tenant', async () => {
+      let heldDuringDiscord = false;
+      discord.removeGuildBan.mockImplementationOnce(async () => {
+        heldDuringDiscord = heldLocks.has(lockKey);
+      });
+
+      const response = await revoke(7, { targetId: MOD_TARGET });
+
+      expect(response.status).toBe(200);
+      expect(lock.withLock).toHaveBeenCalledTimes(1);
+      expect(lock.withLock).toHaveBeenCalledWith(lockKey, expect.any(Function));
+      expect(heldDuringDiscord).toBe(true);
+      expect(db.case.updateMany).toHaveBeenCalled();
+      expect(heldLocks.size).toBe(0);
+    });
+
+    it('relit la sanction sous le verrou : un /ban l’a remplacée entre-temps → 200 « déjà levée », sans Discord', async () => {
+      // Le /ban qui prolonge passe pendant l'attente du verrou : il lève la #7 et crée la suivante
+      lock.withLock.mockImplementationOnce(async (_key, fn) => {
+        theCase({ type: 'BAN', targetId: OTHER_TARGET, revokedAt: new Date(), revokedById: '5' });
+        return fn();
+      });
+
+      const response = await revoke(7);
+
+      expect(response.status).toBe(200);
+      expect(response.body).toEqual({ alreadyRevoked: true });
+      expect(db.case.findUnique).toHaveBeenCalledTimes(2);
+      expect(db.case.findUnique).toHaveBeenLastCalledWith({
+        where: { guildId_number: { guildId: MANAGED, number: 7 } },
+      });
+      expect(discord.removeGuildBan).not.toHaveBeenCalled();
+      untouched();
+    });
+
+    it('verrou déjà pris (une commande du bot sur ce membre) → 409, base et Discord intacts', async () => {
+      heldLocks.add(lockKey);
+
+      const response = await revoke(7);
+
+      expect(response.status).toBe(409);
+      expect(response.body.message).toBe(
+        'Une autre action de modération vise déjà ce membre : réessaie dans quelques secondes.',
+      );
+      expect(discord.removeGuildBan).not.toHaveBeenCalled();
+      untouched();
+    });
+
+    it('Valkey indisponible → 503 en français, aucun appel Discord, base intacte', async () => {
+      lock.withLock.mockRejectedValueOnce(new LockUnavailableError(lockKey));
+
+      const response = await revoke(7);
+
+      expect(response.status).toBe(503);
+      expect(response.body.message).toContain('réessaie dans un instant');
+      expect(discord.removeGuildBan).not.toHaveBeenCalled();
+      expect(discord.getGuildMember).not.toHaveBeenCalled();
+      untouched();
+    });
+
+    it('n’écrit pas la cible dans le journal quand le verrou est indisponible', async () => {
+      const spies = (['warn', 'error', 'log'] as const).map((level) =>
+        vi.spyOn(Logger.prototype, level).mockImplementation(() => undefined),
+      );
+      lock.withLock.mockRejectedValueOnce(new LockUnavailableError(lockKey));
+
+      await revoke(7);
+
+      expect(JSON.stringify(spies.flatMap((spy) => spy.mock.calls))).not.toContain(OTHER_TARGET);
+      spies.forEach((spy) => spy.mockRestore());
+    });
+
+    it.each([
+      [
+        'un refus de Discord (bot trop bas, 409)',
+        409,
+        () => discord.removeGuildBan.mockRejectedValueOnce(discordError(50013, 403)),
+      ],
+      [
+        'une panne de la base après Discord (503)',
+        503,
+        () => db.$transaction.mockRejectedValueOnce(new Error('connexion perdue')),
+      ],
+    ])('libère le verrou après %s : l’essai suivant passe', async (_nom, status, fail) => {
+      const quiet = (['warn', 'error'] as const).map((level) =>
+        vi.spyOn(Logger.prototype, level).mockImplementation(() => undefined),
+      );
+      fail();
+
+      expect((await revoke(7)).status).toBe(status);
+      expect(lock.withLock).toHaveBeenCalledTimes(1);
+      expect(heldLocks.size).toBe(0);
+
+      // la liste des serveurs de l'utilisateur est déjà en cache : rien à rejouer
+      expect((await revoke(7)).status).toBe(200);
+      quiet.forEach((spy) => spy.mockRestore());
+    });
+
+    it('la limite de débit et le contrôle de permission passent AVANT le verrou', async () => {
+      store.set(`ratelimit:moderation-revoke:guild:${MANAGED}`, '30');
+      expect((await revoke(7)).status).toBe(429);
+
+      store.clear();
+      store.set(`session:${SESSION_ID}`, JSON.stringify({ userId: '1', accessToken: 'tok' }));
+      withPermissions(MODERATE_MEMBERS);
+      expect((await revoke(7)).status).toBe(403);
+
+      expect(lock.withLock).not.toHaveBeenCalled();
+    });
+  });
+
   describe('retirer un avertissement', () => {
     it('ne touche pas Discord et prévient le bot avec l’avertissement lui-même', async () => {
       withPermissions(MODERATE_MEMBERS);
@@ -2890,6 +3185,37 @@ describe('images du forum', () => {
     expect(media.put).not.toHaveBeenCalled();
   });
 
+  // Express route sans distinguer la casse ni la barre finale : la liste blanche du JSON non plus
+  it.each(['/api/forum/images/', '/api/FORUM/images'])(
+    'accepte l’envoi multipart sur %s (même route pour Express)',
+    async (path) => {
+      const png = await sharp({
+        create: { width: 10, height: 10, channels: 3, background: '#e85d04' },
+      })
+        .png()
+        .toBuffer();
+
+      const response = await server()
+        .post(path)
+        .set('Cookie', cookie)
+        .attach('image', png, { filename: 'capture.png', contentType: 'image/png' });
+
+      expect(response.status).toBe(201);
+      expect(media.put).toHaveBeenCalledTimes(1);
+    },
+  );
+
+  it('refuse un formulaire urlencoded sur la route des images (415)', async () => {
+    const response = await server()
+      .post('/api/forum/images')
+      .set('Cookie', cookie)
+      .type('form')
+      .send('image=x');
+
+    expect(response.status).toBe(415);
+    expect(media.put).not.toHaveBeenCalled();
+  });
+
   it('sert une image à tout le monde, avec un cache d’un an', async () => {
     const response = await server().get('/api/media/123e4567-e89b-12d3-a456-426614174000');
     const invalid = await server().get('/api/media/pas-un-id');
@@ -3129,5 +3455,128 @@ describe('santé', () => {
     expect(alive.body).toEqual({ status: 'ok', at: heartbeat.at, guilds: 12, ping: 42 });
     expect([corrupt.status, absent.status]).toEqual([503, 503]);
     expect(absent.body.message).toBe('Le bot ne donne plus signe de vie');
+  });
+});
+
+/** Ce que la base garde déjà, lu par la mise à jour avant d'écrire. */
+const stored = (caseRetentionMonths: number | null) =>
+  db.guildConfig.upsert.mockResolvedValueOnce({
+    ...config,
+    caseRetentionMonths,
+  } as typeof config);
+describe('conservation des sanctions (réservée aux administrateurs)', () => {
+  const url = `/api/guilds/${MANAGED}/config`;
+  const asAdmin = (body: object) =>
+    request(app.getHttpServer()).patch(url).set('Cookie', cookie).send(body);
+  /** Faye, déléguée de l'onglet Général. */
+  const asGeneralDelegate = (body: object) => {
+    discord.getCurrentUserGuilds.mockResolvedValueOnce([
+      { id: MANAGED, name: 'Les Agents', icon: null, owner: false, permissions: '0' },
+    ]);
+    db.guildDelegate.findMany.mockResolvedValueOnce([{ ...delegateRow, modules: ['GENERAL'] }]);
+    return request(app.getHttpServer()).patch(url).set('Cookie', faye).send(body);
+  };
+
+  it('lit la durée : 12 mois par défaut', async () => {
+    stored(12);
+
+    const response = await request(app.getHttpServer()).get(url).set('Cookie', cookie);
+
+    expect(response.status).toBe(200);
+    expect(response.body.caseRetentionMonths).toBe(12);
+    expect(db.guildConfig.upsert).toHaveBeenCalledWith(
+      expect.objectContaining({
+        select: expect.objectContaining({ caseRetentionMonths: true }),
+      }),
+    );
+  });
+
+  it.each([6, 24, null])('un administrateur passe la durée à %s', async (months) => {
+    stored(12);
+
+    const response = await asAdmin({ caseRetentionMonths: months });
+
+    expect(response.status).toBe(200);
+    expect(response.body.caseRetentionMonths).toBe(months);
+    expect(db.guildConfig.update).toHaveBeenCalledWith(
+      expect.objectContaining({ data: { caseRetentionMonths: months } }),
+    );
+  });
+
+  it('refuse une durée hors des choix (400)', async () => {
+    const response = await asAdmin({ caseRetentionMonths: 18 });
+
+    expect(response.status).toBe(400);
+    expect(db.guildConfig.update).not.toHaveBeenCalled();
+  });
+
+  it('refuse un délégué qui change la durée (403) et n’enregistre rien du corps', async () => {
+    stored(12);
+
+    const response = await asGeneralDelegate({ caseRetentionMonths: 6, modLogChannelId: CHANNEL });
+
+    expect(response.status).toBe(403);
+    expect(response.body.message).toBe(
+      'Seul un administrateur du serveur peut changer la durée de conservation des sanctions.',
+    );
+    expect(db.guildConfig.update).not.toHaveBeenCalled();
+    expect(redis.publish).not.toHaveBeenCalled();
+  });
+
+  it('refuse aussi un délégué qui passe de « jamais » à une durée', async () => {
+    stored(null);
+
+    const response = await asGeneralDelegate({ caseRetentionMonths: 12 });
+
+    expect(response.status).toBe(403);
+    expect(db.guildConfig.update).not.toHaveBeenCalled();
+  });
+
+  it('laisse un délégué renvoyer la valeur actuelle avec un autre champ modifié, sans la réécrire', async () => {
+    stored(12);
+
+    const response = await asGeneralDelegate({ caseRetentionMonths: 12, modLogChannelId: CHANNEL });
+
+    expect(response.status).toBe(200);
+    expect(response.body.modLogChannelId).toBe(CHANNEL);
+    // Course : un administrateur qui change la durée entre la lecture et l'écriture n'est pas écrasé
+    expect(db.guildConfig.update).toHaveBeenCalledWith(
+      expect.objectContaining({ data: { modLogChannelId: CHANNEL } }),
+    );
+  });
+
+  it.each([
+    [12, null],
+    [24, 6],
+  ])('refuse un délégué qui passe la durée de %s à %s (403)', async (before, after) => {
+    stored(before);
+
+    const response = await asGeneralDelegate({ caseRetentionMonths: after });
+
+    expect(response.status).toBe(403);
+    expect(db.guildConfig.update).not.toHaveBeenCalled();
+  });
+
+  it('laisse un délégué qui n’envoie pas la durée', async () => {
+    stored(12);
+
+    const response = await asGeneralDelegate({ modLogChannelId: CHANNEL });
+
+    expect(response.status).toBe(200);
+    expect(db.guildConfig.update).toHaveBeenCalledWith(
+      expect.objectContaining({ data: { modLogChannelId: CHANNEL } }),
+    );
+  });
+
+  it('laisse un délégué renvoyer null quand la base vaut déjà null', async () => {
+    stored(null);
+
+    const response = await asGeneralDelegate({
+      caseRetentionMonths: null,
+      modLogChannelId: CHANNEL,
+    });
+
+    expect(response.status).toBe(200);
+    expect(db.guildConfig.update).toHaveBeenCalledOnce();
   });
 });

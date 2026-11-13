@@ -1,6 +1,8 @@
 import { Queue, Worker, type Job } from 'bullmq';
 import { DEFAULT_JOB_OPTIONS, redisConnection } from './common.js';
+export * from './lock.js';
 export * from './metrics.js';
+export * from './moderation.js';
 export * from './td2.js';
 
 /** Le nom de la file : le bot (qui traite) et l'API (qui ajoute) doivent dire le même. */

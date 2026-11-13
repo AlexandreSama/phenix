@@ -5,12 +5,16 @@ import {
   createGiveawayQueue,
   createGiveawayScheduler,
   createGiveawayWorker,
+  createLock,
   createMetricsQueue,
   createMetricsWorker,
+  createModerationQueue,
+  createModerationWorker,
   createTd2Queue,
   createTd2Scheduler,
   createTd2Worker,
   ensureMetricsSchedules,
+  ensureModerationSchedules,
 } from '@phenix/jobs';
 import { createProcessMeter } from '@phenix/metrics';
 import { METRICS } from '@phenix/shared';
@@ -39,7 +43,12 @@ import {
 } from './modules/giveaways/index.js';
 import { createMessageXpHandler, levelingComponents } from './modules/leveling/index.js';
 import { createMetricsProcessor } from './modules/metrics/index.js';
-import { publishDashboardLog, startBanExpiry } from './modules/moderation/index.js';
+import {
+  createLockReleaseLogger,
+  createModerationProcessor,
+  publishDashboardLog,
+  startBanExpiry,
+} from './modules/moderation/index.js';
 import {
   createRolePanelPublisher,
   publishPendingRolePanels,
@@ -102,9 +111,22 @@ td2Worker.on('failed', (job, err) =>
 );
 
 // Une connexion qui échoue vite plutôt que d'attendre Valkey : le cache des stats (sans lui, le bot
-// interroge tracker.gg) et le battement de cœur (sans lui, /api/health/bot signale le bot absent)
+// interroge tracker.gg), le battement de cœur (sans lui, /api/health/bot signale le bot absent) et
+// les verrous de modération (sans eux, une commande agit quand même, la levée automatique attend)
 const cache = new Redis(env.REDIS_URL, { enableOfflineQueue: false, maxRetriesPerRequest: 1 });
 cache.on('error', (err) => logger.warn({ err }, 'Cache et battement de cœur : erreur Valkey'));
+
+// Une action de modération à la fois par membre (bot et API). Un seul jeu de délais pour les
+// commandes et la levée automatique : l'attente d'une seconde tient dans les 3 s qu'accorde Discord
+// pour acquitter une interaction, et la levée automatique, séquentielle et sans chevauchement, peut
+// se permettre d'attendre aussi. TTL de 30 s : de quoi couvrir MP, action Discord et base.
+const locks = createLock(cache, {
+  ttlMs: 30_000,
+  waitMs: 1_000,
+  retryMs: 100,
+  timeoutMs: 1_000,
+  onReleaseError: createLockReleaseLogger(logger),
+});
 if (!env.TRN_API_KEY) logger.warn('TRN_API_KEY absente : /td2 stats est désactivée');
 
 // Les métriques des propriétaires (phase 11) : un relevé toutes les 5 minutes, planifié par
@@ -128,6 +150,18 @@ metricsWorker.on('failed', (job, err) =>
 if (!env.GARAGE_ADMIN_URL || !env.GARAGE_ADMIN_TOKEN) {
   logger.warn('GARAGE_ADMIN_URL ou GARAGE_ADMIN_TOKEN absente : pas de relevé Garage');
 }
+
+// Le ménage des sanctions closes au-delà de la rétention de chaque serveur, chaque nuit
+const moderationQueue = createModerationQueue(env.REDIS_URL);
+const moderationWorker = createModerationWorker(
+  env.REDIS_URL,
+  createModerationProcessor({ db: prisma, logger }),
+);
+moderationQueue.on('error', (err) => logger.error({ err }, 'Moderation queue: Valkey error'));
+moderationWorker.on('error', (err) => logger.error({ err }, 'Moderation worker error'));
+moderationWorker.on('failed', (job, err) =>
+  logger.warn({ err, job: job?.name }, 'Case purge failed'),
+);
 const usage = createDbCommandUsageRecorder(prisma, { logger, intervalMs: METRICS.usageFlushMs });
 
 const context: BotContext = {
@@ -141,6 +175,7 @@ const context: BotContext = {
   td2: createTd2Scheduler(td2Queue),
   stats: createTd2Stats({ apiKey: env.TRN_API_KEY, baseUrl: env.TRN_API_URL, cache }),
   ownerIds: env.BOT_OWNER_IDS,
+  locks,
 };
 const unsubscribe = subscribeToBotEvents(env.REDIS_URL, {
   configs,
@@ -216,6 +251,12 @@ client.once(Events.ClientReady, (ready) => {
     logger.error({ err }, 'Échec de la planification des relevés'),
   );
   metricsWorker.run().catch((err: unknown) => logger.error({ err }, 'Worker des métriques arrêté'));
+  ensureModerationSchedules(moderationQueue).catch((err: unknown) =>
+    logger.error({ err }, 'Failed to schedule the case purge'),
+  );
+  moderationWorker
+    .run()
+    .catch((err: unknown) => logger.error({ err }, 'Moderation worker stopped'));
   resumeTd2Events(ready, prisma, context.td2, logger).catch((err: unknown) =>
     logger.error({ err }, 'Échec de la reprise des sorties TD2'),
   );
@@ -237,6 +278,8 @@ async function shutdown(signal: string): Promise<void> {
   await td2Queue.close();
   await metricsWorker.close();
   await metricsQueue.close();
+  await moderationWorker.close();
+  await moderationQueue.close();
   // Le dernier lot des commandes comptées, avant de fermer la base
   await usage.stop();
   await unsubscribe();

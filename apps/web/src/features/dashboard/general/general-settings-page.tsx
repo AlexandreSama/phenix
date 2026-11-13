@@ -1,7 +1,7 @@
-import { useQueries } from '@tanstack/react-query';
+import { useQueries, useQuery } from '@tanstack/react-query';
 import { useParams } from '@tanstack/react-router';
 import { PageHeader } from '../../../components/ui/panel';
-import { channelsQuery, configQuery, rolesQuery, useUpdateConfig } from '../api';
+import { channelsQuery, configQuery, guildsQuery, rolesQuery, useUpdateConfig } from '../api';
 import { firstFailure, LoadError, PageSkeleton } from '../query-state';
 import { GeneralSettingsForm } from './general-settings-form';
 
@@ -11,6 +11,8 @@ export function GeneralSettingsPage() {
     queries: [configQuery(guildId), channelsQuery(guildId), rolesQuery(guildId)],
   });
   const [config, channels, roles] = queries;
+  // Le rôle sur ce serveur vient de la liste des serveurs, déjà en cache (garde de route)
+  const guild = useQuery(guildsQuery).data?.find((entry) => entry.id === guildId);
   const update = useUpdateConfig(guildId);
   const { error, retry } = firstFailure(queries);
 
@@ -29,6 +31,7 @@ export function GeneralSettingsPage() {
           config={config.data}
           channels={channels.data}
           roles={roles.data}
+          canEditRetention={guild?.access === 'admin'}
           onSubmit={(values) => update.mutateAsync(values)}
         />
       )}

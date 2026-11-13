@@ -170,6 +170,23 @@ export function liftSanction(
   });
 }
 
+/**
+ * Les sanctions encore actives d'un type pour une cible sur un serveur, les plus récentes d'abord.
+ * Mêmes règles que `activeCaseWhere` : un ban temporaire échu mais pas levé en fait partie.
+ */
+export function findActiveCases(
+  db: Pick<PrismaClient, 'case'>,
+  guildId: string,
+  targetId: string,
+  type: 'WARN' | 'MUTE' | 'BAN',
+  now = new Date(),
+): Promise<Case[]> {
+  return db.case.findMany({
+    where: { guildId, targetId, ...activeCaseWhere(type, now) },
+    orderBy: { number: 'desc' },
+  });
+}
+
 /** Bans temporaires arrivés à échéance, sur les serveurs où se trouve le bot. */
 export function findExpiredBans(
   db: Pick<PrismaClient, 'case'>,
@@ -230,6 +247,8 @@ export function caseStatus(
 }
 
 const CASE_NUMBER = /^#?(\d{1,9})$/;
+/** Identifiants trouvés par pseudo gardés au plus dans une recherche */
+export const MAX_CASE_SEARCH_USER_IDS = 50;
 const SNOWFLAKE = /^\d{17,20}$/;
 
 /** Neutralise les jokers du LIKE de PostgreSQL (l'échappement par défaut est la barre oblique inverse). */
@@ -240,16 +259,26 @@ function escapeLike(text: string): string {
 /**
  * Ce que veut dire le texte de la barre de recherche : un numéro de sanction (`12`, `#12`),
  * un identifiant Discord (cible ou modérateur) ou, sinon, un morceau de la raison.
+ * Dans ce dernier cas, `userIds` (les membres dont le pseudo correspond au texte) élargit la
+ * recherche à leurs sanctions, comme cible ou comme modérateur ; dédoublonnés, 50 au plus.
  * Le texte n'est jamais interprété comme un motif : Prisma n'échappe PAS `%` et `_` dans
  * `contains` (ils seraient des jokers du LIKE), on le fait ici.
  */
-export function caseSearchWhere(q: string | undefined): Prisma.CaseWhereInput | undefined {
+export function caseSearchWhere(
+  q: string | undefined,
+  userIds?: readonly string[],
+): Prisma.CaseWhereInput | undefined {
   const text = q?.trim();
   if (!text) return undefined;
   const number = CASE_NUMBER.exec(text)?.[1];
   if (number) return { number: Number(number) };
   if (SNOWFLAKE.test(text)) return { OR: [{ targetId: text }, { moderatorId: text }] };
-  return { reason: { contains: escapeLike(text), mode: 'insensitive' } };
+  const reason: Prisma.CaseWhereInput = {
+    reason: { contains: escapeLike(text), mode: 'insensitive' },
+  };
+  const ids = [...new Set(userIds)].slice(0, MAX_CASE_SEARCH_USER_IDS);
+  if (ids.length === 0) return reason;
+  return { OR: [reason, { targetId: { in: ids } }, { moderatorId: { in: ids } }] };
 }
 
 export interface CaseListFilters {
@@ -262,6 +291,8 @@ export interface CaseListFilters {
   to?: Date;
   /** Texte de la barre de recherche, voir `caseSearchWhere` */
   q?: string;
+  /** Membres dont le pseudo correspond à `q`, voir `caseSearchWhere` */
+  userIds?: string[];
 }
 
 export interface CasePageInput {
@@ -291,7 +322,7 @@ export async function listGuildCases(
   const created =
     filters.from || filters.to ? { createdAt: { gte: filters.from, lte: filters.to } } : undefined;
   // guildId en premier et hors de tout OR : aucun filtre ne peut sortir du serveur
-  const search = caseSearchWhere(filters.q);
+  const search = caseSearchWhere(filters.q, filters.userIds);
   const where: Prisma.CaseWhereInput = {
     AND: [
       { guildId },
@@ -315,6 +346,24 @@ export async function listGuildCases(
     db.case.count({ where }),
   ]);
   return { items, total, page: current, pageSize: size };
+}
+
+/**
+ * Les cibles distinctes des sanctions d'un serveur, les plus récemment sanctionnées d'abord,
+ * `limit` au plus : la liste des membres dont on cherche le pseudo dans les profils en cache.
+ */
+export async function distinctCasePeople(
+  db: Pick<PrismaClient, 'case'>,
+  guildId: string,
+  limit: number,
+): Promise<string[]> {
+  const groups = await db.case.groupBy({
+    by: ['targetId'],
+    where: { guildId },
+    orderBy: { _max: { number: 'desc' } },
+    take: Math.max(Math.trunc(limit), 1),
+  });
+  return groups.map((group) => group.targetId);
 }
 
 export interface MemberCaseSummary {

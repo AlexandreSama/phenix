@@ -41,7 +41,10 @@ sanction qui vise soi-même, sourdine d'un membre parti refusée (elle reviendra
   sinon).
 
 - **Limite de débit** : 10 levées par minute et par compte, 30 par minute et par serveur
-  (`RateLimitService`, sans nouvelle dépendance), comptées avant toute lecture. Un refus de Discord
+  (`RateLimitService`, sans nouvelle dépendance). Celle du COMPTE est comptée avant toute lecture ;
+  celle du SERVEUR, APRÈS le contrôle de permission Discord et avant le verrou et l'appel Discord (sinon
+  des délégués sans permission épuiseraient le quota des vrais modérateurs). Conséquence : une réponse
+  `alreadyRevoked` ou un refus d'auto-levée ne consomme pas le quota du serveur. Un refus de Discord
   (bot trop bas) ne change rien en base et se rejouerait sans fin ; chaque essai coûte des appels REST
   et les refus comptent contre le jeton du bot.
 - **CSRF** : l'authentification est un cookie `SameSite=Lax`, qui ne part pas depuis un autre site mais
@@ -50,9 +53,17 @@ sanction qui vise soi-même, sourdine d'un membre parti refusée (elle reviendra
   (`same-origin` ou `none` seulement) et `Origin` (celui de `PUBLIC_URL` seulement) avant toute route
   (`common/csrf.ts`) ; sans ces en-têtes (curl, tests), elle passe, faute de navigateur à abuser. La
   route de levée n'accepte en plus que du JSON (415). Un refus est journalisé (méthode, chemin masqué,
-  en-têtes), car pino-http n'est pas encore branché à ce stade. **Résidu** : un navigateur d'avant 2019
-  (qui n'envoie ni `Sec-Fetch-Site` ni `Origin` sur un formulaire) visé depuis un sous-domaine voisin ;
-  exiger `application/json` sur toutes les écritures l'éliminerait (sauf l'envoi d'images du forum). `PUBLIC_URL` doit être l'origine du site vue par le
+  en-têtes), car pino-http n'est pas encore branché à ce stade. **Résidu réduit** : un navigateur
+  d'avant 2019 (qui n'envoie ni `Sec-Fetch-Site` ni `Origin` sur un formulaire) visé depuis un
+  sous-domaine voisin est en partie arrêté par `jsonOnly()` (`apps/api/src/common/json-only.ts`), qui
+  refuse en 415 toute écriture (toute méthode autre que GET, HEAD, OPTIONS) dont le `Content-Type`
+  n'est pas `application/json`, ou qui porte un corps sans `Content-Type`, sauf `POST /api/forum/images`
+  en multipart (liste blanche). Cela ferme les formulaires HTML, mais une écriture SANS corps ni
+  `Content-Type` passe encore (`giveaways/:id/end`, `giveaways/:id/reroll`, `auth/logout`) : elle ne
+  repose alors que sur `Origin` et `Sec-Fetch-Site`. **Résidus restants** : une écriture sans corps
+  depuis un navigateur d'avant 2019 sans `Origin` ni `Sec-Fetch-Site`, et l'envoi d'images multipart du
+  forum (l'image est vérifiée et ré-encodée). Piste non retenue ici : exiger un en-tête personnalisé
+  (`X-Requested-With`) sur toute écriture, qui fermerait aussi ces résidus. `PUBLIC_URL` doit être l'origine du site vue par le
   navigateur (`vite preview`, port 4173, demande de le régler).
 - **Commandes du bot alignées sur le site** : `/clearwarn` interdit l'auto-levée ; le routeur du bot
   vérifie lui-même `requiredPermissions` (commandes et autocomplétion), pour toute commande qui propose
@@ -68,11 +79,12 @@ sanction qui vise soi-même, sourdine d'un membre parti refusée (elle reviendra
 - **Hiérarchie** : `checkTarget` s'applique à la sourdine (la cible est membre). Pour un ban, la cible
   n'est plus membre et Discord ne contrôle rien non plus ; pour un avertissement, comme `/clearwarn`,
   seule l'auto-levée est interdite.
-- **Résidu connu** : si un `/ban` rebannit la cible entre l'appel Discord du site et sa transaction, la
-  levée par personne lève aussi la sanction récente alors que le membre est banni. La fenêtre dure un
-  aller-retour Discord ; un verrou partagé entre le bot et l'API (verrou Valkey ou verrou consultatif
-  PostgreSQL) la fermerait, à envisager. De même, la levée automatique d'un ban temporaire ne relit pas
-  la sanction juste avant `bans.remove` : un `/ban` qui prolonge pile à ce moment serait débanni.
+- **Résidu connu (fermé par l'ADR-0007)** : un `/ban` qui rebannissait la cible entre l'appel Discord
+  du site et sa transaction faisait lever aussi la sanction récente, et la levée automatique d'un ban
+  temporaire ne relisait pas la sanction avant `bans.remove`. Le verrou partagé dans Valkey et la
+  relecture sous le verrou ferment ces deux fenêtres, avec les réserves de l'ADR-0007 : tant que Valkey
+  répond (les commandes du bot passent sans verrou s'il est en panne), et le TTL de 30 s reste
+  dépassable par les reprises de `@discordjs/rest`. Voir ADR-0007.
 
 ## Options écartées
 

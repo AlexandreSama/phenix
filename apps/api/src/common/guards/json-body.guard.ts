@@ -5,19 +5,19 @@ import {
   type ExecutionContext,
 } from '@nestjs/common';
 import type { Request } from 'express';
+import { hasBody, isJsonRequest, JSON_ONLY_MESSAGE } from '../json-only.js';
 
 /**
- * Pour une action qui agit sur des personnes : le corps doit être du JSON. Un formulaire HTML
- * (`application/x-www-form-urlencoded`) part sans requête préalable ni contrôle CORS, et Nest
- * l'analyse par défaut : ce garde le refuse, le site, lui, envoie toujours du JSON.
- * Défense en plus du cookie SameSite=Lax, qui ne protège pas contre un sous-domaine du même site.
+ * Pour une action qui agit sur des personnes : le corps est obligatoire, et en JSON. L'intergiciel
+ * `jsonOnly` refuse déjà tout formulaire HTML sur les écritures, mais laisse passer une requête sans
+ * corps ni `Content-Type` (curl, déconnexion) : ici, ce n'est pas permis.
  */
 @Injectable()
 export class JsonBodyGuard implements CanActivate {
   canActivate(context: ExecutionContext): boolean {
     const request = context.switchToHttp().getRequest<Request>();
-    if (!request.is('application/json')) {
-      throw new UnsupportedMediaTypeException('Cette action n’accepte que du JSON');
+    if (!isJsonRequest(request) || !hasBody(request)) {
+      throw new UnsupportedMediaTypeException(JSON_ONLY_MESSAGE);
     }
     return true;
   }

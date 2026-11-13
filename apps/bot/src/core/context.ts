@@ -1,5 +1,5 @@
 import type { PrismaClient } from '@phenix/database';
-import type { GiveawayScheduler, Td2Scheduler } from '@phenix/jobs';
+import type { GiveawayScheduler, Lock, Td2Scheduler } from '@phenix/jobs';
 import type { ObjectStorage } from '@phenix/storage';
 import type { Logger } from '../logger.js';
 import type { Td2StatsProvider } from '../modules/td2/stats/index.js';
@@ -25,4 +25,6 @@ export interface BotContext {
   stats: Td2StatsProvider;
   /** Les propriétaires du bot (BOT_OWNER_IDS) : eux seuls peuvent lancer /broadcast */
   ownerIds: readonly string[];
+  /** Verrous Valkey partagés avec l'API : une seule action de modération à la fois par membre */
+  locks: Lock;
 }

@@ -1,6 +1,8 @@
 import { afterAll, describe, expect, inject, it } from 'vitest';
 import {
   createCase,
+  distinctCasePeople,
+  findActiveCases,
   findCaseById,
   findExpiredBans,
   getCase,
@@ -475,5 +477,89 @@ describe('origine d’une levée', () => {
 
     expect((await findCaseById(prisma, guildId, created.id))?.number).toBe(1);
     expect(await findCaseById(prisma, newGuildId(), created.id)).toBeNull();
+  });
+});
+
+describe('listGuildCases : recherche par pseudo (identifiants trouvés)', () => {
+  const FOUND = '777777777777777777';
+
+  it('trouve les sanctions dont la cible ou le modérateur est parmi les identifiants, sur ce serveur seulement', async () => {
+    const guildId = newGuildId();
+    const elsewhere = newGuildId();
+    await createCase(prisma, { ...base(guildId), type: 'WARN', reason: 'Spam' }); // #1
+    await createCase(prisma, { ...base(guildId), type: 'KICK', targetId: FOUND }); // #2
+    await createCase(prisma, { ...base(guildId), type: 'WARN', moderatorId: FOUND }); // #3
+    await createCase(prisma, { ...base(guildId), type: 'WARN', reason: 'Alice insulte' }); // #4
+    await createCase(prisma, { ...base(elsewhere), type: 'KICK', targetId: FOUND });
+
+    const page = await listGuildCases(
+      prisma,
+      guildId,
+      { q: 'ali', userIds: [FOUND] },
+      { page: 1, pageSize: 20 },
+    );
+
+    expect(page.items.map((c) => c.number)).toEqual([4, 3, 2]);
+    expect(page.total).toBe(3);
+  });
+});
+
+describe('findActiveCases', () => {
+  it('renvoie les sanctions actives de ce type pour la cible, dont un ban temporaire échu non levé', async () => {
+    const guildId = newGuildId();
+    const past = new Date(Date.now() - 60_000);
+    await createCase(prisma, { ...base(guildId), type: 'BAN', expiresAt: past }); // #1 échu, pas levé
+    await createCase(prisma, { ...base(guildId), type: 'BAN' }); // #2 levé
+    await revokeCases(prisma, {
+      ...base(guildId),
+      type: 'BAN',
+      number: 2,
+      revokedById: '444444444444444444',
+    });
+    await createCase(prisma, { ...base(guildId), type: 'BAN' }); // #3 définitif
+    await createCase(prisma, { ...base(guildId), type: 'WARN' }); // #4 autre type
+    await createCase(prisma, { ...base(guildId), type: 'BAN', targetId: '555555555555555555' }); // #5 autre cible
+    await createCase(prisma, { ...base(newGuildId()), type: 'BAN' }); // autre serveur
+
+    const active = await findActiveCases(prisma, guildId, base(guildId).targetId, 'BAN');
+
+    expect(active.map((c) => c.number)).toEqual([3, 1]);
+  });
+
+  it('exclut une sourdine terminée', async () => {
+    const guildId = newGuildId();
+    await createCase(prisma, {
+      ...base(guildId),
+      type: 'MUTE',
+      expiresAt: new Date(Date.now() - 60_000),
+    });
+    await createCase(prisma, {
+      ...base(guildId),
+      type: 'MUTE',
+      expiresAt: new Date(Date.now() + 3_600_000),
+    });
+
+    const active = await findActiveCases(prisma, guildId, base(guildId).targetId, 'MUTE');
+
+    expect(active.map((c) => c.number)).toEqual([2]);
+  });
+});
+
+describe('distinctCasePeople', () => {
+  it('renvoie les cibles distinctes du serveur, les plus récemment sanctionnées d’abord, bornées', async () => {
+    const guildId = newGuildId();
+    const [x, y, z] = ['111111111111111111', '555555555555555555', '888888888888888888'];
+    await createCase(prisma, { ...base(guildId), type: 'WARN', targetId: x });
+    await createCase(prisma, { ...base(guildId), type: 'WARN', targetId: y });
+    await createCase(prisma, { ...base(guildId), type: 'WARN', targetId: x });
+    await createCase(prisma, { ...base(guildId), type: 'WARN', targetId: z });
+    await createCase(prisma, {
+      ...base(newGuildId()),
+      type: 'WARN',
+      targetId: '999999999999999999',
+    });
+
+    expect(await distinctCasePeople(prisma, guildId, 10)).toEqual([z, x, y]);
+    expect(await distinctCasePeople(prisma, guildId, 2)).toEqual([z, x]);
   });
 });

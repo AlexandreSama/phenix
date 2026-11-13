@@ -1,11 +1,13 @@
 import { DiscordAPIError } from '@discordjs/rest';
 import { Logger } from '@nestjs/common';
+import { createLock, LockBusyError, moderationLockKey } from '@phenix/jobs';
 import { BOT_EVENTS_CHANNEL, parseBotEvent, type ResolvedUser } from '@phenix/shared';
 import { Redis } from 'ioredis';
 import { afterAll, beforeAll, beforeEach, describe, expect, inject, it, vi } from 'vitest';
 import { UserDirectory } from '../modules/moderation/user-directory.js';
 import { BotEventsService } from './bot-events.service.js';
 import { CacheService } from './cache.service.js';
+import { LockService } from './lock.service.js';
 
 // Vrai Valkey (Testcontainers), vrai ioredis : seul Discord est simulé.
 const url = inject('redisUrl');
@@ -209,5 +211,37 @@ describe('BotEventsService sur un vrai Valkey', () => {
     } finally {
       await subscriber.quit();
     }
+  });
+});
+
+describe('LockService sur un vrai Valkey (verrou partagé avec le bot)', () => {
+  const key = moderationLockKey('300000000000000001', '500000000000000001');
+
+  it('un verrou posé par le bot avec moderationLockKey bloque l’API, puis la laisse passer une fois libéré', async () => {
+    // Le bot pose le même verrou avec son propre client ioredis
+    const botRedis = new Redis(url);
+    const bot = createLock(botRedis, { ttlMs: 30_000, waitMs: 0, retryMs: 50, timeoutMs: 1_000 });
+    const api = new LockService(redis);
+    const task = vi.fn(async () => 'levée');
+
+    try {
+      await bot.withLock(key, async () => {
+        await expect(api.withLock(key, task)).rejects.toBeInstanceOf(LockBusyError);
+      });
+    } finally {
+      await botRedis.quit();
+    }
+
+    expect(task).not.toHaveBeenCalled();
+    await expect(api.withLock(key, task)).resolves.toBe('levée');
+    expect(await redis.exists(key)).toBe(0);
+  });
+
+  it('pose la clé avec un TTL d’au plus 30 s pendant la tâche', async () => {
+    await new LockService(redis).withLock(key, async () => {
+      const ttl = await redis.pttl(key);
+      expect(ttl).toBeGreaterThan(0);
+      expect(ttl).toBeLessThanOrEqual(30_000);
+    });
   });
 });

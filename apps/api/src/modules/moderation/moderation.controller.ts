@@ -48,9 +48,10 @@ export class ModerationController {
   @Get('cases')
   list(
     @Param('guildId') guildId: string,
+    @CurrentSession() session: Session,
     @Query({ schema: caseListQuerySchema }) query: CaseListQuery,
   ): Promise<CasePage> {
-    return this.moderation.list(guildId, query);
+    return this.moderation.list(guildId, session.userId, query);
   }
 
   /** Qui il est et où il en est ; son historique est la liste filtrée par `targetId`. */

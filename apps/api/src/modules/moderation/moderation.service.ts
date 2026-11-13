@@ -16,10 +16,12 @@ import {
   summarizeMemberCases,
   type Case,
 } from '@phenix/database';
+import { LockBusyError, LockUnavailableError, moderationLockKey } from '@phenix/jobs';
 import {
   auditReason,
   CASE_PAGE_SIZE,
   checkTarget,
+  MODERATION_BUSY_MESSAGE,
   type CaseListQuery,
   type CasePage,
   type CaseRevokeInput,
@@ -31,12 +33,14 @@ import {
 } from '@phenix/shared';
 import { PermissionFlagsBits } from 'discord-api-types/v10';
 import { BotEventsService } from '../../core/bot-events.service.js';
+import { LockService } from '../../core/lock.service.js';
 import { RateLimitService } from '../../core/rate-limit.service.js';
 import { ENV } from '../../core/tokens.js';
 import { DiscordService } from '../../discord/discord.service.js';
 import type { Env } from '../../env.js';
 import type { Session } from '../auth/session.service.js';
 import { GuildsService } from '../guilds/guilds.service.js';
+import { MemberSearch } from './member-search.js';
 import { classifyDiscordError, discordErrorCode } from './revoke-errors.js';
 import { UserDirectory } from './user-directory.js';
 
@@ -51,6 +55,8 @@ const ABSENT_MEMBER =
   'Ce membre a quitté le serveur : sa sourdine ne peut pas être levée d’ici, elle reviendrait avec lui.';
 const BOT_TOO_LOW =
   'Le bot n’a pas le droit d’agir sur ce membre : son rôle doit être au-dessus du sien, avec la bonne permission.';
+const LOCK_UNAVAILABLE =
+  'Impossible de vérifier qu’aucune autre action de modération ne vise ce membre : réessaie dans un instant.';
 
 @Injectable()
 export class ModerationService {
@@ -63,17 +69,23 @@ export class ModerationService {
     private readonly guilds: GuildsService,
     private readonly botEvents: BotEventsService,
     private readonly rateLimit: RateLimitService,
+    private readonly lock: LockService,
+    private readonly memberSearch: MemberSearch,
     @Inject(ENV) private readonly env: Env,
   ) {}
 
-  /** Les sanctions de ce serveur, filtrées, avec le nom de chaque personne concernée. */
-  async list(guildId: string, query: CaseListQuery): Promise<CasePage> {
+  /**
+   * Les sanctions de ce serveur, filtrées, avec le nom de chaque personne concernée. Le texte
+   * cherché vaut aussi pour les pseudos (`MemberSearch`), sans jamais faire échouer la liste.
+   */
+  async list(guildId: string, userId: string, query: CaseListQuery): Promise<CasePage> {
     const { page: number, ...filters } = query;
     const now = new Date();
+    const { userIds, nameSearch } = await this.memberSearch.search(guildId, userId, filters.q);
     const slice = await listGuildCases(
       this.db,
       guildId,
-      filters,
+      { ...filters, userIds },
       { page: number, pageSize: CASE_PAGE_SIZE },
       now,
     );
@@ -89,6 +101,7 @@ export class ModerationService {
       total: slice.total,
       page: slice.page,
       pageSize: slice.pageSize,
+      nameSearch,
     };
   }
 
@@ -97,6 +110,8 @@ export class ModerationService {
    * refuse ou ne répond pas, la sanction reste active et le site ne ment pas ; si la base échoue après
    * Discord, un nouvel essai converge (un ban déjà levé répond 10026, un timeout se retire deux fois).
    * La cible vient de la sanction trouvée par (serveur, numéro), jamais du client.
+   * Discord et la base se font sous le verrou du membre, partagé avec le bot (/ban, /mute, levée
+   * automatique…), et la sanction y est relue : une commande passée pendant l'attente est vue.
    */
   async revoke(
     guild: ManageableGuild,
@@ -104,31 +119,18 @@ export class ModerationService {
     session: Session,
     input: CaseRevokeInput,
   ): Promise<CaseRevokeResult> {
-    // Avant toute lecture : un refus de Discord (bot trop bas…) ne change rien en base, donc se
-    // rejouerait sans fin ; chaque essai coûte des appels REST, et les refus comptent contre le jeton
+    // Limite par compte, avant toute lecture : un refus de Discord (bot trop bas…) ne change rien en
+    // base, donc se rejouerait sans fin ; chaque essai coûte des appels REST, et les refus comptent
+    // contre le jeton
     await this.rateLimit.hit(
       `moderation-revoke:${session.userId}`,
       10,
       60,
       'Trop de levées à la suite : patiente une minute.',
     );
-    await this.rateLimit.hit(
-      `moderation-revoke:guild:${guild.id}`,
-      30,
-      60,
-      'Ce serveur a trop de levées à la suite : patiente une minute.',
-    );
-    const sanction = await this.db.case.findUnique({
-      where: { guildId_number: { guildId: guild.id, number } },
-    });
-    if (!sanction) throw new NotFoundException('Sanction introuvable');
-
-    const status = caseStatus(sanction);
-    if (status === 'revoked') return { alreadyRevoked: true };
-    const type = sanction.type;
-    if (status !== 'active' || (type !== 'WARN' && type !== 'MUTE' && type !== 'BAN')) {
-      throw new ConflictException('Cette sanction ne peut pas être levée');
-    }
+    const sanction = await this.findCase(guild.id, number);
+    const type = liftableType(sanction);
+    if (!type) return { alreadyRevoked: true };
 
     const actorId = session.userId;
     if (sanction.targetId === actorId) {
@@ -141,14 +143,28 @@ export class ModerationService {
         `Il te manque la permission Discord « ${label} » sur ce serveur.`,
       );
     }
+    // Limite du serveur, après la permission et avant Discord : des délégués sans la permission ne
+    // peuvent pas épuiser celle des vrais modérateurs
+    await this.rateLimit.hit(
+      `moderation-revoke:guild:${guild.id}`,
+      30,
+      60,
+      'Ce serveur a trop de levées à la suite : patiente une minute.',
+    );
 
     const reason = auditReason(await this.actorName(actorId), input.reason, 'dashboard');
-    await this.actOnDiscord(guild.id, sanction, actorId, reason);
-
-    const { revoked, record } = await this.record(guild, sanction, actorId, input.reason);
+    const lifted = await this.underLock(guild.id, sanction.targetId, async () => {
+      // Relue sous le verrou : un /ban qui prolonge a pu la lever (et créer la suivante) entre-temps
+      const current = await this.findCase(guild.id, number);
+      if (!liftableType(current)) return null;
+      await this.actOnDiscord(guild.id, current, actorId, reason);
+      return this.record(guild, current, actorId, input.reason);
+    });
     // Une autre levée est passée entre-temps (site, commande, levée automatique) : rien à publier
-    if (revoked === 0) return { alreadyRevoked: true };
+    if (!lifted || lifted.revoked === 0) return { alreadyRevoked: true };
+    const { record } = lifted;
 
+    // Hors du verrou : prévenir le bot ne touche ni Discord ni la sanction, inutile de bloquer le membre
     this.logger.log({ guildId: guild.id, case: number, type }, 'Sanction lifted from dashboard');
     // Le bot publie le log ; pour un avertissement, qui n'a pas de sanction de fin, c'est lui-même
     await this.botEvents.notify({
@@ -157,6 +173,33 @@ export class ModerationService {
       caseId: record?.id ?? sanction.id,
     });
     return { alreadyRevoked: false };
+  }
+
+  /** La sanction de ce serveur portant ce numéro ; 404 sinon. */
+  private async findCase(guildId: string, number: number): Promise<Case> {
+    const sanction = await this.db.case.findUnique({
+      where: { guildId_number: { guildId, number } },
+    });
+    if (!sanction) throw new NotFoundException('Sanction introuvable');
+    return sanction;
+  }
+
+  /**
+   * `fn` sous le verrou de modération du membre. Pris ailleurs : 409, rien n'est touché. Valkey en
+   * panne : on refuse (503) plutôt que d'agir sans savoir si le bot agit sur le même membre.
+   */
+  private async underLock<T>(guildId: string, targetId: string, fn: () => Promise<T>): Promise<T> {
+    try {
+      return await this.lock.withLock(moderationLockKey(guildId, targetId), fn);
+    } catch (err) {
+      if (err instanceof LockBusyError) throw new ConflictException(MODERATION_BUSY_MESSAGE);
+      if (err instanceof LockUnavailableError) {
+        // Ni la clé ni l'erreur : elles contiennent l'identifiant du membre
+        this.logger.warn({ guildId }, 'Moderation lock unavailable, lift refused');
+        throw new ServiceUnavailableException(LOCK_UNAVAILABLE);
+      }
+      throw err;
+    }
   }
 
   /**
@@ -295,6 +338,17 @@ export class ModerationService {
       activeBan: summary.activeBan,
     };
   }
+}
+
+/** Le type à lever ; null si elle l'est déjà ; 409 si elle ne peut pas l'être (plus active, ou sans objet). */
+function liftableType(sanction: Case): 'WARN' | 'MUTE' | 'BAN' | null {
+  const status = caseStatus(sanction);
+  if (status === 'revoked') return null;
+  const type = sanction.type;
+  if (status !== 'active' || (type !== 'WARN' && type !== 'MUTE' && type !== 'BAN')) {
+    throw new ConflictException('Cette sanction ne peut pas être levée');
+  }
+  return type;
 }
 
 const person = (people: Map<string, ResolvedUser>, id: string): ResolvedUser =>

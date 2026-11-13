@@ -11,6 +11,7 @@ import { DiscordService } from '../discord/discord.service.js';
 import type { Env } from '../env.js';
 import { BotEventsService } from './bot-events.service.js';
 import { CacheService } from './cache.service.js';
+import { LockService } from './lock.service.js';
 import { RateLimitService } from './rate-limit.service.js';
 import { SessionService } from '../modules/auth/session.service.js';
 import { ENV } from './tokens.js';
@@ -28,7 +29,7 @@ class ConnectionsShutdown implements OnApplicationShutdown {
   }
 }
 
-/** Services partagés par toute l'API : config, base, Valkey (cache, limites de débit), Discord, sessions. */
+/** Services partagés par toute l'API : config, base, Valkey (cache, limites de débit, verrous), Discord, sessions. */
 @Global()
 @Module({})
 export class CoreModule {
@@ -42,6 +43,7 @@ export class CoreModule {
         BotEventsService,
         CacheService,
         DiscordService,
+        LockService,
         RateLimitService,
         SessionService,
         ConnectionsShutdown,
@@ -53,6 +55,7 @@ export class CoreModule {
         BotEventsService,
         CacheService,
         DiscordService,
+        LockService,
         RateLimitService,
         SessionService,
       ],

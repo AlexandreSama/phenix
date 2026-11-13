@@ -1,5 +1,12 @@
 import { describe, expect, it } from 'vitest';
-import { auditReason, checkTarget, type TargetCheck } from './moderation.js';
+import {
+  auditReason,
+  CASE_RETENTION_CHOICES,
+  CASE_RETENTION_DEFAULT_MONTHS,
+  checkTarget,
+  MODERATION_BUSY_MESSAGE,
+  type TargetCheck,
+} from './moderation.js';
 
 const base: TargetCheck = {
   moderatorId: 'mod',
@@ -59,5 +66,26 @@ describe('auditReason', () => {
   it('tient dans les 512 caractères du journal d’audit de Discord', () => {
     expect(auditReason('modo', 'x'.repeat(600))).toHaveLength(512);
     expect(auditReason('modo', 'x'.repeat(600), 'dashboard')).toHaveLength(512);
+  });
+});
+
+describe('rétention des sanctions', () => {
+  it('propose 6, 12, 24 mois ou jamais, dans cet ordre, en français', () => {
+    expect(CASE_RETENTION_CHOICES).toEqual([
+      { months: 6, label: '6 mois' },
+      { months: 12, label: '12 mois (par défaut)' },
+      { months: 24, label: '24 mois' },
+      { months: null, label: 'Jamais' },
+    ]);
+  });
+
+  it('garde 12 mois par défaut', () => {
+    expect(CASE_RETENTION_DEFAULT_MONTHS).toBe(12);
+  });
+
+  it('dit en français qu’une autre action vise déjà le membre', () => {
+    expect(MODERATION_BUSY_MESSAGE).toBe(
+      'Une autre action de modération vise déjà ce membre : réessaie dans quelques secondes.',
+    );
   });
 });
