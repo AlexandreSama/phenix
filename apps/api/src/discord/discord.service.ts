@@ -111,14 +111,17 @@ export class DiscordService {
   /**
    * Les membres dont le pseudo ou le surnom commence par `query`. Cette recherche ne demande
    * pas l'intent privilégié « Server Members », contrairement à la liste complète.
+   * `signal` borne l'attente (échéance de la recherche par pseudo des sanctions).
    */
   async searchGuildMembers(
     guildId: string,
     query: string,
     limit = 10,
+    signal?: AbortSignal,
   ): Promise<RESTGetAPIGuildMembersSearchResult> {
     return (await this.rest.get(Routes.guildMembersSearch(guildId), {
       query: makeURLSearchParams({ query, limit }),
+      signal,
     })) as RESTGetAPIGuildMembersSearchResult;
   }
 

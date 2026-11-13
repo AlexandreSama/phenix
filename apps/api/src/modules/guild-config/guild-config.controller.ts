@@ -3,7 +3,9 @@ import {
   generalConfigPatchSchema,
   type GeneralConfig,
   type GeneralConfigPatch,
+  type ManageableGuild,
 } from '@phenix/shared';
+import { CurrentGuildAccess } from '../../common/decorators/current-guild-access.decorator.js';
 import { AuthGuard } from '../../common/guards/auth.guard.js';
 import { GuildAccessGuard, GuildModule } from '../../common/guards/guild-access.guard.js';
 import { GuildConfigService } from './guild-config.service.js';
@@ -23,8 +25,9 @@ export class GuildConfigController {
   @Patch()
   update(
     @Param('guildId') guildId: string,
+    @CurrentGuildAccess() guild: ManageableGuild,
     @Body({ schema: generalConfigPatchSchema }) patch: GeneralConfigPatch,
   ): Promise<GeneralConfig> {
-    return this.config.update(guildId, patch);
+    return this.config.update(guildId, patch, guild.access);
   }
 }

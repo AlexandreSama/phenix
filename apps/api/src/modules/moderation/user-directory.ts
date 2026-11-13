@@ -28,7 +28,8 @@ interface DiscordProfiles {
 }
 
 const fallback = (id: string): ResolvedUser => ({ id, name: id, avatarUrl: null });
-const key = (id: string) => `discord:users:${id}`;
+/** La clé du profil en cache d'un compte ; relue aussi par la recherche par pseudo. */
+export const profileCacheKey = (id: string) => `discord:users:${id}`;
 
 /**
  * Les noms et avatars des personnes d'une page de sanctions. La base ne garde que leur identifiant :
@@ -57,7 +58,7 @@ export class UserDirectory {
 
     let cached: (ResolvedUser | null)[];
     try {
-      cached = await this.cache.getMany<ResolvedUser>(distinct.map(key));
+      cached = await this.cache.getMany<ResolvedUser>(distinct.map(profileCacheKey));
     } catch {
       // Valkey en panne : on n'envoie pas toute la page à Discord à sa place
       this.logger.warn('Profile cache unavailable, showing identifiers');
@@ -115,7 +116,7 @@ export class UserDirectory {
   /** Une panne de Valkey ne doit pas faire échouer la page. */
   private async keep(id: string, profile: ResolvedUser, seconds: number): Promise<void> {
     try {
-      await this.cache.put(key(id), profile, seconds);
+      await this.cache.put(profileCacheKey(id), profile, seconds);
     } catch {
       // le profil reste affiché, il sera simplement redemandé
     }
