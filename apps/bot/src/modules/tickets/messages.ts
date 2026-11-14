@@ -15,9 +15,12 @@ import {
 import { buildCustomId } from '../../core/custom-id.js';
 import { baseEmbed, COLORS } from '../../core/embeds.js';
 
-/** Le bouton d'un type du panneau. Sans id (anciens panneaux déjà postés), `ticket:open` ouvre le premier type. */
-export const openCustomId = (typeId: number) => buildCustomId('ticket', 'open', typeId);
-/** Le menu de choix du panneau, quand il y a trop de types pour des boutons. */
+/**
+ * Le bouton unique du panneau : il propose le menu des types. Les anciens boutons `ticket:open:<id>`
+ * (un par type), déjà postés, restent gérés et ouvrent directement leur type.
+ */
+export const OPEN_CUSTOM_ID = buildCustomId('ticket', 'open');
+/** Le menu « Type de ticket », en réponse au bouton unique (l'ancien menu du panneau le partage). */
 export const CHOOSE_CUSTOM_ID = buildCustomId('ticket', 'choose');
 /** Le formulaire d'un type : ses réponses reviennent avec le customId du type. */
 export const formCustomId = (typeId: number) => buildCustomId('ticket', 'form', typeId);
@@ -45,8 +48,7 @@ export function parseTicketId(id: string | undefined): number | null {
 /** Délai entre la fermeture et la suppression du salon : le temps de lire le dernier message. */
 export const DELETE_DELAY_MS = 5000;
 
-/** Au-delà de 5 types, une rangée de boutons ne suffit plus : un menu en accepte 25. */
-const MAX_BUTTONS = 5;
+/** Un menu Discord accepte 25 options, et un serveur 25 types de ticket au plus. */
 const MAX_MENU_OPTIONS = 25;
 /** Discord limite le texte cumulé des embeds d'un message à 6000 caractères. */
 const EMBEDS_TEXT_BUDGET = 6000;
@@ -78,36 +80,42 @@ export function truncate(text: string, max: number): string {
 export type PanelType = Pick<TicketType, 'id' | 'name' | 'description' | 'emoji'>;
 
 /**
- * Le panneau « Ouvrir un ticket » : un bouton par type jusqu'à 5 types, puis un menu de choix
- * (jusqu'à 25). L'invite du menu est le « texte du bouton » réglé sur le site.
+ * Le panneau « Ouvrir un ticket » : un embed et un seul bouton, quel que soit le nombre de types.
+ * Le type se choisit ensuite, dans une réponse visible du seul membre (voir `ticketTypeChoice`).
+ * Le texte du bouton est celui réglé sur le site.
  */
 export function ticketPanelMessage(
   panel: Pick<TicketPanel, 'title' | 'description' | 'buttonLabel'>,
-  types: PanelType[],
 ): {
   embeds: EmbedBuilder[];
-  components: ActionRowBuilder<ButtonBuilder | StringSelectMenuBuilder>[];
+  components: ActionRowBuilder<ButtonBuilder>[];
 } {
   const embed = baseEmbed().setTitle(panel.title);
   if (panel.description) embed.setDescription(panel.description);
 
-  if (types.length <= MAX_BUTTONS) {
-    const buttons = types.map((type) => {
-      const button = new ButtonBuilder()
-        .setCustomId(openCustomId(type.id))
-        .setLabel(truncate(type.name, 80))
-        .setStyle(ButtonStyle.Primary);
-      return type.emoji ? button.setEmoji(type.emoji) : button;
-    });
-    return {
-      embeds: [embed],
-      components: [new ActionRowBuilder<ButtonBuilder>().addComponents(buttons)],
-    };
-  }
+  const button = new ButtonBuilder()
+    .setCustomId(OPEN_CUSTOM_ID)
+    .setLabel(truncate(panel.buttonLabel, 80))
+    .setEmoji('🎫')
+    .setStyle(ButtonStyle.Primary);
+  return {
+    embeds: [embed],
+    components: [new ActionRowBuilder<ButtonBuilder>().addComponents(button)],
+  };
+}
 
+/**
+ * Le choix du type, montré au membre qui a cliqué sur « Ouvrir un ticket » : un menu « Type de
+ * ticket » à une option par type. Son choix ouvre le formulaire du type, ou le salon s'il n'a
+ * pas de question. Le panneau d'avant (menu au-delà de 5 types) envoie le même choix.
+ */
+export function ticketTypeChoice(types: PanelType[]): {
+  content: string;
+  components: ActionRowBuilder<StringSelectMenuBuilder>[];
+} {
   const menu = new StringSelectMenuBuilder()
     .setCustomId(CHOOSE_CUSTOM_ID)
-    .setPlaceholder(truncate(panel.buttonLabel, 150))
+    .setPlaceholder('Type de ticket')
     .addOptions(
       types.slice(0, MAX_MENU_OPTIONS).map((type) => {
         const option = new StringSelectMenuOptionBuilder()
@@ -119,7 +127,7 @@ export function ticketPanelMessage(
       }),
     );
   return {
-    embeds: [embed],
+    content: 'Quel est le type de ton ticket ?',
     components: [new ActionRowBuilder<StringSelectMenuBuilder>().addComponents(menu)],
   };
 }

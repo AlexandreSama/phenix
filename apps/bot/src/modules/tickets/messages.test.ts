@@ -7,10 +7,11 @@ import {
   claimCustomId,
   closedTicketLog,
   formAnswersMessage,
-  openCustomId,
+  OPEN_CUSTOM_ID,
   rateCustomId,
   ratingMessage,
   ticketPanelMessage,
+  ticketTypeChoice,
   welcomeButtons,
   welcomeMessage,
 } from './messages.js';
@@ -36,43 +37,57 @@ const types = (count: number) =>
   }));
 
 describe('messages des tickets', () => {
-  it('le panneau porte un bouton par type quand il y en a de 1 à 5', () => {
-    const { embeds, components } = ticketPanelMessage(panel, types(2));
+  it('le panneau ne porte qu’un seul bouton « Ouvrir un ticket », quel que soit le nombre de types', () => {
+    const { embeds, components } = ticketPanelMessage(panel);
 
     expect(embeds[0]?.data.title).toBe('Support');
     expect(components).toHaveLength(1);
     const buttons = components[0]?.toJSON().components;
     expect(buttons).toMatchObject([
-      { custom_id: 'ticket:open:1', label: 'Type 1', emoji: { name: '🎫' } },
-      { custom_id: 'ticket:open:2', label: 'Type 2' },
+      {
+        type: ComponentType.Button,
+        custom_id: OPEN_CUSTOM_ID,
+        label: 'Ouvrir un ticket',
+        emoji: { name: '🎫' },
+      },
     ]);
-    expect(buttons?.every((button) => button.type === ComponentType.Button)).toBe(true);
   });
 
-  it('le panneau garde cinq boutons sur une seule rangée', () => {
-    const { components } = ticketPanelMessage(panel, types(5));
+  it('le bouton du panneau prend le texte réglé sur le site', () => {
+    const { components } = ticketPanelMessage({ ...panel, buttonLabel: 'Besoin d’aide ?' });
 
-    expect(components).toHaveLength(1);
-    expect(components[0]?.toJSON().components).toHaveLength(5);
+    expect(components[0]?.toJSON().components[0]).toMatchObject({ label: 'Besoin d’aide ?' });
   });
 
-  it('le panneau passe à un menu de choix dès six types, avec l’invite du panneau', () => {
-    const { components } = ticketPanelMessage(panel, types(25));
+  it('le choix du type est un menu « Type de ticket » à une option par type', () => {
+    const { content, components } = ticketTypeChoice(types(25));
 
+    expect(content).toBe('Quel est le type de ton ticket ?');
     expect(components).toHaveLength(1);
     const menu = components[0]?.toJSON().components[0];
     expect(menu).toMatchObject({
       type: ComponentType.StringSelect,
       custom_id: CHOOSE_CUSTOM_ID,
-      placeholder: 'Ouvrir un ticket',
+      placeholder: 'Type de ticket',
     });
     const options = (menu as { options: { value: string; label: string }[] }).options;
     expect(options).toHaveLength(25);
-    expect(options[0]).toMatchObject({ value: '1', label: 'Type 1', description: 'Description 1' });
+    expect(options[0]).toMatchObject({
+      value: '1',
+      label: 'Type 1',
+      description: 'Description 1',
+      emoji: { name: '🎫' },
+    });
+  });
+
+  it('le menu de choix s’arrête à 25 types, la limite de Discord', () => {
+    const menu = ticketTypeChoice(types(30)).components[0]?.toJSON().components[0];
+
+    expect((menu as { options: unknown[] }).options).toHaveLength(25);
   });
 
   it('les identifiants des composants tiennent dans les 100 caractères de Discord', () => {
-    expect(openCustomId(2_147_483_647).length).toBeLessThanOrEqual(100);
+    expect(OPEN_CUSTOM_ID).toBe('ticket:open');
     expect(CHOOSE_CUSTOM_ID).toBe('ticket:choose');
   });
 

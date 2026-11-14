@@ -6,7 +6,7 @@ const CHANNEL = '400000000000000001';
 const channels = [{ id: CHANNEL, name: 'aide', parentName: null }];
 
 function setup(onSubmit = vi.fn().mockResolvedValue(undefined)) {
-  render(<TicketSettingsForm settings={null} types={[]} channels={channels} onSubmit={onSubmit} />);
+  render(<TicketSettingsForm settings={null} channels={channels} onSubmit={onSubmit} />);
   return onSubmit;
 }
 
@@ -53,24 +53,6 @@ describe('TicketSettingsForm', () => {
 
     const preview = within(screen.getByRole('figure', { name: 'Aperçu du panel sur Discord' }));
     expect(preview.getByText('🎫 Contacter le staff')).toBeTruthy();
-  });
-
-  it('montre les types du serveur dans l’aperçu', () => {
-    const type = {
-      id: 1,
-      name: 'Bug',
-      description: null,
-      emoji: null,
-      categoryId: '1',
-      staffRoleIds: ['2'],
-      inactivityHours: null,
-      questionCount: 0,
-    };
-    render(
-      <TicketSettingsForm settings={null} types={[type]} channels={channels} onSubmit={vi.fn()} />,
-    );
-    const preview = within(screen.getByRole('figure', { name: 'Aperçu du panel sur Discord' }));
-    expect(preview.getByText('Bug')).toBeTruthy();
   });
 
   it('affiche l’erreur renvoyée par l’API', async () => {

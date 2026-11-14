@@ -1,10 +1,5 @@
 import { zodResolver } from '@hookform/resolvers/zod';
-import type {
-  GuildChannelSummary,
-  TicketSettings,
-  TicketSettingsInput,
-  TicketTypeSummary,
-} from '@phenix/shared';
+import type { GuildChannelSummary, TicketSettings, TicketSettingsInput } from '@phenix/shared';
 import { useForm, useWatch } from 'react-hook-form';
 import { Field, inputClass } from '../../../components/ui/field';
 import { FormActions } from '../../../components/ui/form-actions';
@@ -15,14 +10,12 @@ import { TicketPanelPreview } from './ticket-panel-preview';
 
 interface Props {
   settings: TicketSettings | null;
-  /** Pour l'aperçu du panel : boutons ou menu selon leur nombre */
-  types: TicketTypeSummary[];
   channels: GuildChannelSummary[];
   onSubmit: (input: TicketSettingsInput) => Promise<unknown>;
 }
 
 /** Les réglages des tickets et leur panel, avec l'aperçu. Il reçoit ses données et ne sait rien de l'API. */
-export function TicketSettingsForm({ settings, types, channels, onSubmit }: Props) {
+export function TicketSettingsForm({ settings, channels, onSubmit }: Props) {
   const {
     register,
     handleSubmit,
@@ -76,7 +69,7 @@ export function TicketSettingsForm({ settings, types, channels, onSubmit }: Prop
         <Panel
           icon="ticket"
           title="Panel « Ouvrir un ticket »"
-          description="Le message que le bot publie : un bouton par type de ticket (jusqu’à 5), un menu au-delà."
+          description="Le message que le bot publie : un seul bouton. Le membre y choisit le type de ticket, puis répond à ses questions."
         >
           <Field
             id="panelChannelId"
@@ -106,7 +99,7 @@ export function TicketSettingsForm({ settings, types, channels, onSubmit }: Prop
           <Field
             id="panelButtonLabel"
             label="Texte du bouton"
-            hint="Devient l’invite du menu déroulant quand il y a plus de 5 types."
+            hint="Le texte du bouton sous le message du panel."
             error={errors.panel?.buttonLabel?.message}
           >
             <input
@@ -138,7 +131,6 @@ export function TicketSettingsForm({ settings, types, channels, onSubmit }: Prop
           title={panel.title}
           description={typeof panel.description === 'string' ? panel.description : ''}
           buttonLabel={panel.buttonLabel}
-          types={types}
         />
       </div>
     </form>

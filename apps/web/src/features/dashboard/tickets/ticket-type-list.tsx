@@ -79,8 +79,8 @@ export function TicketTypeList({ types, edit, add, onDelete }: Props) {
   if (types.length === 0) {
     return (
       <EmptyState icon="ticket" title="Aucun type de ticket pour l’instant" action={add}>
-        Crée le premier : le panel affiche un bouton par type, et le bot ouvre un salon dans la
-        catégorie choisie.
+        Crée le premier : le membre le choisit après avoir cliqué sur le bouton du panel, et le bot
+        ouvre un salon dans la catégorie choisie.
       </EmptyState>
     );
   }
