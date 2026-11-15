@@ -1,5 +1,5 @@
 import { zodResolver } from '@hookform/resolvers/zod';
-import type { GuildChannelSummary, LevelingConfig } from '@phenix/shared';
+import type { GuildCategorySummary, GuildChannelSummary, LevelingConfig } from '@phenix/shared';
 import { useForm, useWatch } from 'react-hook-form';
 import { Icon } from '../../../components/icon';
 import { Field, inputClass } from '../../../components/ui/field';
@@ -7,11 +7,13 @@ import { FormActions } from '../../../components/ui/form-actions';
 import { Panel } from '../../../components/ui/panel';
 import { Switch } from '../../../components/ui/switch';
 import { ChannelOptions } from '../form-parts';
+import { ExcludedChannelsField } from './excluded-channels-field';
 import {
   estimateLevel,
   formatMinutes,
   levelingFormSchema,
   toFormValues,
+  unknownChannelIds,
   type LevelingFormInput,
 } from './form-values';
 
@@ -19,6 +21,9 @@ interface Props {
   guildId: string;
   config: LevelingConfig;
   channels: GuildChannelSummary[];
+  voiceChannels: GuildChannelSummary[];
+  forumChannels: GuildChannelSummary[];
+  categories: GuildCategorySummary[];
   onSubmit: (config: LevelingConfig) => Promise<unknown>;
 }
 
@@ -26,7 +31,15 @@ interface Props {
 const TARGET_LEVEL = 10;
 
 /** Le formulaire seul : il reçoit ses données et ne sait rien de l'API. */
-export function LevelingSettingsForm({ guildId, config, channels, onSubmit }: Props) {
+export function LevelingSettingsForm({
+  guildId,
+  config,
+  channels,
+  voiceChannels,
+  forumChannels,
+  categories,
+  onSubmit,
+}: Props) {
   const {
     register,
     handleSubmit,
@@ -40,10 +53,24 @@ export function LevelingSettingsForm({ guildId, config, channels, onSubmit }: Pr
   });
 
   // L'estimation suit la saisie en direct
-  const [xpEnabled, xpMin, xpMax, cooldown, isPublic] = useWatch({
+  const [xpEnabled, xpMin, xpMax, cooldown, isPublic, excludedIds] = useWatch({
     control,
-    name: ['xpEnabled', 'xpMin', 'xpMax', 'xpCooldownSec', 'leaderboardPublic'],
+    name: [
+      'xpEnabled',
+      'xpMin',
+      'xpMax',
+      'xpCooldownSec',
+      'leaderboardPublic',
+      'xpExcludedChannelIds',
+    ],
   });
+  // Calculé sur la config enregistrée : un salon supprimé reste affiché, décoché, jusqu'à l'enregistrement
+  const deletedIds = unknownChannelIds(config.xpExcludedChannelIds, [
+    ...channels.map((channel) => channel.id),
+    ...voiceChannels.map((channel) => channel.id),
+    ...forumChannels.map((channel) => channel.id),
+    ...categories.map((category) => category.id),
+  ]);
   const estimate = estimateLevel(TARGET_LEVEL, Number(xpMin), Number(xpMax), Number(cooldown));
 
   const save = async (values: LevelingConfig) => {
@@ -113,6 +140,17 @@ export function LevelingSettingsForm({ guildId, config, channels, onSubmit }: Pr
             />
           </Field>
         </div>
+
+        <ExcludedChannelsField
+          registration={register('xpExcludedChannelIds')}
+          selected={excludedIds ?? []}
+          channels={channels}
+          voiceChannels={voiceChannels}
+          forumChannels={forumChannels}
+          categories={categories}
+          deletedIds={deletedIds}
+          error={errors.xpExcludedChannelIds?.message}
+        />
 
         {estimate && (
           <p
