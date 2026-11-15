@@ -13,6 +13,7 @@ const settings = {
   xpCooldownSec: 60,
   levelUpChannelId: null,
   leaderboardPublic: true,
+  xpExcludedChannelIds: [],
   ticketLogChannelId: null,
   td2ChannelId: null,
   td2ReportChannelId: null,

@@ -3,6 +3,7 @@ import type { Message } from 'discord.js';
 import type { BotContext } from '../../core/context.js';
 import { announceLevelUp } from './announce.js';
 import { createCooldowns, levelingSettings, randomXp, type Cooldowns } from './xp.js';
+import { isXpExcluded } from './xp-rules.js';
 
 /**
  * Donne de l'XP aux auteurs de messages, au plus une fois par délai.
@@ -21,6 +22,20 @@ export function createMessageXpHandler(
     try {
       const settings = levelingSettings(await configs.get(message.guildId));
       if (!settings.xpEnabled) return;
+
+      // Avant le délai : un message exclu ne doit pas retarder le prochain gain, ailleurs.
+      const { channel } = message;
+      const excluded = channel.isThread()
+        ? isXpExcluded(settings.xpExcludedChannelIds, {
+            channelId: channel.id,
+            parentChannelId: channel.parentId,
+            categoryId: channel.parent?.parentId,
+          })
+        : isXpExcluded(settings.xpExcludedChannelIds, {
+            channelId: channel.id,
+            categoryId: channel.parentId,
+          });
+      if (excluded) return;
 
       const cooldownMs = settings.xpCooldownSec * 1000;
       if (!cooldowns.take(`${message.guildId}:${message.author.id}`, cooldownMs)) return;
