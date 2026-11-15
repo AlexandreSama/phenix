@@ -15,6 +15,7 @@ import { JSON_ONLY_MESSAGE } from './common/json-only.js';
 import { LockService } from './core/lock.service.js';
 import { EVIDENCE, GIVEAWAY_QUEUE, MEDIA, TRANSCRIPTS } from './core/tokens.js';
 import { DiscordService } from './discord/discord.service.js';
+import { GuildsService } from './modules/guilds/guilds.service.js';
 import type { Env } from './env.js';
 
 const env: Env = {
@@ -46,6 +47,10 @@ const GAMER_ROLE = '600000000000000001';
 const MOD_ROLE = '600000000000000002';
 const BOT_ROLE = '600000000000000009';
 const CATEGORY = '400000000000000009';
+const VOICE_CHANNEL = '400000000000000003';
+const STAGE_CHANNEL = '400000000000000004';
+const FORUM_CHANNEL = '400000000000000005';
+const MEDIA_CHANNEL = '400000000000000006';
 const SESSION_ID = 'a'.repeat(43);
 /** Une seconde session, celle d'un propriétaire du bot (BOT_OWNER_IDS). */
 const OWNER_SESSION_ID = 'o'.repeat(43);
@@ -85,6 +90,7 @@ const config = {
   xpCooldownSec: 60,
   levelUpChannelId: null,
   leaderboardPublic: true,
+  xpExcludedChannelIds: [] as string[],
   td2ChannelId: null as string | null,
   td2PublicListing: false,
   td2ReportChannelId: null as string | null,
@@ -602,6 +608,10 @@ const discord = {
     { id: CHANNEL, type: 0, name: 'logs', position: 1 },
     { id: OTHER_CHANNEL, type: 0, name: 'roles', position: 2 },
     { id: CATEGORY, type: 4, name: 'Support', position: 0 },
+    { id: STAGE_CHANNEL, type: 13, name: 'Scène', position: 4 },
+    { id: VOICE_CHANNEL, type: 2, name: 'Général', position: 3, parent_id: CATEGORY },
+    { id: FORUM_CHANNEL, type: 15, name: 'Idées', position: 6, parent_id: CATEGORY },
+    { id: MEDIA_CHANNEL, type: 16, name: 'Captures', position: 5 },
   ]),
   getGuildRoles: vi.fn(async () => [
     { id: MANAGED, name: '@everyone', position: 0, permissions: '0', color: 0, managed: false },
@@ -864,6 +874,10 @@ describe('config d’un serveur', () => {
   });
 });
 
+/** `count` identifiants de salons distincts. */
+const manyIds = (count: number) =>
+  Array.from({ length: count }, (_, index) => String(400000000000001000n + BigInt(index)));
+
 describe('réglages XP', () => {
   it('vérifie min ≤ max avec la valeur déjà enregistrée', async () => {
     const response = await request(app.getHttpServer())
@@ -887,6 +901,138 @@ describe('réglages XP', () => {
     expect(response.status).toBe(200);
     expect(response.body).toMatchObject({ xpMin: 20, xpMax: 40, levelUpChannelId: CHANNEL });
     expect(redis.publish).toHaveBeenCalledOnce();
+  });
+
+  describe('salons exclus du gain d’XP', () => {
+    const url = `/api/guilds/${MANAGED}/leveling`;
+    const UNKNOWN = '400000000000000999';
+    const patch = (body: object, session = cookie) =>
+      request(app.getHttpServer()).patch(url).set('Cookie', session).send(body);
+    /** Faye, membre de MANAGED sans « Gérer le serveur », avec ces onglets. */
+    const fayeWith = (modules: string[]) => {
+      discord.getCurrentUserGuilds.mockResolvedValueOnce([
+        { id: MANAGED, name: 'Les Agents', icon: null, owner: false, permissions: '0' },
+      ]);
+      db.guildDelegate.findMany.mockResolvedValueOnce([{ ...delegateRow, modules }]);
+    };
+
+    it('la liste est vide par défaut', async () => {
+      const response = await request(app.getHttpServer()).get(url).set('Cookie', cookie);
+
+      expect(response.status).toBe(200);
+      expect(response.body.xpExcludedChannelIds).toEqual([]);
+    });
+
+    it('enregistre un salon texte, un salon vocal et une catégorie, et le GET les renvoie', async () => {
+      const ids = [CHANNEL, VOICE_CHANNEL, CATEGORY];
+
+      const saved = await patch({ xpExcludedChannelIds: ids });
+      db.guildConfig.upsert.mockResolvedValueOnce({ ...config, xpExcludedChannelIds: ids });
+      const read = await request(app.getHttpServer()).get(url).set('Cookie', cookie);
+
+      expect(saved.status).toBe(200);
+      expect(saved.body.xpExcludedChannelIds).toEqual(ids);
+      expect(db.guildConfig.update).toHaveBeenCalledWith(
+        expect.objectContaining({ data: { xpExcludedChannelIds: ids } }),
+      );
+      expect(read.body.xpExcludedChannelIds).toEqual(ids);
+    });
+
+    it('accepte un salon forum et un salon média', async () => {
+      const response = await patch({ xpExcludedChannelIds: [FORUM_CHANNEL, MEDIA_CHANNEL] });
+
+      expect(response.status).toBe(200);
+      expect(db.guildConfig.update).toHaveBeenCalledWith(
+        expect.objectContaining({ data: { xpExcludedChannelIds: [FORUM_CHANNEL, MEDIA_CHANNEL] } }),
+      );
+    });
+
+    it('accepte un salon de scène', async () => {
+      const response = await patch({ xpExcludedChannelIds: [STAGE_CHANNEL] });
+
+      expect(response.status).toBe(200);
+    });
+
+    it('prévient le bot', async () => {
+      await patch({ xpExcludedChannelIds: [CHANNEL] });
+
+      expect(redis.publish).toHaveBeenCalledWith(
+        'bot:events',
+        JSON.stringify({ type: 'config.updated', guildId: MANAGED }),
+      );
+    });
+
+    it('vider la liste est permis', async () => {
+      const response = await patch({ xpExcludedChannelIds: [] });
+
+      expect(response.status).toBe(200);
+      expect(response.body.xpExcludedChannelIds).toEqual([]);
+    });
+
+    it('refuse un identifiant inconnu sur ce serveur (400)', async () => {
+      const response = await patch({ xpExcludedChannelIds: [CHANNEL, UNKNOWN] });
+
+      expect(response.status).toBe(400);
+      expect(response.body.message).toBe('Salon inconnu sur ce serveur : ' + UNKNOWN);
+      expect(db.guildConfig.update).not.toHaveBeenCalled();
+      expect(redis.publish).not.toHaveBeenCalled();
+    });
+
+    it('refuse un doublon (400)', async () => {
+      const response = await patch({ xpExcludedChannelIds: [CHANNEL, CHANNEL] });
+
+      expect(response.status).toBe(400);
+      expect(db.guildConfig.update).not.toHaveBeenCalled();
+    });
+
+    it('refuse 51 entrées ; 50 passent la validation zod puis échouent sur l’identifiant inconnu (400)', async () => {
+      const tooMany = await patch({ xpExcludedChannelIds: manyIds(51) });
+      expect(tooMany.status).toBe(400);
+      expect(db.guildConfig.update).not.toHaveBeenCalled();
+
+      // 50 entrées passent la limite de zod : seul l'identifiant inconnu les arrête
+      const atLimit = await patch({ xpExcludedChannelIds: manyIds(50) });
+      expect(atLimit.status).toBe(400);
+      expect(atLimit.body.message).toMatch(/^Salon inconnu sur ce serveur/);
+    });
+
+    it('un identifiant déjà enregistré mais disparu ne bloque pas un PATCH qui ne touche pas au champ', async () => {
+      db.guildConfig.upsert.mockResolvedValueOnce({ ...config, xpExcludedChannelIds: [UNKNOWN] });
+
+      const response = await patch({ xpCooldownSec: 90 });
+
+      expect(response.status).toBe(200);
+      expect(db.guildConfig.update).toHaveBeenCalledWith(
+        expect.objectContaining({ data: { xpCooldownSec: 90 } }),
+      );
+    });
+
+    it('un identifiant déjà enregistré mais disparu peut rester dans la liste renvoyée', async () => {
+      db.guildConfig.upsert.mockResolvedValueOnce({ ...config, xpExcludedChannelIds: [UNKNOWN] });
+
+      const response = await patch({ xpExcludedChannelIds: [UNKNOWN, CHANNEL] });
+
+      expect(response.status).toBe(200);
+      expect(response.body.xpExcludedChannelIds).toEqual([UNKNOWN, CHANNEL]);
+    });
+
+    it('un délégué de l’onglet Niveaux peut modifier la liste', async () => {
+      fayeWith(['LEVELING']);
+
+      const response = await patch({ xpExcludedChannelIds: [VOICE_CHANNEL] }, faye);
+
+      expect(response.status).toBe(200);
+      expect(response.body.xpExcludedChannelIds).toEqual([VOICE_CHANNEL]);
+    });
+
+    it('un délégué sans l’onglet Niveaux est refusé (403)', async () => {
+      fayeWith(['TD2']);
+
+      const response = await patch({ xpExcludedChannelIds: [VOICE_CHANNEL] }, faye);
+
+      expect(response.status).toBe(403);
+      expect(db.guildConfig.update).not.toHaveBeenCalled();
+    });
   });
 });
 
@@ -920,6 +1066,197 @@ describe('classement public', () => {
   it('refuse une page qui n’est pas un nombre positif', async () => {
     const response = await request(app.getHttpServer()).get(`/api/leaderboard/${MANAGED}?page=0`);
     expect(response.status).toBe(400);
+  });
+});
+
+describe('salons vocaux', () => {
+  const url = `/api/guilds/${MANAGED}/voice-channels`;
+
+  it('liste les salons vocaux et de scène, dans l’ordre de Discord, sans les salons texte', async () => {
+    const response = await request(app.getHttpServer()).get(url).set('Cookie', cookie);
+
+    expect(response.status).toBe(200);
+    expect(response.body).toEqual([
+      { id: VOICE_CHANNEL, name: 'Général', parentName: 'Support' },
+      { id: STAGE_CHANNEL, name: 'Scène', parentName: null },
+    ]);
+  });
+
+  it('a la même forme que la liste des salons texte', async () => {
+    const voice = await request(app.getHttpServer()).get(url).set('Cookie', cookie);
+    const text = await request(app.getHttpServer())
+      .get(`/api/guilds/${MANAGED}/channels`)
+      .set('Cookie', cookie);
+
+    expect(Object.keys(voice.body[0]).toSorted()).toEqual(Object.keys(text.body[0]).toSorted());
+    expect(text.body.map((channel: { id: string }) => channel.id)).toEqual([
+      CHANNEL,
+      OTHER_CHANNEL,
+    ]);
+  });
+
+  it('refuse un serveur que l’on ne gère pas (403)', async () => {
+    const response = await request(app.getHttpServer())
+      .get(`/api/guilds/${NOT_MANAGED}/voice-channels`)
+      .set('Cookie', cookie);
+
+    expect(response.status).toBe(403);
+  });
+
+  it('demande une session (401)', async () => {
+    const response = await request(app.getHttpServer()).get(url);
+
+    expect(response.status).toBe(401);
+  });
+
+  it('un délégué, quel que soit son onglet, peut la lire', async () => {
+    discord.getCurrentUserGuilds.mockResolvedValueOnce([
+      { id: MANAGED, name: 'Les Agents', icon: null, owner: false, permissions: '0' },
+    ]);
+
+    const response = await request(app.getHttpServer()).get(url).set('Cookie', faye);
+
+    expect(response.status).toBe(200);
+  });
+});
+
+describe('salons forum et média', () => {
+  const url = `/api/guilds/${MANAGED}/forum-channels`;
+
+  it('liste les forums et les médias, dans l’ordre de Discord, sans les autres salons', async () => {
+    const response = await request(app.getHttpServer()).get(url).set('Cookie', cookie);
+
+    expect(response.status).toBe(200);
+    expect(response.body).toEqual([
+      { id: MEDIA_CHANNEL, name: 'Captures', parentName: null },
+      { id: FORUM_CHANNEL, name: 'Idées', parentName: 'Support' },
+    ]);
+  });
+
+  it('ne les ajoute pas à la liste des salons où poster', async () => {
+    const text = await request(app.getHttpServer())
+      .get(`/api/guilds/${MANAGED}/channels`)
+      .set('Cookie', cookie);
+
+    expect(text.body.map((channel: { id: string }) => channel.id)).toEqual([
+      CHANNEL,
+      OTHER_CHANNEL,
+    ]);
+  });
+
+  it('a la même forme que la liste des salons texte', async () => {
+    const forums = await request(app.getHttpServer()).get(url).set('Cookie', cookie);
+    const text = await request(app.getHttpServer())
+      .get(`/api/guilds/${MANAGED}/channels`)
+      .set('Cookie', cookie);
+
+    expect(Object.keys(forums.body[0]).toSorted()).toEqual(Object.keys(text.body[0]).toSorted());
+  });
+
+  it('refuse un serveur que l’on ne gère pas (403)', async () => {
+    const response = await request(app.getHttpServer())
+      .get(`/api/guilds/${NOT_MANAGED}/forum-channels`)
+      .set('Cookie', cookie);
+
+    expect(response.status).toBe(403);
+  });
+
+  it('demande une session (401)', async () => {
+    const response = await request(app.getHttpServer()).get(url);
+
+    expect(response.status).toBe(401);
+  });
+
+  it('un délégué, quel que soit son onglet, peut la lire', async () => {
+    discord.getCurrentUserGuilds.mockResolvedValueOnce([
+      { id: MANAGED, name: 'Les Agents', icon: null, owner: false, permissions: '0' },
+    ]);
+
+    const response = await request(app.getHttpServer()).get(url).set('Cookie', faye);
+
+    expect(response.status).toBe(200);
+  });
+});
+
+describe('liste brute des salons', () => {
+  it('à froid, salons texte, vocaux, forums et catégories ne coûtent qu’un appel à Discord', async () => {
+    const guilds = app.get(GuildsService);
+
+    await Promise.all([
+      guilds.channels(MANAGED),
+      guilds.voice(MANAGED),
+      guilds.forums(MANAGED),
+      guilds.categories(MANAGED),
+    ]);
+
+    expect(discord.getGuildChannels).toHaveBeenCalledTimes(1);
+  });
+
+  it('une seconde série d’appels, caches chauds, n’en coûte aucun de plus', async () => {
+    const guilds = app.get(GuildsService);
+    await guilds.channels(MANAGED);
+    await guilds.voice(MANAGED);
+
+    await guilds.forums(MANAGED);
+    await guilds.categories(MANAGED);
+
+    expect(discord.getGuildChannels).toHaveBeenCalledTimes(1);
+  });
+
+  it('une erreur de Discord remonte, n’est pas gardée, et l’appel suivant réessaie', async () => {
+    const guilds = app.get(GuildsService);
+    discord.getGuildChannels.mockRejectedValueOnce(new Error('Discord indisponible'));
+
+    await expect(guilds.channels(MANAGED)).rejects.toThrow('Discord indisponible');
+    const retry = await guilds.channels(MANAGED);
+
+    expect(retry.length).toBeGreaterThan(0);
+    expect(discord.getGuildChannels).toHaveBeenCalledTimes(2);
+  });
+
+  it('deux serveurs chargés à froid en même temps ont chacun leur requête et leur liste', async () => {
+    const guilds = app.get(GuildsService);
+    const byGuild = async (guildId?: string) =>
+      guildId === NOT_MANAGED
+        ? [{ id: '400000000000000888', type: 0, name: 'ailleurs', position: 0 }]
+        : [{ id: CHANNEL, type: 0, name: 'logs', position: 0 }];
+    discord.getGuildChannels.mockImplementationOnce(byGuild).mockImplementationOnce(byGuild);
+
+    const [mine, other] = await Promise.all([
+      guilds.channels(MANAGED),
+      guilds.channels(NOT_MANAGED),
+    ]);
+
+    expect(discord.getGuildChannels).toHaveBeenCalledTimes(2);
+    expect(discord.getGuildChannels).toHaveBeenCalledWith(MANAGED);
+    expect(discord.getGuildChannels).toHaveBeenCalledWith(NOT_MANAGED);
+    expect(mine.map((channel) => channel.name)).toEqual(['logs']);
+    expect(other.map((channel) => channel.name)).toEqual(['ailleurs']);
+  });
+
+  it('ne garde dans Valkey que les champs lus : ni droits par salon (identifiants de membres), ni sujet', async () => {
+    const guilds = app.get(GuildsService);
+    const MEMBER_ID = '700000000000000001';
+    // Ce que Discord renvoie réellement : bien plus de champs que ceux que l'API lit
+    const fromDiscord = {
+      id: CHANNEL,
+      type: 0,
+      name: 'logs',
+      position: 1,
+      parent_id: CATEGORY,
+      topic: 'réservé à Faye',
+      permission_overwrites: [{ id: MEMBER_ID, type: 1, allow: '0', deny: '1024' }],
+    };
+    discord.getGuildChannels.mockResolvedValueOnce([fromDiscord]);
+
+    await guilds.channels(MANAGED);
+
+    const stored = store.get(`guild-raw-channels:${MANAGED}`);
+    expect(stored).toBeDefined();
+    expect(JSON.parse(stored ?? '[]')).toEqual([
+      { id: CHANNEL, type: 0, name: 'logs', position: 1, parent_id: CATEGORY },
+    ]);
+    expect(stored).not.toContain(MEMBER_ID);
   });
 });
 

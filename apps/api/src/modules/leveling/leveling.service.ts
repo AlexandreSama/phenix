@@ -20,6 +20,7 @@ const LEVELING_FIELDS = {
   xpCooldownSec: true,
   levelUpChannelId: true,
   leaderboardPublic: true,
+  xpExcludedChannelIds: true,
 } as const;
 
 /** Le classement bouge à chaque message : 30 secondes de cache suffisent à absorber le trafic. */
@@ -45,7 +46,8 @@ export class LevelingService {
 
   async updateConfig(guildId: string, patch: LevelingConfigPatch): Promise<LevelingConfig> {
     // Le patch peut ne contenir que xpMin : la règle min ≤ max se vérifie sur la config complète
-    const merged = levelingConfigSchema.safeParse({ ...(await this.getConfig(guildId)), ...patch });
+    const current = await this.getConfig(guildId);
+    const merged = levelingConfigSchema.safeParse({ ...current, ...patch });
     if (!merged.success) {
       throw new BadRequestException(merged.error.issues.map((issue) => issue.message));
     }
@@ -55,6 +57,9 @@ export class LevelingService {
         throw new BadRequestException('Salon inconnu sur ce serveur');
       }
     }
+    if (patch.xpExcludedChannelIds) {
+      await this.assertExcludableChannels(guildId, patch.xpExcludedChannelIds, current);
+    }
 
     const config = await this.db.guildConfig.update({
       where: { guildId },
@@ -63,6 +68,32 @@ export class LevelingService {
     });
     await this.botEvents.notify({ type: 'config.updated', guildId });
     return config;
+  }
+
+  /**
+   * Chaque salon exclu doit être un salon texte, vocal, forum ou média, ou une catégorie du serveur.
+   * Un identifiant déjà enregistré mais disparu (salon supprimé) peut rester dans la liste :
+   * seuls les identifiants ajoutés sont vérifiés, pour ne pas bloquer l'enregistrement.
+   */
+  private async assertExcludableChannels(
+    guildId: string,
+    ids: readonly string[],
+    current: LevelingConfig,
+  ): Promise<void> {
+    const stored = new Set(current.xpExcludedChannelIds);
+    const added = ids.filter((id) => !stored.has(id));
+    if (added.length === 0) return;
+    const [text, voice, forums, categories] = await Promise.all([
+      this.guilds.channels(guildId),
+      this.guilds.voice(guildId),
+      this.guilds.forums(guildId),
+      this.guilds.categories(guildId),
+    ]);
+    const known = new Set(
+      [...text, ...voice, ...forums, ...categories].map((channel) => channel.id),
+    );
+    const unknown = added.find((id) => !known.has(id));
+    if (unknown) throw new BadRequestException(`Salon inconnu sur ce serveur : ${unknown}`);
   }
 
   /**

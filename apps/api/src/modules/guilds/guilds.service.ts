@@ -22,6 +22,15 @@ const CACHE_SECONDS = 60;
 /** Salons où le bot peut écrire un log ou une annonce. */
 const TEXT_CHANNELS = new Set<ChannelType>([ChannelType.GuildText, ChannelType.GuildAnnouncement]);
 
+/** Salons vocaux et salons de scène : on peut en exclure du gain d'XP. */
+const VOICE_CHANNELS = new Set<ChannelType>([ChannelType.GuildVoice, ChannelType.GuildStageVoice]);
+
+/**
+ * Forums et salons média : on peut en exclure du gain d'XP (leurs posts sont des fils qui en héritent),
+ * mais on n'y poste pas une annonce, donc ils ne figurent pas dans `TEXT_CHANNELS`.
+ */
+const FORUM_CHANNELS = new Set<ChannelType>([ChannelType.GuildForum, ChannelType.GuildMedia]);
+
 /** Les seuls champs lus sur un salon Discord. */
 interface DiscordChannel {
   id: string;
@@ -41,6 +50,9 @@ interface UserGuild {
 
 @Injectable()
 export class GuildsService {
+  /** Les lectures de la liste des salons en cours, par serveur. */
+  private readonly pendingChannels = new Map<string, Promise<DiscordChannel[]>>();
+
   constructor(
     private readonly discord: DiscordService,
     private readonly db: PrismaClient,
@@ -125,34 +137,72 @@ export class GuildsService {
     return (BigInt(guild.permissions) & (PermissionFlagsBits.Administrator | flag)) !== 0n;
   }
 
-  async channels(guildId: string): Promise<GuildChannelSummary[]> {
-    return this.cache.wrap(`guild-channels:${guildId}`, CACHE_SECONDS, async () => {
-      const all = (await this.discord.getGuildChannels(guildId)) as DiscordChannel[];
-      const categories = new Map(
-        all
-          .filter((channel) => channel.type === ChannelType.GuildCategory)
-          .map((category) => [category.id, category.name]),
-      );
-      return all
-        .filter((channel) => TEXT_CHANNELS.has(channel.type))
-        .toSorted((a, b) => (a.position ?? 0) - (b.position ?? 0))
-        .map((channel) => ({
-          id: channel.id,
-          name: channel.name ?? channel.id,
-          parentName: (channel.parent_id && categories.get(channel.parent_id)) || null,
-        }));
-    });
+  channels(guildId: string): Promise<GuildChannelSummary[]> {
+    return this.channelSummaries(guildId, TEXT_CHANNELS);
+  }
+
+  /** Les salons vocaux et de scène, sous la même forme que les salons texte. */
+  voice(guildId: string): Promise<GuildChannelSummary[]> {
+    return this.channelSummaries(guildId, VOICE_CHANNELS);
+  }
+
+  /** Les salons forum et média, sous la même forme que les salons texte. */
+  forums(guildId: string): Promise<GuildChannelSummary[]> {
+    return this.channelSummaries(guildId, FORUM_CHANNELS);
   }
 
   /** Les catégories du serveur, dans l'ordre de Discord : les tickets s'ouvrent dans l'une d'elles. */
   async categories(guildId: string): Promise<GuildCategorySummary[]> {
-    return this.cache.wrap(`guild-categories:${guildId}`, CACHE_SECONDS, async () => {
-      const all = (await this.discord.getGuildChannels(guildId)) as DiscordChannel[];
-      return all
+    const all = await this.rawChannels(guildId);
+    return all
+      .filter((channel) => channel.type === ChannelType.GuildCategory)
+      .toSorted((a, b) => (a.position ?? 0) - (b.position ?? 0))
+      .map((category) => ({ id: category.id, name: category.name ?? category.id }));
+  }
+
+  private async channelSummaries(
+    guildId: string,
+    types: ReadonlySet<ChannelType>,
+  ): Promise<GuildChannelSummary[]> {
+    const all = await this.rawChannels(guildId);
+    const categories = new Map(
+      all
         .filter((channel) => channel.type === ChannelType.GuildCategory)
-        .toSorted((a, b) => (a.position ?? 0) - (b.position ?? 0))
-        .map((category) => ({ id: category.id, name: category.name ?? category.id }));
-    });
+        .map((category) => [category.id, category.name]),
+    );
+    return all
+      .filter((channel) => types.has(channel.type))
+      .toSorted((a, b) => (a.position ?? 0) - (b.position ?? 0))
+      .map((channel) => ({
+        id: channel.id,
+        name: channel.name ?? channel.id,
+        parentName: (channel.parent_id && categories.get(channel.parent_id)) || null,
+      }));
+  }
+
+  /**
+   * La liste brute des salons, lue une seule fois chez Discord par minute et par serveur : les
+   * listes texte, vocal, forum et catégories en sont des filtres. Les appels simultanés à froid
+   * partagent la même requête (le cache seul ne les empêcherait pas de partir tous ensemble).
+   */
+  private rawChannels(guildId: string): Promise<DiscordChannel[]> {
+    const pending = this.pendingChannels.get(guildId);
+    if (pending) return pending;
+    const load = this.cache
+      .wrap(`guild-raw-channels:${guildId}`, CACHE_SECONDS, async () => {
+        // Seuls les champs lus : on ne garde pas les droits par salon (identifiants de membres)
+        const channels = (await this.discord.getGuildChannels(guildId)) as DiscordChannel[];
+        return channels.map(({ id, type, name, position, parent_id }) => ({
+          id,
+          type,
+          name,
+          position,
+          parent_id,
+        }));
+      })
+      .finally(() => this.pendingChannels.delete(guildId));
+    this.pendingChannels.set(guildId, load);
+    return load;
   }
 
   /**
