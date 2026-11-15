@@ -6,3 +6,5 @@ src/generated/
 .env
 garage.toml
 *.log
+/.ai/mcp/mcp.json
+/.aiassistant/rules/base.md

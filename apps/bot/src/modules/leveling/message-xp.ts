@@ -26,17 +26,26 @@ export function createMessageXpHandler(
       if (!cooldowns.take(`${message.guildId}:${message.author.id}`, cooldownMs)) return;
 
       const member = message.member;
+      const displayName = member?.displayName ?? message.author.displayName;
+      const avatarUrl = (member ?? message.author).displayAvatarURL({
+        extension: 'png',
+        size: 128,
+        forceStatic: true,
+      });
       const result = await awardXp(db, {
         guildId: message.guildId,
         userId: message.author.id,
         amount: randomXp(settings.xpMin, settings.xpMax, random),
         cooldownMs,
-        displayName: member?.displayName ?? message.author.displayName,
-        avatarUrl: (member ?? message.author).displayAvatarURL({ extension: 'png', size: 128 }),
+        displayName,
+        avatarUrl,
       });
 
       if (result?.leveledUp) {
-        await announceLevelUp(message, result.level, settings.levelUpChannelId, logger);
+        await announceLevelUp(message, result.level, settings.levelUpChannelId, logger, {
+          displayName,
+          avatarUrl,
+        });
       }
     } catch (err) {
       logger.error({ err, guildId: message.guildId }, "Échec du gain d'XP");
