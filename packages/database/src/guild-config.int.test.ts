@@ -79,3 +79,26 @@ describe('GuildConfig : conservation des sanctions', () => {
     expect(config?.caseRetentionMonths).toBeNull();
   });
 });
+
+describe('GuildConfig : salons exclus du gain d’XP', () => {
+  it('une config neuve n’exclut aucun salon', async () => {
+    const guildId = await newGuild();
+
+    const config = await prisma.guildConfig.create({ data: { guildId } });
+
+    expect(config.xpExcludedChannelIds).toEqual([]);
+  });
+
+  it('écrit puis relit la liste, dans l’ordre', async () => {
+    const guildId = await newGuild();
+    await prisma.guildConfig.create({ data: { guildId } });
+
+    await prisma.guildConfig.update({
+      where: { guildId },
+      data: { xpExcludedChannelIds: ['333333333333333333', '111111111111111111'] },
+    });
+
+    const config = await prisma.guildConfig.findUnique({ where: { guildId } });
+    expect(config?.xpExcludedChannelIds).toEqual(['333333333333333333', '111111111111111111']);
+  });
+});

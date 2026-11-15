@@ -108,6 +108,7 @@ export type GuildConfigCountAggregateOutputType = {
   xpCooldownSec: number
   levelUpChannelId: number
   leaderboardPublic: number
+  xpExcludedChannelIds: number
   ticketCategoryId: number
   ticketStaffRoleIds: number
   ticketLogChannelId: number
@@ -211,6 +212,7 @@ export type GuildConfigCountAggregateInputType = {
   xpCooldownSec?: true
   levelUpChannelId?: true
   leaderboardPublic?: true
+  xpExcludedChannelIds?: true
   ticketCategoryId?: true
   ticketStaffRoleIds?: true
   ticketLogChannelId?: true
@@ -329,6 +331,7 @@ export type GuildConfigGroupByOutputType = {
   xpCooldownSec: number
   levelUpChannelId: string | null
   leaderboardPublic: boolean
+  xpExcludedChannelIds: string[]
   ticketCategoryId: string | null
   ticketStaffRoleIds: string[]
   ticketLogChannelId: string | null
@@ -383,6 +386,7 @@ export type GuildConfigWhereInput = {
   xpCooldownSec?: Prisma.IntFilter<"GuildConfig"> | number
   levelUpChannelId?: Prisma.StringNullableFilter<"GuildConfig"> | string | null
   leaderboardPublic?: Prisma.BoolFilter<"GuildConfig"> | boolean
+  xpExcludedChannelIds?: Prisma.StringNullableListFilter<"GuildConfig">
   ticketCategoryId?: Prisma.StringNullableFilter<"GuildConfig"> | string | null
   ticketStaffRoleIds?: Prisma.StringNullableListFilter<"GuildConfig">
   ticketLogChannelId?: Prisma.StringNullableFilter<"GuildConfig"> | string | null
@@ -415,6 +419,7 @@ export type GuildConfigOrderByWithRelationInput = {
   xpCooldownSec?: Prisma.SortOrder
   levelUpChannelId?: Prisma.SortOrderInput | Prisma.SortOrder
   leaderboardPublic?: Prisma.SortOrder
+  xpExcludedChannelIds?: Prisma.SortOrder
   ticketCategoryId?: Prisma.SortOrderInput | Prisma.SortOrder
   ticketStaffRoleIds?: Prisma.SortOrder
   ticketLogChannelId?: Prisma.SortOrderInput | Prisma.SortOrder
@@ -450,6 +455,7 @@ export type GuildConfigWhereUniqueInput = Prisma.AtLeast<{
   xpCooldownSec?: Prisma.IntFilter<"GuildConfig"> | number
   levelUpChannelId?: Prisma.StringNullableFilter<"GuildConfig"> | string | null
   leaderboardPublic?: Prisma.BoolFilter<"GuildConfig"> | boolean
+  xpExcludedChannelIds?: Prisma.StringNullableListFilter<"GuildConfig">
   ticketCategoryId?: Prisma.StringNullableFilter<"GuildConfig"> | string | null
   ticketStaffRoleIds?: Prisma.StringNullableListFilter<"GuildConfig">
   ticketLogChannelId?: Prisma.StringNullableFilter<"GuildConfig"> | string | null
@@ -482,6 +488,7 @@ export type GuildConfigOrderByWithAggregationInput = {
   xpCooldownSec?: Prisma.SortOrder
   levelUpChannelId?: Prisma.SortOrderInput | Prisma.SortOrder
   leaderboardPublic?: Prisma.SortOrder
+  xpExcludedChannelIds?: Prisma.SortOrder
   ticketCategoryId?: Prisma.SortOrderInput | Prisma.SortOrder
   ticketStaffRoleIds?: Prisma.SortOrder
   ticketLogChannelId?: Prisma.SortOrderInput | Prisma.SortOrder
@@ -521,6 +528,7 @@ export type GuildConfigScalarWhereWithAggregatesInput = {
   xpCooldownSec?: Prisma.IntWithAggregatesFilter<"GuildConfig"> | number
   levelUpChannelId?: Prisma.StringNullableWithAggregatesFilter<"GuildConfig"> | string | null
   leaderboardPublic?: Prisma.BoolWithAggregatesFilter<"GuildConfig"> | boolean
+  xpExcludedChannelIds?: Prisma.StringNullableListFilter<"GuildConfig">
   ticketCategoryId?: Prisma.StringNullableWithAggregatesFilter<"GuildConfig"> | string | null
   ticketStaffRoleIds?: Prisma.StringNullableListFilter<"GuildConfig">
   ticketLogChannelId?: Prisma.StringNullableWithAggregatesFilter<"GuildConfig"> | string | null
@@ -551,6 +559,7 @@ export type GuildConfigCreateInput = {
   xpCooldownSec?: number
   levelUpChannelId?: string | null
   leaderboardPublic?: boolean
+  xpExcludedChannelIds?: Prisma.GuildConfigCreatexpExcludedChannelIdsInput | string[]
   ticketCategoryId?: string | null
   ticketStaffRoleIds?: Prisma.GuildConfigCreateticketStaffRoleIdsInput | string[]
   ticketLogChannelId?: string | null
@@ -583,6 +592,7 @@ export type GuildConfigUncheckedCreateInput = {
   xpCooldownSec?: number
   levelUpChannelId?: string | null
   leaderboardPublic?: boolean
+  xpExcludedChannelIds?: Prisma.GuildConfigCreatexpExcludedChannelIdsInput | string[]
   ticketCategoryId?: string | null
   ticketStaffRoleIds?: Prisma.GuildConfigCreateticketStaffRoleIdsInput | string[]
   ticketLogChannelId?: string | null
@@ -613,6 +623,7 @@ export type GuildConfigUpdateInput = {
   xpCooldownSec?: Prisma.IntFieldUpdateOperationsInput | number
   levelUpChannelId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   leaderboardPublic?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  xpExcludedChannelIds?: Prisma.GuildConfigUpdatexpExcludedChannelIdsInput | string[]
   ticketCategoryId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   ticketStaffRoleIds?: Prisma.GuildConfigUpdateticketStaffRoleIdsInput | string[]
   ticketLogChannelId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -645,6 +656,7 @@ export type GuildConfigUncheckedUpdateInput = {
   xpCooldownSec?: Prisma.IntFieldUpdateOperationsInput | number
   levelUpChannelId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   leaderboardPublic?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  xpExcludedChannelIds?: Prisma.GuildConfigUpdatexpExcludedChannelIdsInput | string[]
   ticketCategoryId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   ticketStaffRoleIds?: Prisma.GuildConfigUpdateticketStaffRoleIdsInput | string[]
   ticketLogChannelId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -676,6 +688,7 @@ export type GuildConfigCreateManyInput = {
   xpCooldownSec?: number
   levelUpChannelId?: string | null
   leaderboardPublic?: boolean
+  xpExcludedChannelIds?: Prisma.GuildConfigCreatexpExcludedChannelIdsInput | string[]
   ticketCategoryId?: string | null
   ticketStaffRoleIds?: Prisma.GuildConfigCreateticketStaffRoleIdsInput | string[]
   ticketLogChannelId?: string | null
@@ -706,6 +719,7 @@ export type GuildConfigUpdateManyMutationInput = {
   xpCooldownSec?: Prisma.IntFieldUpdateOperationsInput | number
   levelUpChannelId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   leaderboardPublic?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  xpExcludedChannelIds?: Prisma.GuildConfigUpdatexpExcludedChannelIdsInput | string[]
   ticketCategoryId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   ticketStaffRoleIds?: Prisma.GuildConfigUpdateticketStaffRoleIdsInput | string[]
   ticketLogChannelId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -737,6 +751,7 @@ export type GuildConfigUncheckedUpdateManyInput = {
   xpCooldownSec?: Prisma.IntFieldUpdateOperationsInput | number
   levelUpChannelId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   leaderboardPublic?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  xpExcludedChannelIds?: Prisma.GuildConfigUpdatexpExcludedChannelIdsInput | string[]
   ticketCategoryId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   ticketStaffRoleIds?: Prisma.GuildConfigUpdateticketStaffRoleIdsInput | string[]
   ticketLogChannelId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -781,6 +796,7 @@ export type GuildConfigCountOrderByAggregateInput = {
   xpCooldownSec?: Prisma.SortOrder
   levelUpChannelId?: Prisma.SortOrder
   leaderboardPublic?: Prisma.SortOrder
+  xpExcludedChannelIds?: Prisma.SortOrder
   ticketCategoryId?: Prisma.SortOrder
   ticketStaffRoleIds?: Prisma.SortOrder
   ticketLogChannelId?: Prisma.SortOrder
@@ -906,6 +922,10 @@ export type GuildConfigCreatestaffRoleIdsInput = {
   set: string[]
 }
 
+export type GuildConfigCreatexpExcludedChannelIdsInput = {
+  set: string[]
+}
+
 export type GuildConfigCreateticketStaffRoleIdsInput = {
   set: string[]
 }
@@ -921,6 +941,11 @@ export type GuildConfigUpdatestaffRoleIdsInput = {
 
 export type BoolFieldUpdateOperationsInput = {
   set?: boolean
+}
+
+export type GuildConfigUpdatexpExcludedChannelIdsInput = {
+  set?: string[]
+  push?: string | string[]
 }
 
 export type GuildConfigUpdateticketStaffRoleIdsInput = {
@@ -952,6 +977,7 @@ export type GuildConfigCreateWithoutGuildInput = {
   xpCooldownSec?: number
   levelUpChannelId?: string | null
   leaderboardPublic?: boolean
+  xpExcludedChannelIds?: Prisma.GuildConfigCreatexpExcludedChannelIdsInput | string[]
   ticketCategoryId?: string | null
   ticketStaffRoleIds?: Prisma.GuildConfigCreateticketStaffRoleIdsInput | string[]
   ticketLogChannelId?: string | null
@@ -982,6 +1008,7 @@ export type GuildConfigUncheckedCreateWithoutGuildInput = {
   xpCooldownSec?: number
   levelUpChannelId?: string | null
   leaderboardPublic?: boolean
+  xpExcludedChannelIds?: Prisma.GuildConfigCreatexpExcludedChannelIdsInput | string[]
   ticketCategoryId?: string | null
   ticketStaffRoleIds?: Prisma.GuildConfigCreateticketStaffRoleIdsInput | string[]
   ticketLogChannelId?: string | null
@@ -1028,6 +1055,7 @@ export type GuildConfigUpdateWithoutGuildInput = {
   xpCooldownSec?: Prisma.IntFieldUpdateOperationsInput | number
   levelUpChannelId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   leaderboardPublic?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  xpExcludedChannelIds?: Prisma.GuildConfigUpdatexpExcludedChannelIdsInput | string[]
   ticketCategoryId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   ticketStaffRoleIds?: Prisma.GuildConfigUpdateticketStaffRoleIdsInput | string[]
   ticketLogChannelId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -1058,6 +1086,7 @@ export type GuildConfigUncheckedUpdateWithoutGuildInput = {
   xpCooldownSec?: Prisma.IntFieldUpdateOperationsInput | number
   levelUpChannelId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   leaderboardPublic?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  xpExcludedChannelIds?: Prisma.GuildConfigUpdatexpExcludedChannelIdsInput | string[]
   ticketCategoryId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   ticketStaffRoleIds?: Prisma.GuildConfigUpdateticketStaffRoleIdsInput | string[]
   ticketLogChannelId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -1091,6 +1120,7 @@ export type GuildConfigSelect<ExtArgs extends runtime.Types.Extensions.InternalA
   xpCooldownSec?: boolean
   levelUpChannelId?: boolean
   leaderboardPublic?: boolean
+  xpExcludedChannelIds?: boolean
   ticketCategoryId?: boolean
   ticketStaffRoleIds?: boolean
   ticketLogChannelId?: boolean
@@ -1123,6 +1153,7 @@ export type GuildConfigSelectCreateManyAndReturn<ExtArgs extends runtime.Types.E
   xpCooldownSec?: boolean
   levelUpChannelId?: boolean
   leaderboardPublic?: boolean
+  xpExcludedChannelIds?: boolean
   ticketCategoryId?: boolean
   ticketStaffRoleIds?: boolean
   ticketLogChannelId?: boolean
@@ -1155,6 +1186,7 @@ export type GuildConfigSelectUpdateManyAndReturn<ExtArgs extends runtime.Types.E
   xpCooldownSec?: boolean
   levelUpChannelId?: boolean
   leaderboardPublic?: boolean
+  xpExcludedChannelIds?: boolean
   ticketCategoryId?: boolean
   ticketStaffRoleIds?: boolean
   ticketLogChannelId?: boolean
@@ -1187,6 +1219,7 @@ export type GuildConfigSelectScalar = {
   xpCooldownSec?: boolean
   levelUpChannelId?: boolean
   leaderboardPublic?: boolean
+  xpExcludedChannelIds?: boolean
   ticketCategoryId?: boolean
   ticketStaffRoleIds?: boolean
   ticketLogChannelId?: boolean
@@ -1206,7 +1239,7 @@ export type GuildConfigSelectScalar = {
   updatedAt?: boolean
 }
 
-export type GuildConfigOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"guildId" | "timezone" | "modLogChannelId" | "staffRoleIds" | "announceChannelId" | "xpEnabled" | "xpMin" | "xpMax" | "xpCooldownSec" | "levelUpChannelId" | "leaderboardPublic" | "ticketCategoryId" | "ticketStaffRoleIds" | "ticketLogChannelId" | "td2ChannelId" | "td2ReportChannelId" | "td2ReportViewerRoleIds" | "td2ReportFeedChannelId" | "td2PublicListing" | "welcomeEnabled" | "welcomeChannelId" | "welcomeMessage" | "welcomeRoleId" | "goodbyeEnabled" | "goodbyeChannelId" | "goodbyeMessage" | "caseRetentionMonths" | "updatedAt", ExtArgs["result"]["guildConfig"]>
+export type GuildConfigOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"guildId" | "timezone" | "modLogChannelId" | "staffRoleIds" | "announceChannelId" | "xpEnabled" | "xpMin" | "xpMax" | "xpCooldownSec" | "levelUpChannelId" | "leaderboardPublic" | "xpExcludedChannelIds" | "ticketCategoryId" | "ticketStaffRoleIds" | "ticketLogChannelId" | "td2ChannelId" | "td2ReportChannelId" | "td2ReportViewerRoleIds" | "td2ReportFeedChannelId" | "td2PublicListing" | "welcomeEnabled" | "welcomeChannelId" | "welcomeMessage" | "welcomeRoleId" | "goodbyeEnabled" | "goodbyeChannelId" | "goodbyeMessage" | "caseRetentionMonths" | "updatedAt", ExtArgs["result"]["guildConfig"]>
 export type GuildConfigInclude<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   guild?: boolean | Prisma.GuildDefaultArgs<ExtArgs>
 }
@@ -1234,6 +1267,7 @@ export type $GuildConfigPayload<ExtArgs extends runtime.Types.Extensions.Interna
     xpCooldownSec: number
     levelUpChannelId: string | null
     leaderboardPublic: boolean
+    xpExcludedChannelIds: string[]
     ticketCategoryId: string | null
     ticketStaffRoleIds: string[]
     ticketLogChannelId: string | null
@@ -1686,6 +1720,7 @@ export interface GuildConfigFieldRefs {
   readonly xpCooldownSec: Prisma.FieldRef<"GuildConfig", 'Int'>
   readonly levelUpChannelId: Prisma.FieldRef<"GuildConfig", 'String'>
   readonly leaderboardPublic: Prisma.FieldRef<"GuildConfig", 'Boolean'>
+  readonly xpExcludedChannelIds: Prisma.FieldRef<"GuildConfig", 'String[]'>
   readonly ticketCategoryId: Prisma.FieldRef<"GuildConfig", 'String'>
   readonly ticketStaffRoleIds: Prisma.FieldRef<"GuildConfig", 'String[]'>
   readonly ticketLogChannelId: Prisma.FieldRef<"GuildConfig", 'String'>

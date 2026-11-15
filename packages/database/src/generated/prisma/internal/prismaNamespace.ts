@@ -2741,6 +2741,7 @@ export const GuildConfigScalarFieldEnum = {
   xpCooldownSec: 'xpCooldownSec',
   levelUpChannelId: 'levelUpChannelId',
   leaderboardPublic: 'leaderboardPublic',
+  xpExcludedChannelIds: 'xpExcludedChannelIds',
   ticketCategoryId: 'ticketCategoryId',
   ticketStaffRoleIds: 'ticketStaffRoleIds',
   ticketLogChannelId: 'ticketLogChannelId',
