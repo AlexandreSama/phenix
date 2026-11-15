@@ -7,6 +7,10 @@ import { createCooldowns } from './xp.js';
 
 const database = vi.hoisted(() => ({ awardXp: vi.fn() }));
 vi.mock('@phenix/database', () => database);
+// Pas de dessin ni d'accès réseau dans ces tests : la carte est testée dans level-card.test.ts
+vi.mock('./level-card.js', () => ({
+  levelUpReply: vi.fn().mockResolvedValue({ files: [] }),
+}));
 const award = database.awardXp;
 
 const settings: GuildSettings = {
@@ -37,12 +41,14 @@ const settings: GuildSettings = {
 /** Faux message : seulement ce que le handler lit. */
 function fakeMessage({ bot = false, system = false } = {}) {
   const send = vi.fn().mockResolvedValue(undefined);
+  const displayAvatarURL = vi.fn(() => 'https://cdn/avatar.png');
   return {
     inGuild: () => true,
     guildId: '100000000000000001',
     system,
     author: { id: '200000000000000001', bot, displayName: 'Agent' },
-    member: { displayName: 'Agent Phénix', displayAvatarURL: () => 'https://cdn/avatar.png' },
+    member: { displayName: 'Agent Phénix', displayAvatarURL },
+    displayAvatarURL,
     guild: { channels: { cache: new Map() } },
     channel: { id: '300000000000000001', send },
     send,
@@ -107,9 +113,36 @@ describe('gain d’XP sur les messages', () => {
 
     await handle(message);
 
-    expect(message.send).toHaveBeenCalledWith({
-      content: '🔥 <@200000000000000001> passe au **niveau 1** !',
-      allowedMentions: { users: ['200000000000000001'] },
+    expect(message.send).toHaveBeenCalledOnce();
+    const callArgs = message.send.mock.calls[0]?.[0];
+    // Le contenu texte est toujours présent
+    expect(callArgs?.content).toContain('🔥');
+    expect(callArgs?.content).toContain('<@200000000000000001>');
+    // La mention notifie le membre, et lui seul
+    expect(callArgs?.allowedMentions?.users).toEqual(['200000000000000001']);
+  });
+
+  it('calcule l’avatar une seule fois par message, même en cas de passage de niveau', async () => {
+    award.mockResolvedValue({ xp: 120, level: 1, leveledUp: true });
+    const { handle } = setup();
+    const message = fakeMessage();
+
+    await handle(message);
+
+    expect(message.displayAvatarURL).toHaveBeenCalledOnce();
+  });
+
+  it('demande un avatar statique (même URL que /rank et /passage-de-niveau), jamais un GIF animé', async () => {
+    award.mockResolvedValue({ xp: 120, level: 1, leveledUp: true });
+    const { handle } = setup();
+    const message = fakeMessage();
+
+    await handle(message);
+
+    expect(message.displayAvatarURL).toHaveBeenCalledWith({
+      extension: 'png',
+      size: 128,
+      forceStatic: true,
     });
   });
 
