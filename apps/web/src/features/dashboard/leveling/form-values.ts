@@ -18,8 +18,22 @@ export const levelingFormSchema = withXpRange(
 
 export type LevelingFormInput = z.input<typeof levelingFormSchema>;
 
+/** Les salons exclus partent d'une liste, même vide : react-hook-form renvoie alors toujours une liste. */
 export function toFormValues(config: LevelingConfig): LevelingFormInput {
-  return { ...config, levelUpChannelId: config.levelUpChannelId ?? '' };
+  return {
+    ...config,
+    levelUpChannelId: config.levelUpChannelId ?? '',
+    xpExcludedChannelIds: config.xpExcludedChannelIds,
+  };
+}
+
+/**
+ * Les identifiants exclus que Discord ne connaît plus (salon ou catégorie supprimé) : on les
+ * affiche pour les retirer, plutôt que de les garder en silence ou de les perdre.
+ */
+export function unknownChannelIds(excludedIds: string[], knownIds: string[]): string[] {
+  const known = new Set(knownIds);
+  return excludedIds.filter((id) => !known.has(id));
 }
 
 export interface LevelEstimate {

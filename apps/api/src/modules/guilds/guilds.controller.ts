@@ -29,6 +29,22 @@ export class GuildsController {
     return this.guilds.channels(guildId);
   }
 
+  // Salons vocaux et de scène : même forme que les salons texte
+  @Get(':guildId/voice-channels')
+  @UseGuards(GuildAccessGuard)
+  @GuildModule('ANY')
+  voice(@Param('guildId') guildId: string): Promise<GuildChannelSummary[]> {
+    return this.guilds.voice(guildId);
+  }
+
+  // Forums et salons média : même forme que les salons texte
+  @Get(':guildId/forum-channels')
+  @UseGuards(GuildAccessGuard)
+  @GuildModule('ANY')
+  forums(@Param('guildId') guildId: string): Promise<GuildChannelSummary[]> {
+    return this.guilds.forums(guildId);
+  }
+
   @Get(':guildId/categories')
   @UseGuards(GuildAccessGuard)
   @GuildModule('ANY')

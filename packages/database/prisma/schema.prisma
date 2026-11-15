@@ -62,6 +62,7 @@ model GuildConfig {
   xpCooldownSec          Int      @default(60)
   levelUpChannelId       String? // vide = dans le salon du message
   leaderboardPublic      Boolean  @default(true) // page /classement du site
+  xpExcludedChannelIds   String[] @default([]) // salons, vocaux ou catégories sans gain d'XP ; les fils en héritent
   ticketCategoryId       String?
   ticketStaffRoleIds     String[]
   ticketLogChannelId     String?

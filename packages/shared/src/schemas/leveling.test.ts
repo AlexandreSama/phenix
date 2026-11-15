@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import {
+  MAX_XP_EXCLUDED_CHANNELS,
   leaderboardQuerySchema,
   levelingConfigPatchSchema,
   levelingConfigSchema,
@@ -12,7 +13,11 @@ const valid = {
   xpCooldownSec: 60,
   levelUpChannelId: null,
   leaderboardPublic: true,
+  xpExcludedChannelIds: [],
 };
+
+/** Un identifiant Discord factice mais valide (18 chiffres). */
+const id = (n: number) => `1000000000000000${String(n).padStart(2, '0')}`;
 
 describe('levelingConfigSchema', () => {
   it('accepte une config valide', () => {
@@ -27,6 +32,47 @@ describe('levelingConfigSchema', () => {
   it('refuse un délai de plus d’une heure', () => {
     const result = levelingConfigSchema.safeParse({ ...valid, xpCooldownSec: 7200 });
     expect(result.error?.issues[0]?.message).toBe('Une heure au plus');
+  });
+});
+
+describe('levelingConfigSchema : salons exclus du gain d’XP', () => {
+  it('limite à 50 salons, valeur exportée pour l’API et le tableau de bord', () => {
+    expect(MAX_XP_EXCLUDED_CHANNELS).toBe(50);
+  });
+
+  it('accepte de 0 à 50 identifiants', () => {
+    const fifty = Array.from({ length: MAX_XP_EXCLUDED_CHANNELS }, (_, n) => id(n));
+    for (const xpExcludedChannelIds of [[], [id(1)], fifty]) {
+      expect(levelingConfigSchema.safeParse({ ...valid, xpExcludedChannelIds }).success).toBe(true);
+    }
+  });
+
+  it('refuse un identifiant invalide', () => {
+    const result = levelingConfigSchema.safeParse({ ...valid, xpExcludedChannelIds: ['abc'] });
+    expect(result.error?.issues[0]?.message).toBe('ID Discord invalide');
+  });
+
+  it('refuse un doublon', () => {
+    const result = levelingConfigSchema.safeParse({
+      ...valid,
+      xpExcludedChannelIds: [id(1), id(2), id(1)],
+    });
+    expect(result.error?.issues[0]?.message).toBe('Un salon ne peut figurer qu’une fois');
+  });
+
+  it('refuse 51 entrées', () => {
+    const result = levelingConfigSchema.safeParse({
+      ...valid,
+      xpExcludedChannelIds: Array.from({ length: MAX_XP_EXCLUDED_CHANNELS + 1 }, (_, n) => id(n)),
+    });
+    expect(result.error?.issues[0]?.message).toBe('50 salons au plus');
+  });
+
+  it('reste facultatif dans une modification partielle', () => {
+    expect(levelingConfigPatchSchema.safeParse({ xpMin: 90 }).success).toBe(true);
+    expect(levelingConfigPatchSchema.safeParse({ xpExcludedChannelIds: [id(1)] }).success).toBe(
+      true,
+    );
   });
 });
 

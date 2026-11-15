@@ -24,6 +24,7 @@ const settings: GuildSettings = {
   xpCooldownSec: 60,
   levelUpChannelId: null,
   leaderboardPublic: true,
+  xpExcludedChannelIds: [],
   ticketLogChannelId: null,
   td2ChannelId: null,
   td2ReportChannelId: null,
@@ -38,8 +39,21 @@ const settings: GuildSettings = {
   goodbyeMessage: null,
 };
 
+const CHANNEL = '300000000000000001';
+const CATEGORY = '400000000000000001';
+const PARENT = '500000000000000001';
+const OTHER_CHANNEL = '300000000000000002';
+
+/** Faux salon : normal (parentId = catégorie) ou fil (parentId = salon parent, parent.parentId = catégorie). */
+type FakeChannel =
+  | { id: string; parentId: string | null; thread?: false }
+  | { id: string; parentId: string; thread: true; parentCategoryId: string | null };
+
 /** Faux message : seulement ce que le handler lit. */
-function fakeMessage({ bot = false, system = false } = {}) {
+function fakeMessage(
+  { bot = false, system = false } = {},
+  where: FakeChannel = { id: CHANNEL, parentId: null },
+) {
   const send = vi.fn().mockResolvedValue(undefined);
   const displayAvatarURL = vi.fn(() => 'https://cdn/avatar.png');
   return {
@@ -50,7 +64,13 @@ function fakeMessage({ bot = false, system = false } = {}) {
     member: { displayName: 'Agent Phénix', displayAvatarURL },
     displayAvatarURL,
     guild: { channels: { cache: new Map() } },
-    channel: { id: '300000000000000001', send },
+    channel: {
+      id: where.id,
+      parentId: where.parentId,
+      parent: where.thread ? { parentId: where.parentCategoryId } : null,
+      isThread: () => where.thread === true,
+      send,
+    },
     send,
   };
 }
@@ -143,6 +163,68 @@ describe('gain d’XP sur les messages', () => {
       extension: 'png',
       size: 128,
       forceStatic: true,
+    });
+  });
+
+  describe('salons exclus', () => {
+    const excluded = { ...settings, xpExcludedChannelIds: [CHANNEL] };
+
+    it('ne donne rien dans un salon exclu', async () => {
+      const { handle } = setup(excluded);
+
+      await handle(fakeMessage());
+
+      expect(award).not.toHaveBeenCalled();
+    });
+
+    it('ne donne rien dans un salon dont la catégorie est exclue', async () => {
+      const { handle } = setup({ ...settings, xpExcludedChannelIds: [CATEGORY] });
+
+      await handle(fakeMessage({}, { id: CHANNEL, parentId: CATEGORY }));
+
+      expect(award).not.toHaveBeenCalled();
+    });
+
+    it('ne donne rien dans un fil dont le salon parent est exclu', async () => {
+      const { handle } = setup({ ...settings, xpExcludedChannelIds: [PARENT] });
+
+      await handle(
+        fakeMessage({}, { id: CHANNEL, parentId: PARENT, thread: true, parentCategoryId: null }),
+      );
+
+      expect(award).not.toHaveBeenCalled();
+    });
+
+    it('ne donne rien dans un fil dont la catégorie du salon parent est exclue', async () => {
+      const { handle } = setup({ ...settings, xpExcludedChannelIds: [CATEGORY] });
+
+      await handle(
+        fakeMessage(
+          {},
+          { id: CHANNEL, parentId: PARENT, thread: true, parentCategoryId: CATEGORY },
+        ),
+      );
+
+      expect(award).not.toHaveBeenCalled();
+    });
+
+    it('donne l’XP dans un salon non exclu quand la liste n’est pas vide', async () => {
+      award.mockResolvedValue({ xp: 10, level: 0, leveledUp: false });
+      const { handle } = setup(excluded);
+
+      await handle(fakeMessage({}, { id: OTHER_CHANNEL, parentId: null }));
+
+      expect(award).toHaveBeenCalledTimes(1);
+    });
+
+    it('ne consomme pas le délai : un message exclu n’empêche pas le suivant, ailleurs, de rapporter', async () => {
+      award.mockResolvedValue({ xp: 10, level: 0, leveledUp: false });
+      const { handle } = setup(excluded);
+
+      await handle(fakeMessage());
+      await handle(fakeMessage({}, { id: OTHER_CHANNEL, parentId: null }));
+
+      expect(award).toHaveBeenCalledTimes(1);
     });
   });
 

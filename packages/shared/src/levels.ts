@@ -47,6 +47,7 @@ export const LEVELING_DEFAULTS = {
   xpCooldownSec: 60,
   levelUpChannelId: null,
   leaderboardPublic: true,
+  xpExcludedChannelIds: [] as readonly string[],
 } as const;
 
 /** Membres par page du classement : le bot en montre moins que le site. */

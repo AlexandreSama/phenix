@@ -7,6 +7,9 @@ const xpAmount = z
   .min(1, '1 XP au moins')
   .max(100, '100 XP au plus');
 
+/** Nombre de salons exclus du gain d'XP au plus, par serveur. */
+export const MAX_XP_EXCLUDED_CHANNELS = 50;
+
 /** Les champs de la page « Niveaux », sans la règle qui relie le minimum et le maximum. */
 export const levelingConfigFields = z.object({
   xpEnabled: z.boolean(),
@@ -19,6 +22,11 @@ export const levelingConfigFields = z.object({
     .max(3600, 'Une heure au plus'),
   levelUpChannelId: snowflakeSchema.nullable(),
   leaderboardPublic: z.boolean(),
+  /** Salons textes, vocaux ou catégories où l'on ne gagne pas d'XP en écrivant ; les fils en héritent. */
+  xpExcludedChannelIds: z
+    .array(snowflakeSchema)
+    .max(MAX_XP_EXCLUDED_CHANNELS, `${MAX_XP_EXCLUDED_CHANNELS} salons au plus`)
+    .refine((ids) => new Set(ids).size === ids.length, 'Un salon ne peut figurer qu’une fois'),
 });
 
 /**

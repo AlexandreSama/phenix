@@ -50,6 +50,20 @@ export const channelsQuery = (guildId: string) =>
     queryFn: () => api<GuildChannelSummary[]>(`/guilds/${guildId}/channels`),
   });
 
+/** Salons vocaux et de scène, même forme que les salons textuels. */
+export const voiceChannelsQuery = (guildId: string) =>
+  queryOptions({
+    queryKey: ['guilds', guildId, 'voice-channels'],
+    queryFn: () => api<GuildChannelSummary[]>(`/guilds/${guildId}/voice-channels`),
+  });
+
+/** Forums et salons média, même forme que les salons textuels. */
+export const forumChannelsQuery = (guildId: string) =>
+  queryOptions({
+    queryKey: ['guilds', guildId, 'forum-channels'],
+    queryFn: () => api<GuildChannelSummary[]>(`/guilds/${guildId}/forum-channels`),
+  });
+
 export const rolesQuery = (guildId: string) =>
   queryOptions({
     queryKey: ['guilds', guildId, 'roles'],

@@ -8,6 +8,8 @@ const GUILD = '100000000000000001';
 const CHANNEL = '400000000000000001';
 const ROLE = '500000000000000001';
 const CATEGORY = '300000000000000001';
+const VOICE = '400000000000000002';
+const FORUM = '400000000000000003';
 
 /** Ce que l'API répond, adresse par adresse ; toute autre adresse répond 404. */
 const API: Record<string, unknown> = {
@@ -38,6 +40,8 @@ const API: Record<string, unknown> = {
     },
   ],
   [`/api/guilds/${GUILD}/channels`]: [{ id: CHANNEL, name: 'général', parentName: 'Discussion' }],
+  [`/api/guilds/${GUILD}/voice-channels`]: [{ id: VOICE, name: 'Vocal', parentName: null }],
+  [`/api/guilds/${GUILD}/forum-channels`]: [{ id: FORUM, name: 'Idées', parentName: null }],
   [`/api/guilds/${GUILD}/roles`]: [
     { id: ROLE, name: 'Modérateur', color: '#f5aa04', assignable: true, blockedReason: null },
   ],
@@ -55,6 +59,7 @@ const API: Record<string, unknown> = {
     xpCooldownSec: 60,
     levelUpChannelId: null,
     leaderboardPublic: true,
+    xpExcludedChannelIds: [],
   },
   [`/api/guilds/${GUILD}/role-panels`]: [
     {
@@ -334,6 +339,16 @@ describe('pages du tableau de bord', () => {
     expect(screen.getByRole('link', { name: 'Régler les tickets' }).getAttribute('href')).toBe(
       `${base}/tickets/reglages`,
     );
+  });
+
+  it('propose, dans Niveaux, les salons textuels, vocaux, les forums et les catégories à exclure', async () => {
+    open(`${base}/niveaux`);
+
+    const group = await screen.findByRole('group', { name: "Salons exclus de l'XP" });
+    expect(within(group).getByRole('checkbox', { name: /général/ })).toBeTruthy();
+    expect(within(group).getByRole('checkbox', { name: /Vocal/ })).toBeTruthy();
+    expect(within(group).getByRole('checkbox', { name: /Idées/ })).toBeTruthy();
+    expect(within(group).getByRole('checkbox', { name: /Support/ })).toBeTruthy();
   });
 
   it('dit ce qui a échoué et propose de réessayer', async () => {
