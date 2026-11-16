@@ -18,13 +18,22 @@ const config: WelcomeSettings = {
 };
 const channels = [{ id: CHANNEL, name: 'accueil', parentName: null }];
 const roles = [
-  { id: ROLE, name: 'Membre', color: null, assignable: true, blockedReason: null },
+  { id: ROLE, name: 'Membre', color: null, assignable: true, blockedReason: null, managed: false },
+  {
+    id: '500000000000000010',
+    name: 'Booster',
+    color: null,
+    assignable: false,
+    blockedReason: 'Rôle géré par Discord',
+    managed: true,
+  },
   {
     id: BLOCKED_ROLE,
     name: 'Modérateur',
     color: null,
     assignable: false,
     blockedReason: 'Ce rôle donne des permissions de modération',
+    managed: false,
   },
 ];
 
@@ -85,6 +94,15 @@ describe('WelcomeSettingsForm', () => {
       goodbyeEnabled: true,
       goodbyeChannelId: CHANNEL,
     });
+  });
+
+  it('grise un rôle géré (Booster) avec sa raison : il n’est pas distribuable', () => {
+    setup();
+
+    const managed = screen.getByRole('option', {
+      name: /Booster — Rôle géré par Discord/,
+    }) as HTMLOptionElement;
+    expect(managed.disabled).toBe(true);
   });
 
   it('grise les rôles non distribuables avec leur raison', () => {

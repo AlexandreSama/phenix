@@ -7,7 +7,9 @@ import { TicketTypeForm } from './ticket-type-form';
 const CATEGORY = '100000000000000001';
 const MODO = '500000000000000001';
 const categories = [{ id: CATEGORY, name: 'Support' }];
-const roles = [{ id: MODO, name: 'Modo', color: null, assignable: false, blockedReason: 'x' }];
+const roles = [
+  { id: MODO, name: 'Modo', color: null, assignable: false, blockedReason: 'x', managed: false },
+];
 
 function setup(onSubmit = vi.fn().mockResolvedValue(undefined), type?: TicketTypeDetail) {
   render(

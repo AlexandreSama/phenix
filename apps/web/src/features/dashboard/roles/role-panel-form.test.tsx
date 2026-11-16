@@ -13,8 +13,17 @@ const roles = [
     color: null,
     assignable: false,
     blockedReason: 'Placé au-dessus du rôle du bot',
+    managed: false,
   },
-  { id: GAMER, name: 'Gamer', color: null, assignable: true, blockedReason: null },
+  {
+    id: '500000000000000010',
+    name: 'Booster',
+    color: null,
+    assignable: false,
+    blockedReason: 'Rôle géré par Discord',
+    managed: true,
+  },
+  { id: GAMER, name: 'Gamer', color: null, assignable: true, blockedReason: null, managed: false },
 ];
 
 function setup(onSubmit = vi.fn().mockResolvedValue(undefined)) {
@@ -61,6 +70,13 @@ describe('RolePanelForm', () => {
     const admin = screen.getByRole<HTMLOptionElement>('option', { name: /Admin/ });
     expect(admin.disabled).toBe(true);
     expect(admin.textContent).toContain('Placé au-dessus du rôle du bot');
+  });
+
+  it('grise un rôle géré (Booster) avec sa raison : un panel ne peut pas le donner', () => {
+    setup();
+    const booster = screen.getByRole<HTMLOptionElement>('option', { name: /Booster/ });
+    expect(booster.disabled).toBe(true);
+    expect(booster.textContent).toContain('Rôle géré par Discord');
   });
 
   it('signale un rôle en double sous le second bouton', async () => {

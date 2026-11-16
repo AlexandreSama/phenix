@@ -27,7 +27,8 @@ const NO_COLOR = '#a8a29e';
 
 /**
  * Les rôles du serveur à cocher, avec leur couleur. Toutes les cases portent le même
- * register('…') : react-hook-form en fait une liste d'IDs.
+ * register('…') : react-hook-form en fait une liste d'IDs. Un rôle géré (Booster, intégration)
+ * reste visible mais grisé, avec sa raison : on ne le choisit pas ici (seul un bonus d'XP le cible).
  */
 export function RoleChecklist({
   roles,
@@ -45,12 +46,13 @@ export function RoleChecklist({
       {roles.map((role) => (
         <label
           key={role.id}
-          className="flex min-h-11 cursor-pointer items-center gap-3 rounded-lg border border-white/8 px-3 py-2 text-sm transition hover:border-white/20 has-checked:border-flame/50 has-checked:bg-flame/8"
+          className="flex min-h-11 cursor-pointer items-center gap-3 rounded-lg border border-white/8 px-3 py-2 text-sm transition hover:border-white/20 has-checked:border-flame/50 has-checked:bg-flame/8 has-disabled:cursor-not-allowed has-disabled:opacity-50"
         >
           <input
             type="checkbox"
             value={role.id}
             className="size-4 accent-flame"
+            disabled={role.managed}
             {...registration}
           />
           <span
@@ -59,6 +61,9 @@ export function RoleChecklist({
             style={{ backgroundColor: role.color ?? NO_COLOR }}
           />
           <span className="truncate text-stone-100">{role.name}</span>
+          {role.managed && role.blockedReason && (
+            <span className="truncate text-xs text-stone-400">({role.blockedReason})</span>
+          )}
         </label>
       ))}
     </div>

@@ -6,11 +6,15 @@ import {
   channelsQuery,
   forumChannelsQuery,
   levelingQuery,
+  rolesQuery,
+  useSaveXpMultipliers,
   useUpdateLeveling,
   voiceChannelsQuery,
+  xpMultipliersQuery,
 } from '../api';
 import { firstFailure, LoadError, PageSkeleton } from '../query-state';
 import { LevelingSettingsForm } from './leveling-settings-form';
+import { XpMultipliersPanel } from './xp-multipliers-panel';
 
 export function LevelingSettingsPage() {
   const { guildId } = useParams({ from: '/dashboard/$guildId' });
@@ -21,10 +25,13 @@ export function LevelingSettingsPage() {
       voiceChannelsQuery(guildId),
       forumChannelsQuery(guildId),
       categoriesQuery(guildId),
+      rolesQuery(guildId),
+      xpMultipliersQuery(guildId),
     ],
   });
-  const [config, channels, voiceChannels, forumChannels, categories] = queries;
+  const [config, channels, voiceChannels, forumChannels, categories, roles, multipliers] = queries;
   const update = useUpdateLeveling(guildId);
+  const saveMultipliers = useSaveXpMultipliers(guildId);
   const { error, retry } = firstFailure(queries);
 
   return (
@@ -39,21 +46,38 @@ export function LevelingSettingsPage() {
           !channels.data ||
           !voiceChannels.data ||
           !forumChannels.data ||
-          !categories.data) && <PageSkeleton label="Chargement des réglages…" panels={3} />}
+          !categories.data ||
+          !roles.data ||
+          !multipliers.data) && <PageSkeleton label="Chargement des réglages…" panels={3} />}
       {config.data &&
         channels.data &&
         voiceChannels.data &&
         forumChannels.data &&
-        categories.data && (
-          <LevelingSettingsForm
-            guildId={guildId}
-            config={config.data}
-            channels={channels.data}
-            voiceChannels={voiceChannels.data}
-            forumChannels={forumChannels.data}
-            categories={categories.data}
-            onSubmit={(values) => update.mutateAsync(values)}
-          />
+        categories.data &&
+        roles.data &&
+        multipliers.data && (
+          <>
+            <LevelingSettingsForm
+              guildId={guildId}
+              config={config.data}
+              channels={channels.data}
+              voiceChannels={voiceChannels.data}
+              forumChannels={forumChannels.data}
+              categories={categories.data}
+              onSubmit={(values) => update.mutateAsync(values)}
+            />
+            {/* Hors du formulaire des réglages : ses bonus s'enregistrent à part (PUT de toute la liste) */}
+            <XpMultipliersPanel
+              config={config.data}
+              multipliers={multipliers.data.multipliers}
+              roles={roles.data}
+              channels={channels.data}
+              voiceChannels={voiceChannels.data}
+              forumChannels={forumChannels.data}
+              categories={categories.data}
+              onSubmit={(list) => saveMultipliers.mutateAsync(list)}
+            />
+          </>
         )}
     </div>
   );

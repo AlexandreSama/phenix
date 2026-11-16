@@ -41,7 +41,11 @@ import {
   giveawayComponents,
   resumeGiveaways,
 } from './modules/giveaways/index.js';
-import { createMessageXpHandler, levelingComponents } from './modules/leveling/index.js';
+import {
+  createMessageXpHandler,
+  createXpRulesCache,
+  levelingComponents,
+} from './modules/leveling/index.js';
 import { createMetricsProcessor } from './modules/metrics/index.js';
 import {
   createLockReleaseLogger,
@@ -79,6 +83,7 @@ import {
 const env = loadEnv();
 const client = createClient();
 const configs = createGuildConfigCache(prisma);
+const xpRules = createXpRulesCache(prisma);
 
 // La file des giveaways : le bot y ajoute des tâches (comme l'API) et il est seul à les traiter
 const giveawayQueue = createGiveawayQueue(env.REDIS_URL);
@@ -169,6 +174,7 @@ const context: BotContext = {
   db: prisma,
   logger,
   configs,
+  xpRules,
   publicUrl: env.PUBLIC_URL?.replace(/\/$/, ''),
   transcripts: createTranscriptStorage(env),
   evidence: createEvidenceStorage(env),
@@ -180,6 +186,7 @@ const context: BotContext = {
 };
 const unsubscribe = subscribeToBotEvents(env.REDIS_URL, {
   configs,
+  xpRules,
   rolePanels: createRolePanelPublisher(client, prisma, logger),
   ticketPanels: createTicketPanelPublisher(client, prisma, logger),
   removeTd2Report: (event) => removeReportStaffMessage(client, configs, event, logger),

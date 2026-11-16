@@ -141,6 +141,24 @@ export function LevelingSettingsForm({
           </Field>
         </div>
 
+        <Field
+          id="xpMultiplierMaxPercent"
+          label="Plafond des bonus"
+          hint="En pourcentage de l'XP de base : le total des bonus ne dépasse jamais ce plafond (de 100 à 1000 %, 300 % par défaut). Les bonus se règlent dans le panneau « Bonus d'XP »."
+          error={errors.xpMultiplierMaxPercent?.message}
+        >
+          <input
+            id="xpMultiplierMaxPercent"
+            type="number"
+            inputMode="numeric"
+            min={100}
+            max={1000}
+            aria-describedby="xpMultiplierMaxPercent-hint"
+            className={`${inputClass} sm:max-w-48`}
+            {...register('xpMultiplierMaxPercent', { valueAsNumber: true })}
+          />
+        </Field>
+
         <ExcludedChannelsField
           registration={register('xpExcludedChannelIds')}
           selected={excludedIds ?? []}

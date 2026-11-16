@@ -3,7 +3,13 @@ import type { GuildSettings } from '../../core/guild-config-cache.js';
 
 export type LevelingSettings = Pick<
   GuildSettings,
-  'xpEnabled' | 'xpMin' | 'xpMax' | 'xpCooldownSec' | 'levelUpChannelId' | 'leaderboardPublic'
+  | 'xpEnabled'
+  | 'xpMin'
+  | 'xpMax'
+  | 'xpCooldownSec'
+  | 'levelUpChannelId'
+  | 'leaderboardPublic'
+  | 'xpMultiplierMaxPercent'
 > & { readonly xpExcludedChannelIds: readonly string[] };
 
 /** Réglages XP d'un serveur ; ceux par défaut s'il n'a pas encore de config. */

@@ -14,6 +14,7 @@ const settings = {
   levelUpChannelId: null,
   leaderboardPublic: true,
   xpExcludedChannelIds: [],
+  xpMultiplierMaxPercent: 300,
   ticketLogChannelId: null,
   td2ChannelId: null,
   td2ReportChannelId: null,
@@ -77,6 +78,15 @@ describe('createGuildConfigCache', () => {
         goodbyeMessage: true,
       }),
     });
+  });
+
+  it('lit le plafond du bonus d’XP', async () => {
+    const { cache, findUnique } = setup();
+
+    await cache.get('1');
+
+    const [args] = findUnique.mock.calls[0] as [{ select: Record<string, true> }];
+    expect(args.select).toHaveProperty('xpMultiplierMaxPercent', true);
   });
 
   it('ne lit plus l’ancien réglage des tickets (catégorie et équipe viennent du type)', async () => {

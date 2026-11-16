@@ -122,6 +122,11 @@ export type RolePanel = Prisma.RolePanelModel
  */
 export type RolePanelOption = Prisma.RolePanelOptionModel
 /**
+ * Model XpMultiplier
+ * 
+ */
+export type XpMultiplier = Prisma.XpMultiplierModel
+/**
  * Model Td2Profile
  * 
  */

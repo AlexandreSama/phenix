@@ -1,6 +1,6 @@
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { createMemoryHistory, createRouter, RouterProvider } from '@tanstack/react-router';
-import { render, screen, within } from '@testing-library/react';
+import { fireEvent, render, screen, within } from '@testing-library/react';
 import { afterEach, beforeEach, describe, expect, it, onTestFinished, vi } from 'vitest';
 import { routeTree } from '../../router';
 
@@ -10,6 +10,7 @@ const ROLE = '500000000000000001';
 const CATEGORY = '300000000000000001';
 const VOICE = '400000000000000002';
 const FORUM = '400000000000000003';
+const BOOSTER = '500000000000000002';
 
 /** Ce que l'API répond, adresse par adresse ; toute autre adresse répond 404. */
 const API: Record<string, unknown> = {
@@ -43,7 +44,22 @@ const API: Record<string, unknown> = {
   [`/api/guilds/${GUILD}/voice-channels`]: [{ id: VOICE, name: 'Vocal', parentName: null }],
   [`/api/guilds/${GUILD}/forum-channels`]: [{ id: FORUM, name: 'Idées', parentName: null }],
   [`/api/guilds/${GUILD}/roles`]: [
-    { id: ROLE, name: 'Modérateur', color: '#f5aa04', assignable: true, blockedReason: null },
+    {
+      id: ROLE,
+      name: 'Modérateur',
+      color: '#f5aa04',
+      assignable: true,
+      blockedReason: null,
+      managed: false,
+    },
+    {
+      id: BOOSTER,
+      name: 'Booster',
+      color: '#f47fff',
+      assignable: false,
+      blockedReason: 'Rôle géré par Discord',
+      managed: true,
+    },
   ],
   [`/api/guilds/${GUILD}/categories`]: [{ id: CATEGORY, name: 'Support' }],
   [`/api/guilds/${GUILD}/config`]: {
@@ -60,6 +76,10 @@ const API: Record<string, unknown> = {
     levelUpChannelId: null,
     leaderboardPublic: true,
     xpExcludedChannelIds: [],
+    xpMultiplierMaxPercent: 300,
+  },
+  [`/api/guilds/${GUILD}/leveling/xp-multipliers`]: {
+    multipliers: [{ kind: 'ROLE', targetId: BOOSTER, percent: 150 }],
   },
   [`/api/guilds/${GUILD}/role-panels`]: [
     {
@@ -349,6 +369,42 @@ describe('pages du tableau de bord', () => {
     expect(within(group).getByRole('checkbox', { name: /Vocal/ })).toBeTruthy();
     expect(within(group).getByRole('checkbox', { name: /Idées/ })).toBeTruthy();
     expect(within(group).getByRole('checkbox', { name: /Support/ })).toBeTruthy();
+  });
+
+  it('charge les bonus d’XP dans Niveaux et les aperçoit avec le plafond', async () => {
+    open(`${base}/niveaux`);
+
+    const panel = await screen.findByRole('region', { name: "Bonus d'XP" });
+    const target = within(panel).getByLabelText<HTMLSelectElement>(
+      'Rôle, salon ou catégorie du bonus 1',
+    );
+    expect(target.value).toBe(BOOSTER);
+    expect(within(panel).getByLabelText<HTMLInputElement>('Pourcentage du bonus 1').value).toBe(
+      '150',
+    );
+    expect(within(panel).getByText('Booster : 15–25 XP → 23–38 XP')).toBeTruthy();
+    expect(screen.getByLabelText<HTMLInputElement>('Plafond des bonus').value).toBe('300');
+  });
+
+  it('enregistre les bonus d’XP par une requête PUT au bon corps', async () => {
+    open(`${base}/niveaux`);
+
+    const panel = await screen.findByRole('region', { name: "Bonus d'XP" });
+    fireEvent.change(within(panel).getByLabelText('Pourcentage du bonus 1'), {
+      target: { value: '200' },
+    });
+    fireEvent.click(within(panel).getByRole('button', { name: 'Enregistrer les bonus' }));
+
+    expect(await within(panel).findByText(/Bonus enregistrés/)).toBeTruthy();
+    const put = vi
+      .mocked(globalThis.fetch)
+      .mock.calls.find(
+        ([url, init]) => String(url).endsWith('/xp-multipliers') && init?.method === 'PUT',
+      );
+    expect(put?.[0]).toBe(`/api/guilds/${GUILD}/leveling/xp-multipliers`);
+    expect(JSON.parse(String(put?.[1]?.body))).toEqual({
+      multipliers: [{ kind: 'ROLE', targetId: BOOSTER, percent: 200 }],
+    });
   });
 
   it('dit ce qui a échoué et propose de réessayer', async () => {

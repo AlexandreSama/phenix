@@ -5,6 +5,7 @@ import { rank } from './commands/rank.js';
 import { leaderboardPageButton } from './leaderboard.js';
 
 export { createMessageXpHandler } from './message-xp.js';
+export { createXpRulesCache, type XpRulesCache } from './xp-rules-cache.js';
 
 export const levelingCommands: SlashCommand[] = [rank, leaderboard, levelup];
 

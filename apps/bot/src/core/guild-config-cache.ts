@@ -14,6 +14,7 @@ export type GuildSettings = Pick<
   | 'levelUpChannelId'
   | 'leaderboardPublic'
   | 'xpExcludedChannelIds'
+  | 'xpMultiplierMaxPercent'
   | 'ticketLogChannelId'
   | 'td2ChannelId'
   | 'td2ReportChannelId'
@@ -49,6 +50,7 @@ const SELECT = {
   levelUpChannelId: true,
   leaderboardPublic: true,
   xpExcludedChannelIds: true,
+  xpMultiplierMaxPercent: true,
   ticketLogChannelId: true,
   td2ChannelId: true,
   td2ReportChannelId: true,

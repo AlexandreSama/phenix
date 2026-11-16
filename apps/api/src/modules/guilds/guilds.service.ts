@@ -206,8 +206,10 @@ export class GuildsService {
   }
 
   /**
-   * Les rôles du serveur, du plus haut au plus bas. Chacun dit si le bot peut le distribuer :
-   * Discord refuse qu'un bot donne un rôle placé au-dessus du sien, et on refuse les rôles de staff.
+   * Les rôles du serveur, du plus haut au plus bas, sauf @everyone. Chacun dit si le bot peut le distribuer :
+   * Discord refuse qu'un bot donne un rôle placé au-dessus du sien, on refuse les rôles de staff, et un rôle
+   * géré par une intégration (Booster, rôle de bot) ne se distribue pas. Ces derniers restent listés :
+   * on peut les cibler (bonus d'XP), mais jamais les attribuer (`assignable: false`).
    */
   async roles(guildId: string): Promise<GuildRoleSummary[]> {
     return this.cache.wrap(`guild-roles:${guildId}`, CACHE_SECONDS, async () => {
@@ -221,11 +223,12 @@ export class GuildsService {
       );
 
       return all
-        .filter((role) => role.id !== guildId && !role.managed) // ni @everyone, ni rôle de bot
+        .filter((role) => role.id !== guildId) // pas @everyone
         .toSorted((a, b) => b.position - a.position)
         .map((role) => {
-          const blockedReason =
-            role.position >= botTop
+          const blockedReason = role.managed
+            ? 'Géré par une intégration (bot, boost…) : Discord le gère seul'
+            : role.position >= botTop
               ? 'Placé au-dessus du rôle du bot'
               : hasForbiddenPermissions(role.permissions)
                 ? 'Donne des droits de modération ou d’administration'
@@ -234,6 +237,7 @@ export class GuildsService {
             id: role.id,
             name: role.name,
             color: role.color ? `#${role.color.toString(16).padStart(6, '0')}` : null,
+            managed: role.managed,
             assignable: blockedReason === null,
             blockedReason,
           };

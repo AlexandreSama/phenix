@@ -2,6 +2,7 @@ import type { PrismaClient } from '@phenix/database';
 import type { GiveawayScheduler, Lock, Td2Scheduler } from '@phenix/jobs';
 import type { ObjectStorage } from '@phenix/storage';
 import type { Logger } from '../logger.js';
+import type { XpRulesCache } from '../modules/leveling/xp-rules-cache.js';
 import type { Td2StatsProvider } from '../modules/td2/stats/index.js';
 import type { GuildConfigCache } from './guild-config-cache.js';
 
@@ -11,6 +12,8 @@ export interface BotContext {
   logger: Logger;
   /** Réglages des serveurs, tenus à jour par le site via Valkey */
   configs: GuildConfigCache;
+  /** Bonus d'XP des serveurs (rôles, salons, catégories), tenus à jour par le site via Valkey */
+  xpRules: XpRulesCache;
   /** Adresse du site, sans / final ; absente si le site n'est pas déployé */
   publicUrl?: string;
   /** Bucket des transcripts de tickets, dans Garage */

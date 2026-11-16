@@ -412,6 +412,7 @@ export const ModelName = {
   GiveawayEntry: 'GiveawayEntry',
   RolePanel: 'RolePanel',
   RolePanelOption: 'RolePanelOption',
+  XpMultiplier: 'XpMultiplier',
   Td2Profile: 'Td2Profile',
   Td2Activity: 'Td2Activity',
   Td2ActivityMode: 'Td2ActivityMode',
@@ -442,7 +443,7 @@ export type TypeMap<ExtArgs extends runtime.Types.Extensions.InternalArgs = runt
     omit: GlobalOmitOptions
   }
   meta: {
-    modelProps: "user" | "guild" | "guildConfig" | "guildDelegate" | "case" | "memberLevel" | "marriage" | "ticket" | "ticketType" | "ticketTypeQuestion" | "ticketPanel" | "giveaway" | "giveawayEntry" | "rolePanel" | "rolePanelOption" | "td2Profile" | "td2Activity" | "td2ActivityMode" | "td2ModeSlot" | "td2Directive" | "td2Event" | "td2EventSlot" | "td2Signup" | "td2Report" | "forumCategory" | "forumThread" | "forumAttachment" | "forumPost" | "commandUsage" | "metricSample"
+    modelProps: "user" | "guild" | "guildConfig" | "guildDelegate" | "case" | "memberLevel" | "marriage" | "ticket" | "ticketType" | "ticketTypeQuestion" | "ticketPanel" | "giveaway" | "giveawayEntry" | "rolePanel" | "rolePanelOption" | "xpMultiplier" | "td2Profile" | "td2Activity" | "td2ActivityMode" | "td2ModeSlot" | "td2Directive" | "td2Event" | "td2EventSlot" | "td2Signup" | "td2Report" | "forumCategory" | "forumThread" | "forumAttachment" | "forumPost" | "commandUsage" | "metricSample"
     txIsolationLevel: TransactionIsolationLevel
   }
   model: {
@@ -1553,6 +1554,80 @@ export type TypeMap<ExtArgs extends runtime.Types.Extensions.InternalArgs = runt
         count: {
           args: Prisma.RolePanelOptionCountArgs<ExtArgs>
           result: runtime.Types.Utils.Optional<Prisma.RolePanelOptionCountAggregateOutputType> | number
+        }
+      }
+    }
+    XpMultiplier: {
+      payload: Prisma.$XpMultiplierPayload<ExtArgs>
+      fields: Prisma.XpMultiplierFieldRefs
+      operations: {
+        findUnique: {
+          args: Prisma.XpMultiplierFindUniqueArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$XpMultiplierPayload> | null
+        }
+        findUniqueOrThrow: {
+          args: Prisma.XpMultiplierFindUniqueOrThrowArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$XpMultiplierPayload>
+        }
+        findFirst: {
+          args: Prisma.XpMultiplierFindFirstArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$XpMultiplierPayload> | null
+        }
+        findFirstOrThrow: {
+          args: Prisma.XpMultiplierFindFirstOrThrowArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$XpMultiplierPayload>
+        }
+        findMany: {
+          args: Prisma.XpMultiplierFindManyArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$XpMultiplierPayload>[]
+        }
+        create: {
+          args: Prisma.XpMultiplierCreateArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$XpMultiplierPayload>
+        }
+        createMany: {
+          args: Prisma.XpMultiplierCreateManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        createManyAndReturn: {
+          args: Prisma.XpMultiplierCreateManyAndReturnArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$XpMultiplierPayload>[]
+        }
+        delete: {
+          args: Prisma.XpMultiplierDeleteArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$XpMultiplierPayload>
+        }
+        update: {
+          args: Prisma.XpMultiplierUpdateArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$XpMultiplierPayload>
+        }
+        deleteMany: {
+          args: Prisma.XpMultiplierDeleteManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        updateMany: {
+          args: Prisma.XpMultiplierUpdateManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        updateManyAndReturn: {
+          args: Prisma.XpMultiplierUpdateManyAndReturnArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$XpMultiplierPayload>[]
+        }
+        upsert: {
+          args: Prisma.XpMultiplierUpsertArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$XpMultiplierPayload>
+        }
+        aggregate: {
+          args: Prisma.XpMultiplierAggregateArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.AggregateXpMultiplier>
+        }
+        groupBy: {
+          args: Prisma.XpMultiplierGroupByArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.XpMultiplierGroupByOutputType>[]
+        }
+        count: {
+          args: Prisma.XpMultiplierCountArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.XpMultiplierCountAggregateOutputType> | number
         }
       }
     }
@@ -2742,6 +2817,7 @@ export const GuildConfigScalarFieldEnum = {
   levelUpChannelId: 'levelUpChannelId',
   leaderboardPublic: 'leaderboardPublic',
   xpExcludedChannelIds: 'xpExcludedChannelIds',
+  xpMultiplierMaxPercent: 'xpMultiplierMaxPercent',
   ticketCategoryId: 'ticketCategoryId',
   ticketStaffRoleIds: 'ticketStaffRoleIds',
   ticketLogChannelId: 'ticketLogChannelId',
@@ -2952,6 +3028,17 @@ export const RolePanelOptionScalarFieldEnum = {
 } as const
 
 export type RolePanelOptionScalarFieldEnum = (typeof RolePanelOptionScalarFieldEnum)[keyof typeof RolePanelOptionScalarFieldEnum]
+
+
+export const XpMultiplierScalarFieldEnum = {
+  guildId: 'guildId',
+  targetId: 'targetId',
+  kind: 'kind',
+  percent: 'percent',
+  createdAt: 'createdAt'
+} as const
+
+export type XpMultiplierScalarFieldEnum = (typeof XpMultiplierScalarFieldEnum)[keyof typeof XpMultiplierScalarFieldEnum]
 
 
 export const Td2ProfileScalarFieldEnum = {
@@ -3324,6 +3411,20 @@ export type ListEnumRolePanelModeFieldRefInput<$PrismaModel> = FieldRefInputType
 
 
 /**
+ * Reference to a field of type 'XpMultiplierKind'
+ */
+export type EnumXpMultiplierKindFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'XpMultiplierKind'>
+    
+
+
+/**
+ * Reference to a field of type 'XpMultiplierKind[]'
+ */
+export type ListEnumXpMultiplierKindFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'XpMultiplierKind[]'>
+    
+
+
+/**
  * Reference to a field of type 'Td2Platform'
  */
 export type EnumTd2PlatformFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'Td2Platform'>
@@ -3586,6 +3687,7 @@ export type GlobalOmitConfig = {
   giveawayEntry?: Prisma.GiveawayEntryOmit
   rolePanel?: Prisma.RolePanelOmit
   rolePanelOption?: Prisma.RolePanelOptionOmit
+  xpMultiplier?: Prisma.XpMultiplierOmit
   td2Profile?: Prisma.Td2ProfileOmit
   td2Activity?: Prisma.Td2ActivityOmit
   td2ActivityMode?: Prisma.Td2ActivityModeOmit

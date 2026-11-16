@@ -86,6 +86,15 @@ export const RolePanelMode = {
 export type RolePanelMode = (typeof RolePanelMode)[keyof typeof RolePanelMode]
 
 
+export const XpMultiplierKind = {
+  ROLE: 'ROLE',
+  CHANNEL: 'CHANNEL',
+  CATEGORY: 'CATEGORY'
+} as const
+
+export type XpMultiplierKind = (typeof XpMultiplierKind)[keyof typeof XpMultiplierKind]
+
+
 export const Td2Platform = {
   UBI: 'UBI',
   PSN: 'PSN',

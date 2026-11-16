@@ -321,6 +321,23 @@ export type EnumRolePanelModeWithAggregatesFilter<$PrismaModel = never> = {
   _max?: Prisma.NestedEnumRolePanelModeFilter<$PrismaModel>
 }
 
+export type EnumXpMultiplierKindFilter<$PrismaModel = never> = {
+  equals?: $Enums.XpMultiplierKind | Prisma.EnumXpMultiplierKindFieldRefInput<$PrismaModel>
+  in?: $Enums.XpMultiplierKind[] | Prisma.ListEnumXpMultiplierKindFieldRefInput<$PrismaModel>
+  notIn?: $Enums.XpMultiplierKind[] | Prisma.ListEnumXpMultiplierKindFieldRefInput<$PrismaModel>
+  not?: Prisma.NestedEnumXpMultiplierKindFilter<$PrismaModel> | $Enums.XpMultiplierKind
+}
+
+export type EnumXpMultiplierKindWithAggregatesFilter<$PrismaModel = never> = {
+  equals?: $Enums.XpMultiplierKind | Prisma.EnumXpMultiplierKindFieldRefInput<$PrismaModel>
+  in?: $Enums.XpMultiplierKind[] | Prisma.ListEnumXpMultiplierKindFieldRefInput<$PrismaModel>
+  notIn?: $Enums.XpMultiplierKind[] | Prisma.ListEnumXpMultiplierKindFieldRefInput<$PrismaModel>
+  not?: Prisma.NestedEnumXpMultiplierKindWithAggregatesFilter<$PrismaModel> | $Enums.XpMultiplierKind
+  _count?: Prisma.NestedIntFilter<$PrismaModel>
+  _min?: Prisma.NestedEnumXpMultiplierKindFilter<$PrismaModel>
+  _max?: Prisma.NestedEnumXpMultiplierKindFilter<$PrismaModel>
+}
+
 export type EnumTd2PlatformFilter<$PrismaModel = never> = {
   equals?: $Enums.Td2Platform | Prisma.EnumTd2PlatformFieldRefInput<$PrismaModel>
   in?: $Enums.Td2Platform[] | Prisma.ListEnumTd2PlatformFieldRefInput<$PrismaModel>
@@ -768,6 +785,23 @@ export type NestedEnumRolePanelModeWithAggregatesFilter<$PrismaModel = never> = 
   _count?: Prisma.NestedIntFilter<$PrismaModel>
   _min?: Prisma.NestedEnumRolePanelModeFilter<$PrismaModel>
   _max?: Prisma.NestedEnumRolePanelModeFilter<$PrismaModel>
+}
+
+export type NestedEnumXpMultiplierKindFilter<$PrismaModel = never> = {
+  equals?: $Enums.XpMultiplierKind | Prisma.EnumXpMultiplierKindFieldRefInput<$PrismaModel>
+  in?: $Enums.XpMultiplierKind[] | Prisma.ListEnumXpMultiplierKindFieldRefInput<$PrismaModel>
+  notIn?: $Enums.XpMultiplierKind[] | Prisma.ListEnumXpMultiplierKindFieldRefInput<$PrismaModel>
+  not?: Prisma.NestedEnumXpMultiplierKindFilter<$PrismaModel> | $Enums.XpMultiplierKind
+}
+
+export type NestedEnumXpMultiplierKindWithAggregatesFilter<$PrismaModel = never> = {
+  equals?: $Enums.XpMultiplierKind | Prisma.EnumXpMultiplierKindFieldRefInput<$PrismaModel>
+  in?: $Enums.XpMultiplierKind[] | Prisma.ListEnumXpMultiplierKindFieldRefInput<$PrismaModel>
+  notIn?: $Enums.XpMultiplierKind[] | Prisma.ListEnumXpMultiplierKindFieldRefInput<$PrismaModel>
+  not?: Prisma.NestedEnumXpMultiplierKindWithAggregatesFilter<$PrismaModel> | $Enums.XpMultiplierKind
+  _count?: Prisma.NestedIntFilter<$PrismaModel>
+  _min?: Prisma.NestedEnumXpMultiplierKindFilter<$PrismaModel>
+  _max?: Prisma.NestedEnumXpMultiplierKindFilter<$PrismaModel>
 }
 
 export type NestedEnumTd2PlatformFilter<$PrismaModel = never> = {
