@@ -18,3 +18,4 @@ export * from './schemas/role-panel.js';
 export * from './schemas/td2.js';
 export * from './schemas/tickets.js';
 export * from './schemas/welcome.js';
+export * from './xp-multipliers.js';

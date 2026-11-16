@@ -79,6 +79,8 @@ export interface GuildRoleSummary {
   name: string;
   /** Couleur du rôle en hexadécimal, ou null s'il n'en a pas */
   color: string | null;
+  /** Rôle géré par une intégration (Booster, rôle de bot) : ciblable par un bonus d'XP, jamais distribuable */
+  managed: boolean;
   /** Le bot peut-il le distribuer par un panel ? */
   assignable: boolean;
   /** Pourquoi il ne peut pas, affiché sur le site ; null s'il peut */

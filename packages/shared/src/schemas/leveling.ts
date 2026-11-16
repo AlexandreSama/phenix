@@ -1,4 +1,9 @@
 import { z } from 'zod';
+import {
+  XP_MULTIPLIER_KINDS,
+  XP_MULTIPLIER_MAX_PERCENT,
+  XP_MULTIPLIER_MIN_PERCENT,
+} from '../xp-multipliers.js';
 import { snowflakeSchema } from './guild-config.js';
 
 const xpAmount = z
@@ -9,6 +14,31 @@ const xpAmount = z
 
 /** Nombre de salons exclus du gain d'XP au plus, par serveur. */
 export const MAX_XP_EXCLUDED_CHANNELS = 50;
+
+/** Nombre de bonus d'XP (rôles, salons, catégories) au plus, par serveur. */
+export const MAX_XP_MULTIPLIERS = 50;
+
+/** Un bonus ou un malus d'XP sur un rôle, un salon ou une catégorie ; 100 % = inchangé. */
+export const xpMultiplierSchema = z.object({
+  kind: z.enum(XP_MULTIPLIER_KINDS, { error: 'Type de bonus inconnu' }),
+  targetId: snowflakeSchema,
+  percent: z
+    .number({ error: 'Entre un nombre' })
+    .int('Nombre entier attendu')
+    .min(XP_MULTIPLIER_MIN_PERCENT, `${XP_MULTIPLIER_MIN_PERCENT} % au moins`)
+    .max(XP_MULTIPLIER_MAX_PERCENT, `${XP_MULTIPLIER_MAX_PERCENT} % au plus`),
+});
+
+/** La liste des bonus d'un serveur, une cible n'y figurant qu'une fois. */
+export const xpMultipliersSchema = z
+  .array(xpMultiplierSchema)
+  .max(MAX_XP_MULTIPLIERS, `${MAX_XP_MULTIPLIERS} bonus au plus`)
+  .refine(
+    (list) => new Set(list.map((entry) => entry.targetId)).size === list.length,
+    'Un rôle, un salon ou une catégorie ne peut avoir qu’un seul bonus',
+  );
+
+export type XpMultiplierEntry = z.infer<typeof xpMultiplierSchema>;
 
 /** Les champs de la page « Niveaux », sans la règle qui relie le minimum et le maximum. */
 export const levelingConfigFields = z.object({
@@ -27,6 +57,12 @@ export const levelingConfigFields = z.object({
     .array(snowflakeSchema)
     .max(MAX_XP_EXCLUDED_CHANNELS, `${MAX_XP_EXCLUDED_CHANNELS} salons au plus`)
     .refine((ids) => new Set(ids).size === ids.length, 'Un salon ne peut figurer qu’une fois'),
+  /** Plafond du total des bonus d'XP, en pourcentage du gain de base. */
+  xpMultiplierMaxPercent: z
+    .number({ error: 'Entre un nombre' })
+    .int('Nombre entier attendu')
+    .min(100, '100 % au moins')
+    .max(1000, '1000 % au plus'),
 });
 
 /**
