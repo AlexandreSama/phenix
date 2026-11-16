@@ -2,11 +2,14 @@ import { BOT_EVENTS_CHANNEL, parseBotEvent } from '@phenix/shared';
 import { Redis } from 'ioredis';
 import type { GuildConfigCache } from '../core/guild-config-cache.js';
 import type { Logger } from '../logger.js';
+import type { XpRulesCache } from '../modules/leveling/xp-rules-cache.js';
 import type { RolePanelPublisher } from '../modules/roles/index.js';
 import type { TicketPanelPublisher } from '../modules/tickets/index.js';
 
 interface Deps {
   configs: GuildConfigCache;
+  /** Bonus d'XP des serveurs : changent avec la config, depuis le même écran du site */
+  xpRules: XpRulesCache;
   rolePanels: RolePanelPublisher;
   ticketPanels: TicketPanelPublisher;
   /** Retire l'embed d'un signalement supprimé depuis la page d'administration */
@@ -19,7 +22,7 @@ interface Deps {
 /** Applique un message reçu de l'API. Un message mal formé est ignoré, jamais fatal. */
 export function handleBotEvent(
   raw: string,
-  { configs, rolePanels, ticketPanels, removeTd2Report, logModeration, logger }: Deps,
+  { configs, xpRules, rolePanels, ticketPanels, removeTd2Report, logModeration, logger }: Deps,
 ): void {
   const event = parseBotEvent(raw);
   if (!event) {
@@ -30,6 +33,7 @@ export function handleBotEvent(
   switch (event.type) {
     case 'config.updated':
       configs.invalidate(event.guildId);
+      xpRules.invalidate(event.guildId);
       logger.info({ guildId: event.guildId }, 'Config du serveur mise à jour depuis le site');
       return;
     // Les publications passent par Discord : on ne les attend pas, et une erreur reste dans les logs
@@ -79,6 +83,7 @@ export function subscribeToBotEvents(redisUrl: string, deps: Deps): () => Promis
   subscriber.on('ready', () => {
     if (connectedOnce) {
       deps.configs.clear();
+      deps.xpRules.clear();
       deps.logger.info('Valkey de retour : cache des configs vidé');
     }
     connectedOnce = true;

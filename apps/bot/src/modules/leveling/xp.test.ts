@@ -38,4 +38,8 @@ describe('levelingSettings', () => {
   it('prend les valeurs par défaut pour un serveur sans config', () => {
     expect(levelingSettings(null)).toMatchObject({ xpEnabled: true, xpMin: 15, xpMax: 25 });
   });
+
+  it('plafonne le bonus d’XP à 300 % pour un serveur sans config', () => {
+    expect(levelingSettings(null).xpMultiplierMaxPercent).toBe(300);
+  });
 });

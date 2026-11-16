@@ -1,9 +1,10 @@
 import { awardXp } from '@phenix/database';
+import { effectiveXp, resolveXpPercents } from '@phenix/shared';
 import type { Message } from 'discord.js';
 import type { BotContext } from '../../core/context.js';
 import { announceLevelUp } from './announce.js';
 import { createCooldowns, levelingSettings, randomXp, type Cooldowns } from './xp.js';
-import { isXpExcluded } from './xp-rules.js';
+import { isXpExcluded, type XpLocation } from './xp-rules.js';
 
 /**
  * Donne de l'XP aux auteurs de messages, au plus une fois par délai.
@@ -14,7 +15,7 @@ export function createMessageXpHandler(
   cooldowns: Cooldowns = createCooldowns(),
   random: () => number = Math.random,
 ) {
-  const { db, configs, logger } = context;
+  const { db, configs, xpRules, logger } = context;
 
   return async (message: Message): Promise<void> => {
     if (!message.inGuild() || message.author.bot || message.system) return;
@@ -25,17 +26,14 @@ export function createMessageXpHandler(
 
       // Avant le délai : un message exclu ne doit pas retarder le prochain gain, ailleurs.
       const { channel } = message;
-      const excluded = channel.isThread()
-        ? isXpExcluded(settings.xpExcludedChannelIds, {
+      const where: XpLocation = channel.isThread()
+        ? {
             channelId: channel.id,
             parentChannelId: channel.parentId,
             categoryId: channel.parent?.parentId,
-          })
-        : isXpExcluded(settings.xpExcludedChannelIds, {
-            channelId: channel.id,
-            categoryId: channel.parentId,
-          });
-      if (excluded) return;
+          }
+        : { channelId: channel.id, categoryId: channel.parentId };
+      if (isXpExcluded(settings.xpExcludedChannelIds, where)) return;
 
       const cooldownMs = settings.xpCooldownSec * 1000;
       if (!cooldowns.take(`${message.guildId}:${message.author.id}`, cooldownMs)) return;
@@ -47,10 +45,20 @@ export function createMessageXpHandler(
         size: 128,
         forceStatic: true,
       });
+      // Après le délai : la plupart des messages s'arrêtent avant, sans toucher au cache
+      const { rolePercents, placePercent } = resolveXpPercents(
+        await xpRules.getMultipliers(message.guildId),
+        { ...where, roleIds: member ? [...member.roles.cache.keys()] : [] },
+      );
+      const amount = effectiveXp(randomXp(settings.xpMin, settings.xpMax, random), {
+        rolePercents,
+        placePercent,
+        maxPercent: settings.xpMultiplierMaxPercent,
+      });
       const result = await awardXp(db, {
         guildId: message.guildId,
         userId: message.author.id,
-        amount: randomXp(settings.xpMin, settings.xpMax, random),
+        amount,
         cooldownMs,
         displayName,
         avatarUrl,

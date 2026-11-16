@@ -1,9 +1,30 @@
+import { EventEmitter } from 'node:events';
 import { describe, expect, it, vi } from 'vitest';
 import type { GuildConfigCache } from '../core/guild-config-cache.js';
-import { handleBotEvent } from './bot-events.js';
+import type { XpRulesCache } from '../modules/leveling/xp-rules-cache.js';
+import { handleBotEvent, subscribeToBotEvents } from './bot-events.js';
+
+// Un faux client Valkey : un émetteur d'événements qui accepte l'abonnement
+const fake = vi.hoisted(() => ({
+  instance: undefined as unknown as import('node:events').EventEmitter,
+}));
+vi.mock('ioredis', async () => {
+  const { EventEmitter: Emitter } = await import('node:events');
+  return {
+    Redis: class extends Emitter {
+      constructor() {
+        super();
+        fake.instance = this;
+      }
+      subscribe = vi.fn(async () => 1);
+      quit = vi.fn(async () => 'OK');
+    },
+  };
+});
 
 function deps() {
   const configs = { get: vi.fn(), invalidate: vi.fn(), clear: vi.fn() };
+  const xpRules = { getMultipliers: vi.fn(), invalidate: vi.fn(), clear: vi.fn() };
   const rolePanels = { publish: vi.fn(async () => {}), remove: vi.fn(async () => {}) };
   const ticketPanels = { publish: vi.fn(async () => {}), remove: vi.fn(async () => {}) };
   const removeTd2Report = vi.fn(async () => {});
@@ -11,6 +32,7 @@ function deps() {
   const logger = { info: vi.fn(), warn: vi.fn(), debug: vi.fn() };
   return {
     configs: configs as unknown as GuildConfigCache & typeof configs,
+    xpRules: xpRules as unknown as XpRulesCache & typeof xpRules,
     rolePanels,
     ticketPanels,
     removeTd2Report,
@@ -49,6 +71,14 @@ describe('handleBotEvent', () => {
     handleBotEvent(JSON.stringify({ type: 'config.updated', guildId: '42' }), d);
 
     expect(d.configs.invalidate).toHaveBeenCalledWith('42');
+  });
+
+  it('oublie aussi les bonus d’XP du serveur modifié sur le site', () => {
+    const d = deps();
+
+    handleBotEvent(JSON.stringify({ type: 'config.updated', guildId: '42' }), d);
+
+    expect(d.xpRules.invalidate).toHaveBeenCalledWith('42');
   });
 
   it('publie ou retire un panel de rôles à la demande du site', () => {
@@ -102,5 +132,23 @@ describe('handleBotEvent', () => {
 
     expect(d.configs.invalidate).not.toHaveBeenCalled();
     expect(d.logger.warn).toHaveBeenCalledTimes(2);
+  });
+});
+
+describe('subscribeToBotEvents', () => {
+  it('vide les caches de configs et de règles d’XP au retour de Valkey, pas à la première connexion', async () => {
+    const d = deps();
+    const close = subscribeToBotEvents('redis://faux', d);
+    const valkey: EventEmitter = fake.instance;
+
+    valkey.emit('ready');
+    expect(d.configs.clear).not.toHaveBeenCalled();
+    expect(d.xpRules.clear).not.toHaveBeenCalled();
+
+    valkey.emit('ready');
+    expect(d.configs.clear).toHaveBeenCalledOnce();
+    expect(d.xpRules.clear).toHaveBeenCalledOnce();
+
+    await close();
   });
 });
