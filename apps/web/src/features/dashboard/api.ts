@@ -35,6 +35,7 @@ import type {
   TicketTypeStats,
   TicketTypeSummary,
   WelcomeSettings,
+  XpMultiplierEntry,
 } from '@phenix/shared';
 import { keepPreviousData, queryOptions, useMutation, useQueryClient } from '@tanstack/react-query';
 import { api } from '../../lib/api';
@@ -108,6 +109,28 @@ export function useUpdateLeveling(guildId: string) {
       // Le classement public a pu changer de visibilité
       await queryClient.invalidateQueries({ queryKey: ['leaderboard', guildId] });
     },
+  });
+}
+
+/** Les bonus d'XP du serveur : un rôle, un salon ou une catégorie, et son pourcentage. */
+export const xpMultipliersQuery = (guildId: string) =>
+  queryOptions({
+    queryKey: ['guilds', guildId, 'leveling', 'xp-multipliers'],
+    queryFn: () =>
+      api<{ multipliers: XpMultiplierEntry[] }>(`/guilds/${guildId}/leveling/xp-multipliers`),
+  });
+
+/** Remplace toute la liste ; un refus (400 : cible inconnue…) remonte avec le message de l'API. */
+export function useSaveXpMultipliers(guildId: string) {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (multipliers: XpMultiplierEntry[]) =>
+      api<{ multipliers: XpMultiplierEntry[] }>(`/guilds/${guildId}/leveling/xp-multipliers`, {
+        method: 'PUT',
+        body: JSON.stringify({ multipliers }),
+      }),
+    // La réponse est la liste enregistrée : on la range directement dans le cache
+    onSuccess: (saved) => queryClient.setQueryData(xpMultipliersQuery(guildId).queryKey, saved),
   });
 }
 

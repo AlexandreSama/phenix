@@ -6,7 +6,9 @@ import { GiveawayForm } from './giveaway-form';
 const CHANNEL = '400000000000000001';
 const ROLE = '600000000000000001';
 const channels = [{ id: CHANNEL, name: 'annonces', parentName: null }];
-const roles = [{ id: ROLE, name: 'Membre', color: null, assignable: true, blockedReason: null }];
+const roles = [
+  { id: ROLE, name: 'Membre', color: null, assignable: true, blockedReason: null, managed: false },
+];
 // Une heure fixe, pour que « dans une minute au moins » ne dépende pas de l'horloge
 const NOW = new Date(2026, 10, 9, 12, 0);
 

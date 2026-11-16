@@ -17,6 +17,15 @@ const roles = [
     color: null,
     assignable: false,
     blockedReason: null,
+    managed: false,
+  },
+  {
+    id: '500000000000000002',
+    name: 'Booster',
+    color: null,
+    assignable: false,
+    blockedReason: 'Rôle géré par Discord',
+    managed: true,
   },
 ];
 
@@ -34,6 +43,17 @@ function setup(onSubmit = vi.fn().mockResolvedValue(undefined), canEditRetention
 }
 
 const retention = () => screen.getByLabelText<HTMLSelectElement>('Conservation des sanctions');
+
+describe('GeneralSettingsForm : rôles gérés', () => {
+  it('affiche un rôle géré désactivé avec sa raison, et laisse cocher les autres', () => {
+    setup();
+
+    const managed = screen.getByLabelText<HTMLInputElement>(/Booster/);
+    expect(managed.disabled).toBe(true);
+    expect(screen.getByText(/Rôle géré par Discord/)).toBeTruthy();
+    expect(screen.getByLabelText<HTMLInputElement>('Modérateur').disabled).toBe(false);
+  });
+});
 
 describe('GeneralSettingsForm', () => {
   it('envoie null pour « Aucun » et l’ID du salon choisi', async () => {

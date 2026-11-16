@@ -23,6 +23,7 @@ const config: LevelingConfig = {
   levelUpChannelId: null,
   leaderboardPublic: true,
   xpExcludedChannelIds: [],
+  xpMultiplierMaxPercent: 300,
 };
 const channels: GuildChannelSummary[] = [{ id: TEXT, name: 'niveaux', parentName: 'Discussion' }];
 const voiceChannels: GuildChannelSummary[] = [{ id: VOICE, name: 'Salon vocal', parentName: null }];
@@ -232,6 +233,43 @@ describe('LevelingSettingsForm : salons exclus de l’XP', () => {
       false,
     );
     expect(within(excludedGroup()).getByRole('status').textContent).toBe('');
+  });
+});
+
+describe('LevelingSettingsForm : plafond des bonus', () => {
+  it('porte le libellé du glossaire, la valeur de la config et son aide', () => {
+    setup();
+
+    const field = screen.getByLabelText<HTMLInputElement>('Plafond des bonus');
+    expect(field.value).toBe('300');
+    expect(field.type).toBe('number');
+    expect(field.min).toBe('100');
+    expect(field.max).toBe('1000');
+    expect(screen.getByText(/le total des bonus ne dépasse jamais ce plafond/i)).toBeTruthy();
+  });
+
+  it('envoie le plafond avec les autres champs', async () => {
+    const onSubmit = setup();
+
+    type('Plafond des bonus', '450');
+    save();
+
+    expect(await screen.findByText('Enregistré. Le bot applique déjà le changement.')).toBeTruthy();
+    expect(onSubmit).toHaveBeenCalledWith({ ...config, xpMultiplierMaxPercent: 450 });
+  });
+
+  it.each([
+    ['99', '100 % au moins'],
+    ['1001', '1000 % au plus'],
+    ['150.5', 'Nombre entier attendu'],
+  ])('refuse le plafond « %s » : %s', async (value, message) => {
+    const onSubmit = setup();
+
+    type('Plafond des bonus', value);
+    save();
+
+    expect((await screen.findByRole('alert')).textContent).toBe(message);
+    expect(onSubmit).not.toHaveBeenCalled();
   });
 });
 
