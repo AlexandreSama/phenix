@@ -46,6 +46,9 @@ const OTHER_CHANNEL = '400000000000000002';
 const GAMER_ROLE = '600000000000000001';
 const MOD_ROLE = '600000000000000002';
 const BOT_ROLE = '600000000000000009';
+/** Le rôle des boosters : géré par Discord, donc jamais distribuable, mais ciblable par un bonus d'XP. */
+const BOOSTER_ROLE = '600000000000000008';
+const MANAGED_ROLE_REASON = 'Géré par une intégration (bot, boost…) : Discord le gère seul';
 const CATEGORY = '400000000000000009';
 const VOICE_CHANNEL = '400000000000000003';
 const STAGE_CHANNEL = '400000000000000004';
@@ -91,6 +94,7 @@ const config = {
   levelUpChannelId: null,
   leaderboardPublic: true,
   xpExcludedChannelIds: [] as string[],
+  xpMultiplierMaxPercent: 300,
   td2ChannelId: null as string | null,
   td2PublicListing: false,
   td2ReportChannelId: null as string | null,
@@ -424,7 +428,15 @@ function metricsSql(sql: string): unknown[] {
 }
 
 const db = {
-  $transaction: vi.fn(async (run: (tx: unknown) => Promise<unknown>) => run(db)),
+  // Une fonction (transaction interactive) ou une liste d'opérations déjà lancées (transaction groupée)
+  $transaction: vi.fn(async (run: ((tx: unknown) => Promise<unknown>) | Promise<unknown>[]) =>
+    Array.isArray(run) ? Promise.all(run) : run(db),
+  ),
+  xpMultiplier: {
+    findMany: vi.fn(async (_args?: object) => [] as object[]),
+    deleteMany: vi.fn(async (_args?: object) => ({ count: 0 })),
+    createMany: vi.fn(async (_args?: object) => ({ count: 0 })),
+  },
   giveaway: {
     count: vi.fn(async () => 1),
     findMany: vi.fn(async () => [giveaway]),
@@ -625,6 +637,7 @@ const discord = {
       managed: false,
     },
     { id: BOT_ROLE, name: 'PhenixMG', position: 5, permissions: '8', color: 0, managed: true },
+    { id: BOOSTER_ROLE, name: 'Booster', position: 1, permissions: '0', color: 0, managed: true },
     {
       id: '600000000000000003',
       name: 'Admin',
@@ -903,6 +916,54 @@ describe('réglages XP', () => {
     expect(redis.publish).toHaveBeenCalledOnce();
   });
 
+  describe('plafond du total des bonus d’XP', () => {
+    const url = `/api/guilds/${MANAGED}/leveling`;
+    const patch = (body: object) =>
+      request(app.getHttpServer()).patch(url).set('Cookie', cookie).send(body);
+
+    it('le GET le renvoie, 300 % par défaut', async () => {
+      const response = await request(app.getHttpServer()).get(url).set('Cookie', cookie);
+
+      expect(response.status).toBe(200);
+      expect(response.body.xpMultiplierMaxPercent).toBe(300);
+      // Le champ doit être demandé à la base : le mock renvoie tout, la vraie requête non
+      expect(db.guildConfig.upsert).toHaveBeenCalledWith(
+        expect.objectContaining({
+          select: expect.objectContaining({ xpMultiplierMaxPercent: true }),
+        }),
+      );
+    });
+
+    it.each([100, 1000])('PATCH accepte %i %', async (value) => {
+      const response = await patch({ xpMultiplierMaxPercent: value });
+
+      expect(response.status).toBe(200);
+      expect(response.body.xpMultiplierMaxPercent).toBe(value);
+      expect(db.guildConfig.update).toHaveBeenCalledWith(
+        expect.objectContaining({
+          data: { xpMultiplierMaxPercent: value },
+          select: expect.objectContaining({ xpMultiplierMaxPercent: true }),
+        }),
+      );
+    });
+
+    it.each([99, 1001])('PATCH refuse %i % (400)', async (value) => {
+      const response = await patch({ xpMultiplierMaxPercent: value });
+
+      expect(response.status).toBe(400);
+      expect(db.guildConfig.update).not.toHaveBeenCalled();
+    });
+
+    it('prévient le bot', async () => {
+      await patch({ xpMultiplierMaxPercent: 500 });
+
+      expect(redis.publish).toHaveBeenCalledWith(
+        'bot:events',
+        JSON.stringify({ type: 'config.updated', guildId: MANAGED }),
+      );
+    });
+  });
+
   describe('salons exclus du gain d’XP', () => {
     const url = `/api/guilds/${MANAGED}/leveling`;
     const UNKNOWN = '400000000000000999';
@@ -1032,6 +1093,364 @@ describe('réglages XP', () => {
 
       expect(response.status).toBe(403);
       expect(db.guildConfig.update).not.toHaveBeenCalled();
+    });
+  });
+});
+
+/** Un bonus d'XP sur un rôle, un salon ou une catégorie, tel que l'API l'attend. */
+const roleBonus = (targetId: string, percent = 150) => ({ kind: 'ROLE', targetId, percent });
+const channelBonus = (targetId: string, percent = 200) => ({ kind: 'CHANNEL', targetId, percent });
+const categoryBonus = (targetId: string, percent = 120) => ({
+  kind: 'CATEGORY',
+  targetId,
+  percent,
+});
+
+/** Des identifiants de rôles distincts, à raison de `count`. */
+const manyRoles = (count: number) =>
+  Array.from({ length: count }, (_, index) =>
+    roleBonus(String(600000000000001000n + BigInt(index))),
+  );
+
+describe('bonus d’XP', () => {
+  const url = `/api/guilds/${MANAGED}/leveling/xp-multipliers`;
+  const GONE_ROLE = '600000000000000777';
+  const GONE_CHANNEL = '400000000000000777';
+  const put = (multipliers: unknown, session = cookie) =>
+    request(app.getHttpServer()).put(url).set('Cookie', session).send({ multipliers });
+  /** Faye, membre de MANAGED sans « Gérer le serveur », avec ces onglets. */
+  const fayeWith = (modules: string[]) => {
+    discord.getCurrentUserGuilds.mockResolvedValueOnce([
+      { id: MANAGED, name: 'Les Agents', icon: null, owner: false, permissions: '0' },
+    ]);
+    db.guildDelegate.findMany.mockResolvedValueOnce([{ ...delegateRow, modules }]);
+  };
+  /** Envoie la liste et vérifie qu'aucune écriture n'a eu lieu ; renvoie le statut et le message. */
+  const refusal = async (list: unknown) => {
+    const response = await put(list);
+    expect(db.xpMultiplier.deleteMany).not.toHaveBeenCalled();
+    expect(db.xpMultiplier.createMany).not.toHaveBeenCalled();
+    expect(redis.publish).not.toHaveBeenCalled();
+    return { status: response.status, message: JSON.stringify(response.body.message) };
+  };
+  const BAD_REQUEST = 400;
+  const saying = (text: string | RegExp) => ({
+    status: BAD_REQUEST,
+    message: expect.stringMatching(
+      typeof text === 'string' ? new RegExp(text.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')) : text,
+    ),
+  });
+  describe('lecture', () => {
+    it('la liste est vide par défaut', async () => {
+      const response = await request(app.getHttpServer()).get(url).set('Cookie', cookie);
+
+      expect(response.status).toBe(200);
+      expect(response.body).toEqual({ multipliers: [] });
+      expect(db.xpMultiplier.findMany).toHaveBeenCalledWith(
+        expect.objectContaining({ where: { guildId: MANAGED } }),
+      );
+    });
+
+    it('renvoie la liste enregistrée', async () => {
+      db.xpMultiplier.findMany.mockResolvedValueOnce([
+        roleBonus(GAMER_ROLE),
+        channelBonus(CHANNEL),
+      ]);
+
+      const response = await request(app.getHttpServer()).get(url).set('Cookie', cookie);
+
+      expect(response.body).toEqual({
+        multipliers: [roleBonus(GAMER_ROLE), channelBonus(CHANNEL)],
+      });
+    });
+
+    it('exige une session (401)', async () => {
+      const response = await request(app.getHttpServer()).get(url);
+
+      expect(response.status).toBe(401);
+    });
+  });
+
+  describe('remplacement', () => {
+    it('enregistre un rôle, un salon et une catégorie, et répond avec la liste', async () => {
+      const list = [roleBonus(GAMER_ROLE), channelBonus(CHANNEL), categoryBonus(CATEGORY)];
+
+      const response = await put(list);
+
+      expect(response.status).toBe(200);
+      // Réponse dans l'ordre des identifiants (comme le GET), pas dans l'ordre d'envoi
+      expect(response.body).toEqual({
+        multipliers: [channelBonus(CHANNEL), categoryBonus(CATEGORY), roleBonus(GAMER_ROLE)],
+      });
+      expect(db.xpMultiplier.deleteMany).toHaveBeenCalledWith({ where: { guildId: MANAGED } });
+      expect(db.xpMultiplier.createMany).toHaveBeenCalledWith({
+        data: list.map((entry) => ({ guildId: MANAGED, ...entry })),
+      });
+    });
+
+    it('répond dans l’ordre des identifiants, comme le GET, quel que soit l’ordre d’envoi', async () => {
+      // Identifiants de longueurs différentes : l'ordre est celui des chaînes (« 1000… » avant « 4000… » avant « 9999… »)
+      const long = '100000000000000000';
+      const short = '99999999999999999';
+      discord.getGuildRoles.mockResolvedValueOnce([
+        { id: short, name: 'Court', position: 1, permissions: '0', color: 0, managed: false },
+        { id: long, name: 'Long', position: 2, permissions: '0', color: 0, managed: false },
+      ]);
+
+      const response = await put([
+        roleBonus(short),
+        channelBonus(CHANNEL),
+        categoryBonus(CATEGORY),
+        roleBonus(long),
+      ]);
+
+      expect(response.status).toBe(200);
+      expect(
+        response.body.multipliers.map(({ targetId }: { targetId: string }) => targetId),
+      ).toEqual([long, CHANNEL, CATEGORY, short]);
+    });
+
+    it('remplace toute la liste déjà enregistrée', async () => {
+      db.xpMultiplier.findMany.mockResolvedValueOnce([
+        roleBonus(GAMER_ROLE),
+        channelBonus(CHANNEL),
+      ]);
+
+      const response = await put([categoryBonus(CATEGORY)]);
+
+      expect(response.status).toBe(200);
+      expect(response.body).toEqual({ multipliers: [categoryBonus(CATEGORY)] });
+      expect(db.xpMultiplier.createMany).toHaveBeenCalledWith({
+        data: [{ guildId: MANAGED, ...categoryBonus(CATEGORY) }],
+      });
+    });
+
+    it('une liste vide supprime tout', async () => {
+      db.xpMultiplier.findMany.mockResolvedValueOnce([roleBonus(GAMER_ROLE)]);
+
+      const response = await put([]);
+
+      expect(response.status).toBe(200);
+      expect(response.body).toEqual({ multipliers: [] });
+      expect(db.xpMultiplier.deleteMany).toHaveBeenCalledWith({ where: { guildId: MANAGED } });
+      expect(db.xpMultiplier.createMany).toHaveBeenCalledWith({ data: [] });
+    });
+
+    it('accepte un salon vocal, un forum, un salon média et une scène', async () => {
+      const response = await put([
+        channelBonus(VOICE_CHANNEL),
+        channelBonus(FORUM_CHANNEL),
+        channelBonus(MEDIA_CHANNEL),
+        channelBonus(STAGE_CHANNEL),
+      ]);
+
+      expect(response.status).toBe(200);
+    });
+
+    it('accepte un rôle géré (Booster), qui ne pourra pourtant pas être distribué', async () => {
+      const response = await put([roleBonus(BOOSTER_ROLE, 200)]);
+
+      expect(response.status).toBe(200);
+      expect(response.body).toEqual({ multipliers: [roleBonus(BOOSTER_ROLE, 200)] });
+    });
+
+    it('accepte les bornes de pourcentage (10 et 500)', async () => {
+      const response = await put([roleBonus(GAMER_ROLE, 10), channelBonus(CHANNEL, 500)]);
+
+      expect(response.status).toBe(200);
+    });
+
+    it('prévient le bot, pour qu’il relise les bonus', async () => {
+      await put([roleBonus(GAMER_ROLE)]);
+
+      expect(redis.publish).toHaveBeenCalledWith(
+        'bot:events',
+        JSON.stringify({ type: 'config.updated', guildId: MANAGED }),
+      );
+    });
+
+    it('un échec d’enregistrement ne prévient pas le bot', async () => {
+      db.xpMultiplier.createMany.mockRejectedValueOnce(new Error('base en panne'));
+
+      const response = await put([roleBonus(GAMER_ROLE)]);
+
+      expect(response.status).toBe(500);
+      expect(redis.publish).not.toHaveBeenCalled();
+    });
+  });
+
+  describe('validation', () => {
+    it('refuse un rôle inconnu sur ce serveur', async () => {
+      expect(await refusal([roleBonus(GONE_ROLE)])).toMatchObject(
+        saying(`Rôle inconnu sur ce serveur : ${GONE_ROLE}`),
+      );
+    });
+
+    it('refuse un salon inconnu sur ce serveur', async () => {
+      expect(await refusal([channelBonus(GONE_CHANNEL)])).toMatchObject(
+        saying(`Salon inconnu sur ce serveur : ${GONE_CHANNEL}`),
+      );
+    });
+
+    it('refuse une catégorie inconnue sur ce serveur', async () => {
+      expect(await refusal([categoryBonus(GONE_CHANNEL)])).toMatchObject(
+        saying(`Catégorie inconnue sur ce serveur : ${GONE_CHANNEL}`),
+      );
+    });
+
+    it('refuse un genre qui ne correspond pas à l’objet', async () => {
+      // Un rôle déclaré salon, un salon déclaré catégorie, une catégorie déclarée salon, un salon déclaré rôle
+      expect(await refusal([channelBonus(GAMER_ROLE)])).toMatchObject(saying(/Salon inconnu/));
+      expect(await refusal([categoryBonus(CHANNEL)])).toMatchObject(saying(/Catégorie inconnue/));
+      expect(await refusal([channelBonus(CATEGORY)])).toMatchObject(saying(/Salon inconnu/));
+      expect(await refusal([roleBonus(CHANNEL)])).toMatchObject(saying(/Rôle inconnu/));
+    });
+
+    it('refuse @everyone (l’identifiant du serveur) comme rôle', async () => {
+      expect(await refusal([roleBonus(MANAGED)])).toMatchObject(
+        saying('@everyone ne peut pas recevoir de bonus'),
+      );
+    });
+
+    it('accepte un salon qui a l’identifiant du serveur (salon par défaut des serveurs anciens)', async () => {
+      discord.getGuildChannels.mockResolvedValueOnce([
+        { id: MANAGED, type: 0, name: 'général', position: 0 },
+      ]);
+
+      const response = await put([channelBonus(MANAGED)]);
+
+      expect(response.status).toBe(200);
+      expect(response.body).toEqual({ multipliers: [channelBonus(MANAGED)] });
+    });
+
+    it('refuse un rôle, un salon ou une catégorie en double', async () => {
+      expect(await refusal([roleBonus(GAMER_ROLE, 120), roleBonus(GAMER_ROLE, 150)])).toMatchObject(
+        saying('Un rôle, un salon ou une catégorie ne peut avoir qu’un seul bonus'),
+      );
+    });
+
+    it('refuse 51 bonus, et laisse passer 50 jusqu’à la vérification des identifiants', async () => {
+      expect(await refusal(manyRoles(51))).toMatchObject(saying(/50 bonus au plus/));
+      const atLimit = await put(manyRoles(50));
+      expect(atLimit.status).toBe(400);
+      expect(atLimit.body.message).toMatch(/^Rôle inconnu sur ce serveur/);
+    });
+
+    it('refuse 9 % et 501 %', async () => {
+      expect(await refusal([roleBonus(GAMER_ROLE, 9)])).toMatchObject(saying(/10 % au moins/));
+      expect(await refusal([roleBonus(GAMER_ROLE, 501)])).toMatchObject(saying(/500 % au plus/));
+    });
+
+    it('refuse un pourcentage non entier, un genre inconnu et un corps sans enveloppe', async () => {
+      expect(await refusal([roleBonus(GAMER_ROLE, 150.5)])).toMatchObject({ status: BAD_REQUEST });
+      expect(await refusal([{ kind: 'MEMBER', targetId: GAMER_ROLE, percent: 150 }])).toMatchObject(
+        saying('Type de bonus inconnu'),
+      );
+      const bare = await request(app.getHttpServer())
+        .put(url)
+        .set('Cookie', cookie)
+        .send([roleBonus(GAMER_ROLE)]);
+      expect(bare.status).toBe(400);
+    });
+
+    it('refuse un corps qui n’est pas du JSON', async () => {
+      const response = await request(app.getHttpServer())
+        .put(url)
+        .set('Cookie', cookie)
+        .type('form')
+        .send('multipliers=1');
+
+      expect(response.status).toBe(415);
+      expect(db.xpMultiplier.createMany).not.toHaveBeenCalled();
+    });
+
+    it('une cible déjà enregistrée mais disparue ne bloque pas un remplacement qui la garde', async () => {
+      db.xpMultiplier.findMany.mockResolvedValueOnce([
+        roleBonus(GONE_ROLE),
+        channelBonus(GONE_CHANNEL),
+      ]);
+
+      const response = await put([
+        roleBonus(GONE_ROLE),
+        channelBonus(GONE_CHANNEL),
+        roleBonus(GAMER_ROLE),
+      ]);
+
+      expect(response.status).toBe(200);
+      expect(db.xpMultiplier.createMany).toHaveBeenCalledWith({
+        data: [roleBonus(GONE_ROLE), channelBonus(GONE_CHANNEL), roleBonus(GAMER_ROLE)].map(
+          (entry) => ({
+            guildId: MANAGED,
+            ...entry,
+          }),
+        ),
+      });
+    });
+
+    it('une cible enregistrée sous un autre genre est revérifiée', async () => {
+      db.xpMultiplier.findMany.mockResolvedValueOnce([roleBonus(GONE_ROLE)]);
+
+      expect(await refusal([channelBonus(GONE_ROLE)])).toMatchObject(saying(/Salon inconnu/));
+    });
+
+    it('les rôles et salons sont lus sur le serveur de l’adresse, pas sur un autre', async () => {
+      await put([roleBonus(GAMER_ROLE), channelBonus(CHANNEL), categoryBonus(CATEGORY)]);
+
+      expect(discord.getGuildRoles).toHaveBeenCalledWith(MANAGED);
+      expect(discord.getGuildChannels).toHaveBeenCalledWith(MANAGED);
+      expect(discord.getGuildRoles).not.toHaveBeenCalledWith(NOT_MANAGED);
+      expect(discord.getGuildChannels).not.toHaveBeenCalledWith(NOT_MANAGED);
+    });
+  });
+
+  describe('accès', () => {
+    it('refuse une écriture sans session (401)', async () => {
+      const response = await request(app.getHttpServer()).put(url).send({ multipliers: [] });
+
+      expect(response.status).toBe(401);
+    });
+
+    it('un délégué de l’onglet Niveaux peut remplacer la liste', async () => {
+      fayeWith(['LEVELING']);
+
+      const response = await put([roleBonus(GAMER_ROLE)], faye);
+
+      expect(response.status).toBe(200);
+    });
+
+    it('un délégué de l’onglet Niveaux peut lire la liste', async () => {
+      fayeWith(['LEVELING']);
+
+      const response = await request(app.getHttpServer()).get(url).set('Cookie', faye);
+
+      expect(response.status).toBe(200);
+    });
+
+    it('un délégué sans l’onglet Niveaux est refusé en écriture (403)', async () => {
+      fayeWith(['TD2']);
+
+      const response = await put([roleBonus(GAMER_ROLE)], faye);
+
+      expect(response.status).toBe(403);
+      expect(db.xpMultiplier.deleteMany).not.toHaveBeenCalled();
+      expect(redis.publish).not.toHaveBeenCalled();
+    });
+
+    it('un délégué sans l’onglet Niveaux est refusé en lecture (403)', async () => {
+      fayeWith(['TD2']);
+
+      const response = await request(app.getHttpServer()).get(url).set('Cookie', faye);
+
+      expect(response.status).toBe(403);
+    });
+
+    it('un serveur que l’on ne gère pas est refusé (403)', async () => {
+      const response = await request(app.getHttpServer())
+        .put(`/api/guilds/${NOT_MANAGED}/leveling/xp-multipliers`)
+        .set('Cookie', cookie)
+        .send({ multipliers: [] });
+
+      expect(response.status).toBe(403);
     });
   });
 });
@@ -1281,9 +1700,41 @@ describe('panels de rôles', () => {
       ]),
     ).toEqual([
       ['Admin', 'Placé au-dessus du rôle du bot'],
+      ['PhenixMG', MANAGED_ROLE_REASON],
       ['Modo', 'Donne des droits de modération ou d’administration'],
       ['Gamer', null],
+      ['Booster', MANAGED_ROLE_REASON],
     ]);
+  });
+
+  it('liste les rôles gérés (Booster) comme non distribuables, et @everyone jamais', async () => {
+    const response = await request(app.getHttpServer())
+      .get(`/api/guilds/${MANAGED}/roles`)
+      .set('Cookie', cookie);
+
+    const byId = new Map(response.body.map((role: { id: string }) => [role.id, role] as const));
+    expect(byId.get(BOOSTER_ROLE)).toMatchObject({
+      name: 'Booster',
+      managed: true,
+      assignable: false,
+      blockedReason: MANAGED_ROLE_REASON,
+    });
+    expect(byId.get(GAMER_ROLE)).toMatchObject({ managed: false, assignable: true });
+    expect(byId.get(MOD_ROLE)).toMatchObject({ managed: false, assignable: false });
+    expect(byId.has(MANAGED)).toBe(false);
+  });
+
+  it('refuse un rôle géré dans un panel, avec la raison (non-régression)', async () => {
+    const response = await request(app.getHttpServer())
+      .post(`/api/guilds/${MANAGED}/role-panels`)
+      .set('Cookie', cookie)
+      .send({ ...input, options: [{ roleId: BOOSTER_ROLE, label: 'Booster', emoji: null }] });
+
+    expect(response.status).toBe(400);
+    expect(response.body.message).toEqual([
+      `Le rôle « Booster » ne peut pas être distribué : ${MANAGED_ROLE_REASON}`,
+    ]);
+    expect(db.rolePanel.create).not.toHaveBeenCalled();
   });
 
   it('refuse un rôle que le bot ne peut pas distribuer', async () => {
@@ -2548,6 +2999,16 @@ describe('bienvenue', () => {
       discord.getGuildChannels.mockRestore();
       discord.getGuildRoles.mockRestore();
     }
+  });
+
+  it('refuse un rôle géré (Booster) comme rôle de bienvenue, avec la raison, sans rien écrire', async () => {
+    const response = await put({ welcomeRoleId: BOOSTER_ROLE });
+
+    expect(response.status).toBe(400);
+    expect(response.body.message).toBe(
+      `Le rôle « Booster » ne peut pas être distribué : ${MANAGED_ROLE_REASON}`,
+    );
+    expect(db.guildConfig.upsert).not.toHaveBeenCalled();
   });
 
   it('refuse un rôle que le bot ne peut pas donner, avec la raison, sans rien écrire', async () => {
