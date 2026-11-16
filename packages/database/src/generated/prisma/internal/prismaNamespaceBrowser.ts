@@ -66,6 +66,7 @@ export const ModelName = {
   GiveawayEntry: 'GiveawayEntry',
   RolePanel: 'RolePanel',
   RolePanelOption: 'RolePanelOption',
+  XpMultiplier: 'XpMultiplier',
   Td2Profile: 'Td2Profile',
   Td2Activity: 'Td2Activity',
   Td2ActivityMode: 'Td2ActivityMode',
@@ -136,6 +137,7 @@ export const GuildConfigScalarFieldEnum = {
   levelUpChannelId: 'levelUpChannelId',
   leaderboardPublic: 'leaderboardPublic',
   xpExcludedChannelIds: 'xpExcludedChannelIds',
+  xpMultiplierMaxPercent: 'xpMultiplierMaxPercent',
   ticketCategoryId: 'ticketCategoryId',
   ticketStaffRoleIds: 'ticketStaffRoleIds',
   ticketLogChannelId: 'ticketLogChannelId',
@@ -346,6 +348,17 @@ export const RolePanelOptionScalarFieldEnum = {
 } as const
 
 export type RolePanelOptionScalarFieldEnum = (typeof RolePanelOptionScalarFieldEnum)[keyof typeof RolePanelOptionScalarFieldEnum]
+
+
+export const XpMultiplierScalarFieldEnum = {
+  guildId: 'guildId',
+  targetId: 'targetId',
+  kind: 'kind',
+  percent: 'percent',
+  createdAt: 'createdAt'
+} as const
+
+export type XpMultiplierScalarFieldEnum = (typeof XpMultiplierScalarFieldEnum)[keyof typeof XpMultiplierScalarFieldEnum]
 
 
 export const Td2ProfileScalarFieldEnum = {

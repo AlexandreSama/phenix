@@ -17,4 +17,5 @@ export * from './td2-events.js';
 export * from './td2-profiles.js';
 export * from './td2-reports.js';
 export * from './tickets.js';
+export * from './xp-multipliers.js';
 export * from './generated/prisma/client.js';

@@ -248,6 +248,7 @@ export type GuildWhereInput = {
   td2Events?: Prisma.Td2EventListRelationFilter
   td2Reports?: Prisma.Td2ReportListRelationFilter
   guildDelegates?: Prisma.GuildDelegateListRelationFilter
+  xpMultipliers?: Prisma.XpMultiplierListRelationFilter
 }
 
 export type GuildOrderByWithRelationInput = {
@@ -270,6 +271,7 @@ export type GuildOrderByWithRelationInput = {
   td2Events?: Prisma.Td2EventOrderByRelationAggregateInput
   td2Reports?: Prisma.Td2ReportOrderByRelationAggregateInput
   guildDelegates?: Prisma.GuildDelegateOrderByRelationAggregateInput
+  xpMultipliers?: Prisma.XpMultiplierOrderByRelationAggregateInput
 }
 
 export type GuildWhereUniqueInput = Prisma.AtLeast<{
@@ -295,6 +297,7 @@ export type GuildWhereUniqueInput = Prisma.AtLeast<{
   td2Events?: Prisma.Td2EventListRelationFilter
   td2Reports?: Prisma.Td2ReportListRelationFilter
   guildDelegates?: Prisma.GuildDelegateListRelationFilter
+  xpMultipliers?: Prisma.XpMultiplierListRelationFilter
 }, "id">
 
 export type GuildOrderByWithAggregationInput = {
@@ -345,6 +348,7 @@ export type GuildCreateInput = {
   td2Events?: Prisma.Td2EventCreateNestedManyWithoutGuildInput
   td2Reports?: Prisma.Td2ReportCreateNestedManyWithoutGuildInput
   guildDelegates?: Prisma.GuildDelegateCreateNestedManyWithoutGuildInput
+  xpMultipliers?: Prisma.XpMultiplierCreateNestedManyWithoutGuildInput
 }
 
 export type GuildUncheckedCreateInput = {
@@ -367,6 +371,7 @@ export type GuildUncheckedCreateInput = {
   td2Events?: Prisma.Td2EventUncheckedCreateNestedManyWithoutGuildInput
   td2Reports?: Prisma.Td2ReportUncheckedCreateNestedManyWithoutGuildInput
   guildDelegates?: Prisma.GuildDelegateUncheckedCreateNestedManyWithoutGuildInput
+  xpMultipliers?: Prisma.XpMultiplierUncheckedCreateNestedManyWithoutGuildInput
 }
 
 export type GuildUpdateInput = {
@@ -389,6 +394,7 @@ export type GuildUpdateInput = {
   td2Events?: Prisma.Td2EventUpdateManyWithoutGuildNestedInput
   td2Reports?: Prisma.Td2ReportUpdateManyWithoutGuildNestedInput
   guildDelegates?: Prisma.GuildDelegateUpdateManyWithoutGuildNestedInput
+  xpMultipliers?: Prisma.XpMultiplierUpdateManyWithoutGuildNestedInput
 }
 
 export type GuildUncheckedUpdateInput = {
@@ -411,6 +417,7 @@ export type GuildUncheckedUpdateInput = {
   td2Events?: Prisma.Td2EventUncheckedUpdateManyWithoutGuildNestedInput
   td2Reports?: Prisma.Td2ReportUncheckedUpdateManyWithoutGuildNestedInput
   guildDelegates?: Prisma.GuildDelegateUncheckedUpdateManyWithoutGuildNestedInput
+  xpMultipliers?: Prisma.XpMultiplierUncheckedUpdateManyWithoutGuildNestedInput
 }
 
 export type GuildCreateManyInput = {
@@ -640,6 +647,20 @@ export type GuildUpdateOneRequiredWithoutRolePanelsNestedInput = {
   update?: Prisma.XOR<Prisma.XOR<Prisma.GuildUpdateToOneWithWhereWithoutRolePanelsInput, Prisma.GuildUpdateWithoutRolePanelsInput>, Prisma.GuildUncheckedUpdateWithoutRolePanelsInput>
 }
 
+export type GuildCreateNestedOneWithoutXpMultipliersInput = {
+  create?: Prisma.XOR<Prisma.GuildCreateWithoutXpMultipliersInput, Prisma.GuildUncheckedCreateWithoutXpMultipliersInput>
+  connectOrCreate?: Prisma.GuildCreateOrConnectWithoutXpMultipliersInput
+  connect?: Prisma.GuildWhereUniqueInput
+}
+
+export type GuildUpdateOneRequiredWithoutXpMultipliersNestedInput = {
+  create?: Prisma.XOR<Prisma.GuildCreateWithoutXpMultipliersInput, Prisma.GuildUncheckedCreateWithoutXpMultipliersInput>
+  connectOrCreate?: Prisma.GuildCreateOrConnectWithoutXpMultipliersInput
+  upsert?: Prisma.GuildUpsertWithoutXpMultipliersInput
+  connect?: Prisma.GuildWhereUniqueInput
+  update?: Prisma.XOR<Prisma.XOR<Prisma.GuildUpdateToOneWithWhereWithoutXpMultipliersInput, Prisma.GuildUpdateWithoutXpMultipliersInput>, Prisma.GuildUncheckedUpdateWithoutXpMultipliersInput>
+}
+
 export type GuildCreateNestedOneWithoutTd2EventsInput = {
   create?: Prisma.XOR<Prisma.GuildCreateWithoutTd2EventsInput, Prisma.GuildUncheckedCreateWithoutTd2EventsInput>
   connectOrCreate?: Prisma.GuildCreateOrConnectWithoutTd2EventsInput
@@ -687,6 +708,7 @@ export type GuildCreateWithoutConfigInput = {
   td2Events?: Prisma.Td2EventCreateNestedManyWithoutGuildInput
   td2Reports?: Prisma.Td2ReportCreateNestedManyWithoutGuildInput
   guildDelegates?: Prisma.GuildDelegateCreateNestedManyWithoutGuildInput
+  xpMultipliers?: Prisma.XpMultiplierCreateNestedManyWithoutGuildInput
 }
 
 export type GuildUncheckedCreateWithoutConfigInput = {
@@ -708,6 +730,7 @@ export type GuildUncheckedCreateWithoutConfigInput = {
   td2Events?: Prisma.Td2EventUncheckedCreateNestedManyWithoutGuildInput
   td2Reports?: Prisma.Td2ReportUncheckedCreateNestedManyWithoutGuildInput
   guildDelegates?: Prisma.GuildDelegateUncheckedCreateNestedManyWithoutGuildInput
+  xpMultipliers?: Prisma.XpMultiplierUncheckedCreateNestedManyWithoutGuildInput
 }
 
 export type GuildCreateOrConnectWithoutConfigInput = {
@@ -745,6 +768,7 @@ export type GuildUpdateWithoutConfigInput = {
   td2Events?: Prisma.Td2EventUpdateManyWithoutGuildNestedInput
   td2Reports?: Prisma.Td2ReportUpdateManyWithoutGuildNestedInput
   guildDelegates?: Prisma.GuildDelegateUpdateManyWithoutGuildNestedInput
+  xpMultipliers?: Prisma.XpMultiplierUpdateManyWithoutGuildNestedInput
 }
 
 export type GuildUncheckedUpdateWithoutConfigInput = {
@@ -766,6 +790,7 @@ export type GuildUncheckedUpdateWithoutConfigInput = {
   td2Events?: Prisma.Td2EventUncheckedUpdateManyWithoutGuildNestedInput
   td2Reports?: Prisma.Td2ReportUncheckedUpdateManyWithoutGuildNestedInput
   guildDelegates?: Prisma.GuildDelegateUncheckedUpdateManyWithoutGuildNestedInput
+  xpMultipliers?: Prisma.XpMultiplierUncheckedUpdateManyWithoutGuildNestedInput
 }
 
 export type GuildCreateWithoutGuildDelegatesInput = {
@@ -787,6 +812,7 @@ export type GuildCreateWithoutGuildDelegatesInput = {
   rolePanels?: Prisma.RolePanelCreateNestedManyWithoutGuildInput
   td2Events?: Prisma.Td2EventCreateNestedManyWithoutGuildInput
   td2Reports?: Prisma.Td2ReportCreateNestedManyWithoutGuildInput
+  xpMultipliers?: Prisma.XpMultiplierCreateNestedManyWithoutGuildInput
 }
 
 export type GuildUncheckedCreateWithoutGuildDelegatesInput = {
@@ -808,6 +834,7 @@ export type GuildUncheckedCreateWithoutGuildDelegatesInput = {
   rolePanels?: Prisma.RolePanelUncheckedCreateNestedManyWithoutGuildInput
   td2Events?: Prisma.Td2EventUncheckedCreateNestedManyWithoutGuildInput
   td2Reports?: Prisma.Td2ReportUncheckedCreateNestedManyWithoutGuildInput
+  xpMultipliers?: Prisma.XpMultiplierUncheckedCreateNestedManyWithoutGuildInput
 }
 
 export type GuildCreateOrConnectWithoutGuildDelegatesInput = {
@@ -845,6 +872,7 @@ export type GuildUpdateWithoutGuildDelegatesInput = {
   rolePanels?: Prisma.RolePanelUpdateManyWithoutGuildNestedInput
   td2Events?: Prisma.Td2EventUpdateManyWithoutGuildNestedInput
   td2Reports?: Prisma.Td2ReportUpdateManyWithoutGuildNestedInput
+  xpMultipliers?: Prisma.XpMultiplierUpdateManyWithoutGuildNestedInput
 }
 
 export type GuildUncheckedUpdateWithoutGuildDelegatesInput = {
@@ -866,6 +894,7 @@ export type GuildUncheckedUpdateWithoutGuildDelegatesInput = {
   rolePanels?: Prisma.RolePanelUncheckedUpdateManyWithoutGuildNestedInput
   td2Events?: Prisma.Td2EventUncheckedUpdateManyWithoutGuildNestedInput
   td2Reports?: Prisma.Td2ReportUncheckedUpdateManyWithoutGuildNestedInput
+  xpMultipliers?: Prisma.XpMultiplierUncheckedUpdateManyWithoutGuildNestedInput
 }
 
 export type GuildCreateWithoutCasesInput = {
@@ -887,6 +916,7 @@ export type GuildCreateWithoutCasesInput = {
   td2Events?: Prisma.Td2EventCreateNestedManyWithoutGuildInput
   td2Reports?: Prisma.Td2ReportCreateNestedManyWithoutGuildInput
   guildDelegates?: Prisma.GuildDelegateCreateNestedManyWithoutGuildInput
+  xpMultipliers?: Prisma.XpMultiplierCreateNestedManyWithoutGuildInput
 }
 
 export type GuildUncheckedCreateWithoutCasesInput = {
@@ -908,6 +938,7 @@ export type GuildUncheckedCreateWithoutCasesInput = {
   td2Events?: Prisma.Td2EventUncheckedCreateNestedManyWithoutGuildInput
   td2Reports?: Prisma.Td2ReportUncheckedCreateNestedManyWithoutGuildInput
   guildDelegates?: Prisma.GuildDelegateUncheckedCreateNestedManyWithoutGuildInput
+  xpMultipliers?: Prisma.XpMultiplierUncheckedCreateNestedManyWithoutGuildInput
 }
 
 export type GuildCreateOrConnectWithoutCasesInput = {
@@ -945,6 +976,7 @@ export type GuildUpdateWithoutCasesInput = {
   td2Events?: Prisma.Td2EventUpdateManyWithoutGuildNestedInput
   td2Reports?: Prisma.Td2ReportUpdateManyWithoutGuildNestedInput
   guildDelegates?: Prisma.GuildDelegateUpdateManyWithoutGuildNestedInput
+  xpMultipliers?: Prisma.XpMultiplierUpdateManyWithoutGuildNestedInput
 }
 
 export type GuildUncheckedUpdateWithoutCasesInput = {
@@ -966,6 +998,7 @@ export type GuildUncheckedUpdateWithoutCasesInput = {
   td2Events?: Prisma.Td2EventUncheckedUpdateManyWithoutGuildNestedInput
   td2Reports?: Prisma.Td2ReportUncheckedUpdateManyWithoutGuildNestedInput
   guildDelegates?: Prisma.GuildDelegateUncheckedUpdateManyWithoutGuildNestedInput
+  xpMultipliers?: Prisma.XpMultiplierUncheckedUpdateManyWithoutGuildNestedInput
 }
 
 export type GuildCreateWithoutLevelsInput = {
@@ -987,6 +1020,7 @@ export type GuildCreateWithoutLevelsInput = {
   td2Events?: Prisma.Td2EventCreateNestedManyWithoutGuildInput
   td2Reports?: Prisma.Td2ReportCreateNestedManyWithoutGuildInput
   guildDelegates?: Prisma.GuildDelegateCreateNestedManyWithoutGuildInput
+  xpMultipliers?: Prisma.XpMultiplierCreateNestedManyWithoutGuildInput
 }
 
 export type GuildUncheckedCreateWithoutLevelsInput = {
@@ -1008,6 +1042,7 @@ export type GuildUncheckedCreateWithoutLevelsInput = {
   td2Events?: Prisma.Td2EventUncheckedCreateNestedManyWithoutGuildInput
   td2Reports?: Prisma.Td2ReportUncheckedCreateNestedManyWithoutGuildInput
   guildDelegates?: Prisma.GuildDelegateUncheckedCreateNestedManyWithoutGuildInput
+  xpMultipliers?: Prisma.XpMultiplierUncheckedCreateNestedManyWithoutGuildInput
 }
 
 export type GuildCreateOrConnectWithoutLevelsInput = {
@@ -1045,6 +1080,7 @@ export type GuildUpdateWithoutLevelsInput = {
   td2Events?: Prisma.Td2EventUpdateManyWithoutGuildNestedInput
   td2Reports?: Prisma.Td2ReportUpdateManyWithoutGuildNestedInput
   guildDelegates?: Prisma.GuildDelegateUpdateManyWithoutGuildNestedInput
+  xpMultipliers?: Prisma.XpMultiplierUpdateManyWithoutGuildNestedInput
 }
 
 export type GuildUncheckedUpdateWithoutLevelsInput = {
@@ -1066,6 +1102,7 @@ export type GuildUncheckedUpdateWithoutLevelsInput = {
   td2Events?: Prisma.Td2EventUncheckedUpdateManyWithoutGuildNestedInput
   td2Reports?: Prisma.Td2ReportUncheckedUpdateManyWithoutGuildNestedInput
   guildDelegates?: Prisma.GuildDelegateUncheckedUpdateManyWithoutGuildNestedInput
+  xpMultipliers?: Prisma.XpMultiplierUncheckedUpdateManyWithoutGuildNestedInput
 }
 
 export type GuildCreateWithoutMarriagesInput = {
@@ -1087,6 +1124,7 @@ export type GuildCreateWithoutMarriagesInput = {
   td2Events?: Prisma.Td2EventCreateNestedManyWithoutGuildInput
   td2Reports?: Prisma.Td2ReportCreateNestedManyWithoutGuildInput
   guildDelegates?: Prisma.GuildDelegateCreateNestedManyWithoutGuildInput
+  xpMultipliers?: Prisma.XpMultiplierCreateNestedManyWithoutGuildInput
 }
 
 export type GuildUncheckedCreateWithoutMarriagesInput = {
@@ -1108,6 +1146,7 @@ export type GuildUncheckedCreateWithoutMarriagesInput = {
   td2Events?: Prisma.Td2EventUncheckedCreateNestedManyWithoutGuildInput
   td2Reports?: Prisma.Td2ReportUncheckedCreateNestedManyWithoutGuildInput
   guildDelegates?: Prisma.GuildDelegateUncheckedCreateNestedManyWithoutGuildInput
+  xpMultipliers?: Prisma.XpMultiplierUncheckedCreateNestedManyWithoutGuildInput
 }
 
 export type GuildCreateOrConnectWithoutMarriagesInput = {
@@ -1145,6 +1184,7 @@ export type GuildUpdateWithoutMarriagesInput = {
   td2Events?: Prisma.Td2EventUpdateManyWithoutGuildNestedInput
   td2Reports?: Prisma.Td2ReportUpdateManyWithoutGuildNestedInput
   guildDelegates?: Prisma.GuildDelegateUpdateManyWithoutGuildNestedInput
+  xpMultipliers?: Prisma.XpMultiplierUpdateManyWithoutGuildNestedInput
 }
 
 export type GuildUncheckedUpdateWithoutMarriagesInput = {
@@ -1166,6 +1206,7 @@ export type GuildUncheckedUpdateWithoutMarriagesInput = {
   td2Events?: Prisma.Td2EventUncheckedUpdateManyWithoutGuildNestedInput
   td2Reports?: Prisma.Td2ReportUncheckedUpdateManyWithoutGuildNestedInput
   guildDelegates?: Prisma.GuildDelegateUncheckedUpdateManyWithoutGuildNestedInput
+  xpMultipliers?: Prisma.XpMultiplierUncheckedUpdateManyWithoutGuildNestedInput
 }
 
 export type GuildCreateWithoutTicketsInput = {
@@ -1187,6 +1228,7 @@ export type GuildCreateWithoutTicketsInput = {
   td2Events?: Prisma.Td2EventCreateNestedManyWithoutGuildInput
   td2Reports?: Prisma.Td2ReportCreateNestedManyWithoutGuildInput
   guildDelegates?: Prisma.GuildDelegateCreateNestedManyWithoutGuildInput
+  xpMultipliers?: Prisma.XpMultiplierCreateNestedManyWithoutGuildInput
 }
 
 export type GuildUncheckedCreateWithoutTicketsInput = {
@@ -1208,6 +1250,7 @@ export type GuildUncheckedCreateWithoutTicketsInput = {
   td2Events?: Prisma.Td2EventUncheckedCreateNestedManyWithoutGuildInput
   td2Reports?: Prisma.Td2ReportUncheckedCreateNestedManyWithoutGuildInput
   guildDelegates?: Prisma.GuildDelegateUncheckedCreateNestedManyWithoutGuildInput
+  xpMultipliers?: Prisma.XpMultiplierUncheckedCreateNestedManyWithoutGuildInput
 }
 
 export type GuildCreateOrConnectWithoutTicketsInput = {
@@ -1245,6 +1288,7 @@ export type GuildUpdateWithoutTicketsInput = {
   td2Events?: Prisma.Td2EventUpdateManyWithoutGuildNestedInput
   td2Reports?: Prisma.Td2ReportUpdateManyWithoutGuildNestedInput
   guildDelegates?: Prisma.GuildDelegateUpdateManyWithoutGuildNestedInput
+  xpMultipliers?: Prisma.XpMultiplierUpdateManyWithoutGuildNestedInput
 }
 
 export type GuildUncheckedUpdateWithoutTicketsInput = {
@@ -1266,6 +1310,7 @@ export type GuildUncheckedUpdateWithoutTicketsInput = {
   td2Events?: Prisma.Td2EventUncheckedUpdateManyWithoutGuildNestedInput
   td2Reports?: Prisma.Td2ReportUncheckedUpdateManyWithoutGuildNestedInput
   guildDelegates?: Prisma.GuildDelegateUncheckedUpdateManyWithoutGuildNestedInput
+  xpMultipliers?: Prisma.XpMultiplierUncheckedUpdateManyWithoutGuildNestedInput
 }
 
 export type GuildCreateWithoutTicketTypesInput = {
@@ -1287,6 +1332,7 @@ export type GuildCreateWithoutTicketTypesInput = {
   td2Events?: Prisma.Td2EventCreateNestedManyWithoutGuildInput
   td2Reports?: Prisma.Td2ReportCreateNestedManyWithoutGuildInput
   guildDelegates?: Prisma.GuildDelegateCreateNestedManyWithoutGuildInput
+  xpMultipliers?: Prisma.XpMultiplierCreateNestedManyWithoutGuildInput
 }
 
 export type GuildUncheckedCreateWithoutTicketTypesInput = {
@@ -1308,6 +1354,7 @@ export type GuildUncheckedCreateWithoutTicketTypesInput = {
   td2Events?: Prisma.Td2EventUncheckedCreateNestedManyWithoutGuildInput
   td2Reports?: Prisma.Td2ReportUncheckedCreateNestedManyWithoutGuildInput
   guildDelegates?: Prisma.GuildDelegateUncheckedCreateNestedManyWithoutGuildInput
+  xpMultipliers?: Prisma.XpMultiplierUncheckedCreateNestedManyWithoutGuildInput
 }
 
 export type GuildCreateOrConnectWithoutTicketTypesInput = {
@@ -1345,6 +1392,7 @@ export type GuildUpdateWithoutTicketTypesInput = {
   td2Events?: Prisma.Td2EventUpdateManyWithoutGuildNestedInput
   td2Reports?: Prisma.Td2ReportUpdateManyWithoutGuildNestedInput
   guildDelegates?: Prisma.GuildDelegateUpdateManyWithoutGuildNestedInput
+  xpMultipliers?: Prisma.XpMultiplierUpdateManyWithoutGuildNestedInput
 }
 
 export type GuildUncheckedUpdateWithoutTicketTypesInput = {
@@ -1366,6 +1414,7 @@ export type GuildUncheckedUpdateWithoutTicketTypesInput = {
   td2Events?: Prisma.Td2EventUncheckedUpdateManyWithoutGuildNestedInput
   td2Reports?: Prisma.Td2ReportUncheckedUpdateManyWithoutGuildNestedInput
   guildDelegates?: Prisma.GuildDelegateUncheckedUpdateManyWithoutGuildNestedInput
+  xpMultipliers?: Prisma.XpMultiplierUncheckedUpdateManyWithoutGuildNestedInput
 }
 
 export type GuildCreateWithoutTicketPanelInput = {
@@ -1387,6 +1436,7 @@ export type GuildCreateWithoutTicketPanelInput = {
   td2Events?: Prisma.Td2EventCreateNestedManyWithoutGuildInput
   td2Reports?: Prisma.Td2ReportCreateNestedManyWithoutGuildInput
   guildDelegates?: Prisma.GuildDelegateCreateNestedManyWithoutGuildInput
+  xpMultipliers?: Prisma.XpMultiplierCreateNestedManyWithoutGuildInput
 }
 
 export type GuildUncheckedCreateWithoutTicketPanelInput = {
@@ -1408,6 +1458,7 @@ export type GuildUncheckedCreateWithoutTicketPanelInput = {
   td2Events?: Prisma.Td2EventUncheckedCreateNestedManyWithoutGuildInput
   td2Reports?: Prisma.Td2ReportUncheckedCreateNestedManyWithoutGuildInput
   guildDelegates?: Prisma.GuildDelegateUncheckedCreateNestedManyWithoutGuildInput
+  xpMultipliers?: Prisma.XpMultiplierUncheckedCreateNestedManyWithoutGuildInput
 }
 
 export type GuildCreateOrConnectWithoutTicketPanelInput = {
@@ -1445,6 +1496,7 @@ export type GuildUpdateWithoutTicketPanelInput = {
   td2Events?: Prisma.Td2EventUpdateManyWithoutGuildNestedInput
   td2Reports?: Prisma.Td2ReportUpdateManyWithoutGuildNestedInput
   guildDelegates?: Prisma.GuildDelegateUpdateManyWithoutGuildNestedInput
+  xpMultipliers?: Prisma.XpMultiplierUpdateManyWithoutGuildNestedInput
 }
 
 export type GuildUncheckedUpdateWithoutTicketPanelInput = {
@@ -1466,6 +1518,7 @@ export type GuildUncheckedUpdateWithoutTicketPanelInput = {
   td2Events?: Prisma.Td2EventUncheckedUpdateManyWithoutGuildNestedInput
   td2Reports?: Prisma.Td2ReportUncheckedUpdateManyWithoutGuildNestedInput
   guildDelegates?: Prisma.GuildDelegateUncheckedUpdateManyWithoutGuildNestedInput
+  xpMultipliers?: Prisma.XpMultiplierUncheckedUpdateManyWithoutGuildNestedInput
 }
 
 export type GuildCreateWithoutGiveawaysInput = {
@@ -1487,6 +1540,7 @@ export type GuildCreateWithoutGiveawaysInput = {
   td2Events?: Prisma.Td2EventCreateNestedManyWithoutGuildInput
   td2Reports?: Prisma.Td2ReportCreateNestedManyWithoutGuildInput
   guildDelegates?: Prisma.GuildDelegateCreateNestedManyWithoutGuildInput
+  xpMultipliers?: Prisma.XpMultiplierCreateNestedManyWithoutGuildInput
 }
 
 export type GuildUncheckedCreateWithoutGiveawaysInput = {
@@ -1508,6 +1562,7 @@ export type GuildUncheckedCreateWithoutGiveawaysInput = {
   td2Events?: Prisma.Td2EventUncheckedCreateNestedManyWithoutGuildInput
   td2Reports?: Prisma.Td2ReportUncheckedCreateNestedManyWithoutGuildInput
   guildDelegates?: Prisma.GuildDelegateUncheckedCreateNestedManyWithoutGuildInput
+  xpMultipliers?: Prisma.XpMultiplierUncheckedCreateNestedManyWithoutGuildInput
 }
 
 export type GuildCreateOrConnectWithoutGiveawaysInput = {
@@ -1545,6 +1600,7 @@ export type GuildUpdateWithoutGiveawaysInput = {
   td2Events?: Prisma.Td2EventUpdateManyWithoutGuildNestedInput
   td2Reports?: Prisma.Td2ReportUpdateManyWithoutGuildNestedInput
   guildDelegates?: Prisma.GuildDelegateUpdateManyWithoutGuildNestedInput
+  xpMultipliers?: Prisma.XpMultiplierUpdateManyWithoutGuildNestedInput
 }
 
 export type GuildUncheckedUpdateWithoutGiveawaysInput = {
@@ -1566,6 +1622,7 @@ export type GuildUncheckedUpdateWithoutGiveawaysInput = {
   td2Events?: Prisma.Td2EventUncheckedUpdateManyWithoutGuildNestedInput
   td2Reports?: Prisma.Td2ReportUncheckedUpdateManyWithoutGuildNestedInput
   guildDelegates?: Prisma.GuildDelegateUncheckedUpdateManyWithoutGuildNestedInput
+  xpMultipliers?: Prisma.XpMultiplierUncheckedUpdateManyWithoutGuildNestedInput
 }
 
 export type GuildCreateWithoutRolePanelsInput = {
@@ -1587,6 +1644,7 @@ export type GuildCreateWithoutRolePanelsInput = {
   td2Events?: Prisma.Td2EventCreateNestedManyWithoutGuildInput
   td2Reports?: Prisma.Td2ReportCreateNestedManyWithoutGuildInput
   guildDelegates?: Prisma.GuildDelegateCreateNestedManyWithoutGuildInput
+  xpMultipliers?: Prisma.XpMultiplierCreateNestedManyWithoutGuildInput
 }
 
 export type GuildUncheckedCreateWithoutRolePanelsInput = {
@@ -1608,6 +1666,7 @@ export type GuildUncheckedCreateWithoutRolePanelsInput = {
   td2Events?: Prisma.Td2EventUncheckedCreateNestedManyWithoutGuildInput
   td2Reports?: Prisma.Td2ReportUncheckedCreateNestedManyWithoutGuildInput
   guildDelegates?: Prisma.GuildDelegateUncheckedCreateNestedManyWithoutGuildInput
+  xpMultipliers?: Prisma.XpMultiplierUncheckedCreateNestedManyWithoutGuildInput
 }
 
 export type GuildCreateOrConnectWithoutRolePanelsInput = {
@@ -1645,6 +1704,7 @@ export type GuildUpdateWithoutRolePanelsInput = {
   td2Events?: Prisma.Td2EventUpdateManyWithoutGuildNestedInput
   td2Reports?: Prisma.Td2ReportUpdateManyWithoutGuildNestedInput
   guildDelegates?: Prisma.GuildDelegateUpdateManyWithoutGuildNestedInput
+  xpMultipliers?: Prisma.XpMultiplierUpdateManyWithoutGuildNestedInput
 }
 
 export type GuildUncheckedUpdateWithoutRolePanelsInput = {
@@ -1663,6 +1723,111 @@ export type GuildUncheckedUpdateWithoutRolePanelsInput = {
   ticketPanel?: Prisma.TicketPanelUncheckedUpdateOneWithoutGuildNestedInput
   ticketTypes?: Prisma.TicketTypeUncheckedUpdateManyWithoutGuildNestedInput
   giveaways?: Prisma.GiveawayUncheckedUpdateManyWithoutGuildNestedInput
+  td2Events?: Prisma.Td2EventUncheckedUpdateManyWithoutGuildNestedInput
+  td2Reports?: Prisma.Td2ReportUncheckedUpdateManyWithoutGuildNestedInput
+  guildDelegates?: Prisma.GuildDelegateUncheckedUpdateManyWithoutGuildNestedInput
+  xpMultipliers?: Prisma.XpMultiplierUncheckedUpdateManyWithoutGuildNestedInput
+}
+
+export type GuildCreateWithoutXpMultipliersInput = {
+  id: string
+  name: string
+  icon?: string | null
+  caseCounter?: number
+  ticketCounter?: number
+  joinedAt?: Date | string
+  leftAt?: Date | string | null
+  config?: Prisma.GuildConfigCreateNestedOneWithoutGuildInput
+  cases?: Prisma.CaseCreateNestedManyWithoutGuildInput
+  levels?: Prisma.MemberLevelCreateNestedManyWithoutGuildInput
+  marriages?: Prisma.MarriageCreateNestedManyWithoutGuildInput
+  tickets?: Prisma.TicketCreateNestedManyWithoutGuildInput
+  ticketPanel?: Prisma.TicketPanelCreateNestedOneWithoutGuildInput
+  ticketTypes?: Prisma.TicketTypeCreateNestedManyWithoutGuildInput
+  giveaways?: Prisma.GiveawayCreateNestedManyWithoutGuildInput
+  rolePanels?: Prisma.RolePanelCreateNestedManyWithoutGuildInput
+  td2Events?: Prisma.Td2EventCreateNestedManyWithoutGuildInput
+  td2Reports?: Prisma.Td2ReportCreateNestedManyWithoutGuildInput
+  guildDelegates?: Prisma.GuildDelegateCreateNestedManyWithoutGuildInput
+}
+
+export type GuildUncheckedCreateWithoutXpMultipliersInput = {
+  id: string
+  name: string
+  icon?: string | null
+  caseCounter?: number
+  ticketCounter?: number
+  joinedAt?: Date | string
+  leftAt?: Date | string | null
+  config?: Prisma.GuildConfigUncheckedCreateNestedOneWithoutGuildInput
+  cases?: Prisma.CaseUncheckedCreateNestedManyWithoutGuildInput
+  levels?: Prisma.MemberLevelUncheckedCreateNestedManyWithoutGuildInput
+  marriages?: Prisma.MarriageUncheckedCreateNestedManyWithoutGuildInput
+  tickets?: Prisma.TicketUncheckedCreateNestedManyWithoutGuildInput
+  ticketPanel?: Prisma.TicketPanelUncheckedCreateNestedOneWithoutGuildInput
+  ticketTypes?: Prisma.TicketTypeUncheckedCreateNestedManyWithoutGuildInput
+  giveaways?: Prisma.GiveawayUncheckedCreateNestedManyWithoutGuildInput
+  rolePanels?: Prisma.RolePanelUncheckedCreateNestedManyWithoutGuildInput
+  td2Events?: Prisma.Td2EventUncheckedCreateNestedManyWithoutGuildInput
+  td2Reports?: Prisma.Td2ReportUncheckedCreateNestedManyWithoutGuildInput
+  guildDelegates?: Prisma.GuildDelegateUncheckedCreateNestedManyWithoutGuildInput
+}
+
+export type GuildCreateOrConnectWithoutXpMultipliersInput = {
+  where: Prisma.GuildWhereUniqueInput
+  create: Prisma.XOR<Prisma.GuildCreateWithoutXpMultipliersInput, Prisma.GuildUncheckedCreateWithoutXpMultipliersInput>
+}
+
+export type GuildUpsertWithoutXpMultipliersInput = {
+  update: Prisma.XOR<Prisma.GuildUpdateWithoutXpMultipliersInput, Prisma.GuildUncheckedUpdateWithoutXpMultipliersInput>
+  create: Prisma.XOR<Prisma.GuildCreateWithoutXpMultipliersInput, Prisma.GuildUncheckedCreateWithoutXpMultipliersInput>
+  where?: Prisma.GuildWhereInput
+}
+
+export type GuildUpdateToOneWithWhereWithoutXpMultipliersInput = {
+  where?: Prisma.GuildWhereInput
+  data: Prisma.XOR<Prisma.GuildUpdateWithoutXpMultipliersInput, Prisma.GuildUncheckedUpdateWithoutXpMultipliersInput>
+}
+
+export type GuildUpdateWithoutXpMultipliersInput = {
+  id?: Prisma.StringFieldUpdateOperationsInput | string
+  name?: Prisma.StringFieldUpdateOperationsInput | string
+  icon?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  caseCounter?: Prisma.IntFieldUpdateOperationsInput | number
+  ticketCounter?: Prisma.IntFieldUpdateOperationsInput | number
+  joinedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  leftAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  config?: Prisma.GuildConfigUpdateOneWithoutGuildNestedInput
+  cases?: Prisma.CaseUpdateManyWithoutGuildNestedInput
+  levels?: Prisma.MemberLevelUpdateManyWithoutGuildNestedInput
+  marriages?: Prisma.MarriageUpdateManyWithoutGuildNestedInput
+  tickets?: Prisma.TicketUpdateManyWithoutGuildNestedInput
+  ticketPanel?: Prisma.TicketPanelUpdateOneWithoutGuildNestedInput
+  ticketTypes?: Prisma.TicketTypeUpdateManyWithoutGuildNestedInput
+  giveaways?: Prisma.GiveawayUpdateManyWithoutGuildNestedInput
+  rolePanels?: Prisma.RolePanelUpdateManyWithoutGuildNestedInput
+  td2Events?: Prisma.Td2EventUpdateManyWithoutGuildNestedInput
+  td2Reports?: Prisma.Td2ReportUpdateManyWithoutGuildNestedInput
+  guildDelegates?: Prisma.GuildDelegateUpdateManyWithoutGuildNestedInput
+}
+
+export type GuildUncheckedUpdateWithoutXpMultipliersInput = {
+  id?: Prisma.StringFieldUpdateOperationsInput | string
+  name?: Prisma.StringFieldUpdateOperationsInput | string
+  icon?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  caseCounter?: Prisma.IntFieldUpdateOperationsInput | number
+  ticketCounter?: Prisma.IntFieldUpdateOperationsInput | number
+  joinedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  leftAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  config?: Prisma.GuildConfigUncheckedUpdateOneWithoutGuildNestedInput
+  cases?: Prisma.CaseUncheckedUpdateManyWithoutGuildNestedInput
+  levels?: Prisma.MemberLevelUncheckedUpdateManyWithoutGuildNestedInput
+  marriages?: Prisma.MarriageUncheckedUpdateManyWithoutGuildNestedInput
+  tickets?: Prisma.TicketUncheckedUpdateManyWithoutGuildNestedInput
+  ticketPanel?: Prisma.TicketPanelUncheckedUpdateOneWithoutGuildNestedInput
+  ticketTypes?: Prisma.TicketTypeUncheckedUpdateManyWithoutGuildNestedInput
+  giveaways?: Prisma.GiveawayUncheckedUpdateManyWithoutGuildNestedInput
+  rolePanels?: Prisma.RolePanelUncheckedUpdateManyWithoutGuildNestedInput
   td2Events?: Prisma.Td2EventUncheckedUpdateManyWithoutGuildNestedInput
   td2Reports?: Prisma.Td2ReportUncheckedUpdateManyWithoutGuildNestedInput
   guildDelegates?: Prisma.GuildDelegateUncheckedUpdateManyWithoutGuildNestedInput
@@ -1687,6 +1852,7 @@ export type GuildCreateWithoutTd2EventsInput = {
   rolePanels?: Prisma.RolePanelCreateNestedManyWithoutGuildInput
   td2Reports?: Prisma.Td2ReportCreateNestedManyWithoutGuildInput
   guildDelegates?: Prisma.GuildDelegateCreateNestedManyWithoutGuildInput
+  xpMultipliers?: Prisma.XpMultiplierCreateNestedManyWithoutGuildInput
 }
 
 export type GuildUncheckedCreateWithoutTd2EventsInput = {
@@ -1708,6 +1874,7 @@ export type GuildUncheckedCreateWithoutTd2EventsInput = {
   rolePanels?: Prisma.RolePanelUncheckedCreateNestedManyWithoutGuildInput
   td2Reports?: Prisma.Td2ReportUncheckedCreateNestedManyWithoutGuildInput
   guildDelegates?: Prisma.GuildDelegateUncheckedCreateNestedManyWithoutGuildInput
+  xpMultipliers?: Prisma.XpMultiplierUncheckedCreateNestedManyWithoutGuildInput
 }
 
 export type GuildCreateOrConnectWithoutTd2EventsInput = {
@@ -1745,6 +1912,7 @@ export type GuildUpdateWithoutTd2EventsInput = {
   rolePanels?: Prisma.RolePanelUpdateManyWithoutGuildNestedInput
   td2Reports?: Prisma.Td2ReportUpdateManyWithoutGuildNestedInput
   guildDelegates?: Prisma.GuildDelegateUpdateManyWithoutGuildNestedInput
+  xpMultipliers?: Prisma.XpMultiplierUpdateManyWithoutGuildNestedInput
 }
 
 export type GuildUncheckedUpdateWithoutTd2EventsInput = {
@@ -1766,6 +1934,7 @@ export type GuildUncheckedUpdateWithoutTd2EventsInput = {
   rolePanels?: Prisma.RolePanelUncheckedUpdateManyWithoutGuildNestedInput
   td2Reports?: Prisma.Td2ReportUncheckedUpdateManyWithoutGuildNestedInput
   guildDelegates?: Prisma.GuildDelegateUncheckedUpdateManyWithoutGuildNestedInput
+  xpMultipliers?: Prisma.XpMultiplierUncheckedUpdateManyWithoutGuildNestedInput
 }
 
 export type GuildCreateWithoutTd2ReportsInput = {
@@ -1787,6 +1956,7 @@ export type GuildCreateWithoutTd2ReportsInput = {
   rolePanels?: Prisma.RolePanelCreateNestedManyWithoutGuildInput
   td2Events?: Prisma.Td2EventCreateNestedManyWithoutGuildInput
   guildDelegates?: Prisma.GuildDelegateCreateNestedManyWithoutGuildInput
+  xpMultipliers?: Prisma.XpMultiplierCreateNestedManyWithoutGuildInput
 }
 
 export type GuildUncheckedCreateWithoutTd2ReportsInput = {
@@ -1808,6 +1978,7 @@ export type GuildUncheckedCreateWithoutTd2ReportsInput = {
   rolePanels?: Prisma.RolePanelUncheckedCreateNestedManyWithoutGuildInput
   td2Events?: Prisma.Td2EventUncheckedCreateNestedManyWithoutGuildInput
   guildDelegates?: Prisma.GuildDelegateUncheckedCreateNestedManyWithoutGuildInput
+  xpMultipliers?: Prisma.XpMultiplierUncheckedCreateNestedManyWithoutGuildInput
 }
 
 export type GuildCreateOrConnectWithoutTd2ReportsInput = {
@@ -1845,6 +2016,7 @@ export type GuildUpdateWithoutTd2ReportsInput = {
   rolePanels?: Prisma.RolePanelUpdateManyWithoutGuildNestedInput
   td2Events?: Prisma.Td2EventUpdateManyWithoutGuildNestedInput
   guildDelegates?: Prisma.GuildDelegateUpdateManyWithoutGuildNestedInput
+  xpMultipliers?: Prisma.XpMultiplierUpdateManyWithoutGuildNestedInput
 }
 
 export type GuildUncheckedUpdateWithoutTd2ReportsInput = {
@@ -1866,6 +2038,7 @@ export type GuildUncheckedUpdateWithoutTd2ReportsInput = {
   rolePanels?: Prisma.RolePanelUncheckedUpdateManyWithoutGuildNestedInput
   td2Events?: Prisma.Td2EventUncheckedUpdateManyWithoutGuildNestedInput
   guildDelegates?: Prisma.GuildDelegateUncheckedUpdateManyWithoutGuildNestedInput
+  xpMultipliers?: Prisma.XpMultiplierUncheckedUpdateManyWithoutGuildNestedInput
 }
 
 
@@ -1884,6 +2057,7 @@ export type GuildCountOutputType = {
   td2Events: number
   td2Reports: number
   guildDelegates: number
+  xpMultipliers: number
 }
 
 export type GuildCountOutputTypeSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
@@ -1897,6 +2071,7 @@ export type GuildCountOutputTypeSelect<ExtArgs extends runtime.Types.Extensions.
   td2Events?: boolean | GuildCountOutputTypeCountTd2EventsArgs
   td2Reports?: boolean | GuildCountOutputTypeCountTd2ReportsArgs
   guildDelegates?: boolean | GuildCountOutputTypeCountGuildDelegatesArgs
+  xpMultipliers?: boolean | GuildCountOutputTypeCountXpMultipliersArgs
 }
 
 /**
@@ -1979,6 +2154,13 @@ export type GuildCountOutputTypeCountGuildDelegatesArgs<ExtArgs extends runtime.
   where?: Prisma.GuildDelegateWhereInput
 }
 
+/**
+ * GuildCountOutputType without action
+ */
+export type GuildCountOutputTypeCountXpMultipliersArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  where?: Prisma.XpMultiplierWhereInput
+}
+
 
 export type GuildSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetSelect<{
   id?: boolean
@@ -2000,6 +2182,7 @@ export type GuildSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs = 
   td2Events?: boolean | Prisma.Guild$td2EventsArgs<ExtArgs>
   td2Reports?: boolean | Prisma.Guild$td2ReportsArgs<ExtArgs>
   guildDelegates?: boolean | Prisma.Guild$guildDelegatesArgs<ExtArgs>
+  xpMultipliers?: boolean | Prisma.Guild$xpMultipliersArgs<ExtArgs>
   _count?: boolean | Prisma.GuildCountOutputTypeDefaultArgs<ExtArgs>
 }, ExtArgs["result"]["guild"]>
 
@@ -2047,6 +2230,7 @@ export type GuildInclude<ExtArgs extends runtime.Types.Extensions.InternalArgs =
   td2Events?: boolean | Prisma.Guild$td2EventsArgs<ExtArgs>
   td2Reports?: boolean | Prisma.Guild$td2ReportsArgs<ExtArgs>
   guildDelegates?: boolean | Prisma.Guild$guildDelegatesArgs<ExtArgs>
+  xpMultipliers?: boolean | Prisma.Guild$xpMultipliersArgs<ExtArgs>
   _count?: boolean | Prisma.GuildCountOutputTypeDefaultArgs<ExtArgs>
 }
 export type GuildIncludeCreateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {}
@@ -2067,6 +2251,7 @@ export type $GuildPayload<ExtArgs extends runtime.Types.Extensions.InternalArgs 
     td2Events: Prisma.$Td2EventPayload<ExtArgs>[]
     td2Reports: Prisma.$Td2ReportPayload<ExtArgs>[]
     guildDelegates: Prisma.$GuildDelegatePayload<ExtArgs>[]
+    xpMultipliers: Prisma.$XpMultiplierPayload<ExtArgs>[]
   }
   scalars: runtime.Types.Extensions.GetPayloadResult<{
     id: string
@@ -2482,6 +2667,7 @@ export interface Prisma__GuildClient<T, Null = never, ExtArgs extends runtime.Ty
   td2Events<T extends Prisma.Guild$td2EventsArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.Guild$td2EventsArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$Td2EventPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
   td2Reports<T extends Prisma.Guild$td2ReportsArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.Guild$td2ReportsArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$Td2ReportPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
   guildDelegates<T extends Prisma.Guild$guildDelegatesArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.Guild$guildDelegatesArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$GuildDelegatePayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
+  xpMultipliers<T extends Prisma.Guild$xpMultipliersArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.Guild$xpMultipliersArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$XpMultiplierPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
   /**
    * Attaches callbacks for the resolution and/or rejection of the Promise.
    * @param onfulfilled The callback to execute when the Promise is resolved.
@@ -3186,6 +3372,30 @@ export type Guild$guildDelegatesArgs<ExtArgs extends runtime.Types.Extensions.In
   take?: number
   skip?: number
   distinct?: Prisma.GuildDelegateScalarFieldEnum | Prisma.GuildDelegateScalarFieldEnum[]
+}
+
+/**
+ * Guild.xpMultipliers
+ */
+export type Guild$xpMultipliersArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  /**
+   * Select specific fields to fetch from the XpMultiplier
+   */
+  select?: Prisma.XpMultiplierSelect<ExtArgs> | null
+  /**
+   * Omit specific fields from the XpMultiplier
+   */
+  omit?: Prisma.XpMultiplierOmit<ExtArgs> | null
+  /**
+   * Choose, which related nodes to fetch as well
+   */
+  include?: Prisma.XpMultiplierInclude<ExtArgs> | null
+  where?: Prisma.XpMultiplierWhereInput
+  orderBy?: Prisma.XpMultiplierOrderByWithRelationInput | Prisma.XpMultiplierOrderByWithRelationInput[]
+  cursor?: Prisma.XpMultiplierWhereUniqueInput
+  take?: number
+  skip?: number
+  distinct?: Prisma.XpMultiplierScalarFieldEnum | Prisma.XpMultiplierScalarFieldEnum[]
 }
 
 /**

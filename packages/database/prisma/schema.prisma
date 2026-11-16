@@ -47,6 +47,7 @@ model Guild {
   td2Events      Td2Event[]
   td2Reports     Td2Report[]
   guildDelegates GuildDelegate[]
+  xpMultipliers  XpMultiplier[]
 }
 
 model GuildConfig {
@@ -63,6 +64,7 @@ model GuildConfig {
   levelUpChannelId       String? // vide = dans le salon du message
   leaderboardPublic      Boolean  @default(true) // page /classement du site
   xpExcludedChannelIds   String[] @default([]) // salons, vocaux ou catégories sans gain d'XP ; les fils en héritent
+  xpMultiplierMaxPercent Int      @default(300) // plafond du total des bonus d'XP, en % du gain de base (100 à 1000)
   ticketCategoryId       String?
   ticketStaffRoleIds     String[]
   ticketLogChannelId     String?
@@ -357,6 +359,24 @@ model RolePanelOption {
   label    String
   emoji    String?
   position Int       @default(0)
+}
+
+// Bonus ou malus d'XP sur un rôle, un salon ou une catégorie ; 100 = inchangé, 150 = ×1,5
+enum XpMultiplierKind {
+  ROLE
+  CHANNEL
+  CATEGORY
+}
+
+model XpMultiplier {
+  guildId   String
+  guild     Guild            @relation(fields: [guildId], references: [id], onDelete: Cascade)
+  targetId  String // identifiant Discord du rôle, du salon ou de la catégorie
+  kind      XpMultiplierKind
+  percent   Int // 10 à 500
+  createdAt DateTime         @default(now())
+
+  @@id([guildId, targetId])
 }
 
 // ---------- The Division 2 ----------
